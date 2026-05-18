@@ -91,7 +91,7 @@ export default function AuthPage() {
           <div>
             <h1 className="text-display text-text leading-none mb-4">
               Never miss a<br />
-              <span style={{ color: "#F5A623" }}>payment again.</span>
+              <span style={{ color: "#0D7377" }}>payment again.</span>
             </h1>
             <p className="text-muted text-lg max-w-sm leading-relaxed">
               The intelligent subscription tracker that keeps your finances sharp and your mind clear.
@@ -109,9 +109,9 @@ export default function AuthPage() {
               >
                 <div
                   className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(245,166,35,0.2)" }}
+                  style={{ background: "rgba(245,166,35,0.12)", border: "1px solid rgba(13,115,119,0.2)" }}
                 >
-                  <f.icon size={16} color="#F5A623" />
+                  <f.icon size={16} color="#0D7377" />
                 </div>
                 <span className="text-muted text-sm">{f.text}</span>
               </motion.div>
@@ -132,7 +132,7 @@ export default function AuthPage() {
             <p className="text-muted text-xs">by cancelling unused subs · avg user</p>
             <div className="mt-3 flex gap-2">
               {["Netflix", "Spotify", "iCloud+"].map((s) => (
-                <span key={s} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(245,166,35,0.1)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.2)" }}>{s}</span>
+                <span key={s} className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(13,115,119,0.1)", color: "#0D7377", border: "1px solid rgba(13,115,119,0.2)" }}>{s}</span>
               ))}
             </div>
           </motion.div>

@@ -19,7 +19,7 @@ export function GreetingHeader() {
         <p className="text-muted text-sm mb-1">{greeting},</p>
         <h1 className="text-3xl font-bold text-text">{name}</h1>
       </div>
-      <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg" style={{ background: "rgba(245,166,35,0.15)", color: "#F5A623", border: "1px solid rgba(245,166,35,0.3)" }}>
+      <div className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg" style={{ background: "rgba(13,115,119,0.15)", color: "#0D7377", border: "1px solid rgba(13,115,119,0.3)" }}>
         {initials}
       </div>
     </div>

@@ -7,8 +7,8 @@ export default function SubscriptionsScreen() {
       <ScrollView contentContainerClassName="p-6">
         <View className="flex-row items-center justify-between mb-6">
           <View className="flex-row items-center gap-3">
-            <View className="w-10 h-10 rounded-xl bg-surface-2 items-center justify-center border border-white/10">
-              <CreditCard size={20} color="#E6EDF3" />
+            <View className="w-10 h-10 rounded-xl bg-surface-2 items-center justify-center border border-black/5">
+              <CreditCard size={20} color="#1A1A1A" />
             </View>
             <Text className="text-3xl font-bold text-text">Subs</Text>
           </View>
@@ -19,7 +19,7 @@ export default function SubscriptionsScreen() {
           </TouchableOpacity>
         </View>
 
-        <View className="bg-surface border border-white/10 p-5 rounded-2xl mb-4">
+        <View className="bg-surface border border-black/5 p-5 rounded-2xl mb-4">
           <Text className="text-center text-muted">Subscriptions list will appear here.</Text>
         </View>
       </ScrollView>

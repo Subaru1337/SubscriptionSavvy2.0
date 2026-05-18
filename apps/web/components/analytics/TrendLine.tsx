@@ -59,8 +59,8 @@ export function TrendLine() {
           <AreaChart data={data} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#F5A623" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#F5A623" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#0D7377" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="#0D7377" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} />
@@ -77,11 +77,11 @@ export function TrendLine() {
               tick={{ fill: '#8B949E', fontSize: 12 }}
               tickFormatter={(val) => `${getCurrencySymbol(baseCurrency)}${val >= 1000 ? (val/1000).toFixed(1)+'k' : val}`}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(245,166,35,0.2)', strokeWidth: 2, strokeDasharray: '4 4' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(13,115,119,0.2)', strokeWidth: 2, strokeDasharray: '4 4' }} />
             <Area 
               type="monotone" 
               dataKey="spend" 
-              stroke="#F5A623" 
+              stroke="#0D7377" 
               strokeWidth={3}
               fillOpacity={1} 
               fill="url(#colorSpend)" 

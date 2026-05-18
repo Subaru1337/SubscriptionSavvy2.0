@@ -5,18 +5,18 @@
 
 /* ─── Design Tokens ──────────────────────────────────────────────────────── */
 :root {
-  --color-base:       #0D1117;
-  --color-surface:    #161B22;
-  --color-surface-2:  #1C2128;
-  --color-amber:      #F5A623;
-  --color-teal:       #2A9D8F;
+  --color-base:       #FAF7F2;
+  --color-surface:    #FFFFFF;
+  --color-surface-2:  #EEF7F7;
+  --color-amber:      #0D7377;
+  --color-teal:       #14A085;
   --color-offwhite:   #F7F3EE;
-  --color-text:       #E6EDF3;
-  --color-muted:      #8B949E;
-  --color-danger:     #F85149;
-  --color-success:    #3FB950;
-  --color-warning:    #E3B341;
-  --color-border:     rgba(240,246,252,0.1);
+  --color-text:       #1A1A1A;
+  --color-muted:      #6B6560;
+  --color-danger:     #E05C5C;
+  --color-success:    #2ECC7A;
+  --color-warning:    #E05C5C;
+  --color-border:     #E8E2D9;
   --nav-h:            72px;
   --radius-card:      16px;
 }
@@ -108,10 +108,10 @@ body {
 
 /* ─── Glass Effect ────────────────────────────────────────────────────────── */
 .glass {
-  background: rgba(22,27,34,0.7);
+  background: rgba(255,255,255,0.7);
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(240,246,252,0.1);
+  border: 1px solid var(--color-border);
 }
 
 /* ─── Buttons ─────────────────────────────────────────────────────────────── */
@@ -131,7 +131,7 @@ body {
 }
 .btn-primary {
   background-color: var(--color-amber);
-  color: #000;
+  color: #FFFFFF;
 }
 .btn-primary:hover {
   background-color: #FBBF24;
@@ -177,11 +177,11 @@ body {
 select.input { cursor: pointer; }
 
 /* ─── Urgency Pills ───────────────────────────────────────────────────────── */
-.pill-overdue  { background: rgba(248,81,73,0.15);  color: #F85149; border: 1px solid rgba(248,81,73,0.3);  }
-.pill-today    { background: rgba(227,179,65,0.15); color: #E3B341; border: 1px solid rgba(227,179,65,0.3); }
-.pill-soon     { background: rgba(245,166,35,0.15); color: #F5A623; border: 1px solid rgba(245,166,35,0.3); }
-.pill-upcoming { background: rgba(42,157,143,0.15); color: #2A9D8F; border: 1px solid rgba(42,157,143,0.3); }
-.pill-normal   { background: rgba(139,148,158,0.15); color: #8B949E; border: 1px solid rgba(139,148,158,0.3); }
+.pill-overdue  { background: rgba(224,92,92,0.15);  color: #E05C5C; border: 1px solid rgba(224,92,92,0.3);  }
+.pill-today    { background: rgba(224,92,92,0.15); color: #E05C5C; border: 1px solid rgba(224,92,92,0.3); }
+.pill-soon     { background: rgba(13,115,119,0.15); color: #0D7377; border: 1px solid rgba(13,115,119,0.3); }
+.pill-upcoming { background: rgba(20,160,133,0.15); color: #14A085; border: 1px solid rgba(20,160,133,0.3); }
+.pill-normal   { background: rgba(107,101,96,0.15); color: #6B6560; border: 1px solid rgba(107,101,96,0.3); }
 
 /* ─── Animations ──────────────────────────────────────────────────────────── */
 @keyframes breathe {
@@ -269,7 +269,7 @@ select.input { cursor: pointer; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(13,17,23,0.8);
+  background: rgba(26,26,26,0.5);
   backdrop-filter: blur(4px);
   z-index: 50;
   display: flex;

@@ -21,9 +21,9 @@ export default function AuthScreen() {
           <View>
             <Text className="text-xs font-bold text-muted uppercase mb-2">Email</Text>
             <TextInput
-              className="bg-surface-2 border border-white/10 rounded-xl p-4 text-text"
+              className="bg-surface-2 border border-black/5 rounded-xl p-4 text-text"
               placeholder="you@example.com"
-              placeholderTextColor="#8B949E"
+              placeholderTextColor="#6B6560"
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
@@ -34,9 +34,9 @@ export default function AuthScreen() {
           <View className="mt-4">
             <Text className="text-xs font-bold text-muted uppercase mb-2">Password</Text>
             <TextInput
-              className="bg-surface-2 border border-white/10 rounded-xl p-4 text-text"
+              className="bg-surface-2 border border-black/5 rounded-xl p-4 text-text"
               placeholder="Min 8 characters"
-              placeholderTextColor="#8B949E"
+              placeholderTextColor="#6B6560"
               value={password}
               onChangeText={setPassword}
               secureTextEntry

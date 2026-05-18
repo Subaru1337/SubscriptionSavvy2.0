@@ -40,7 +40,7 @@ export function FloatingPillNav() {
                 href={href}
                 id={`nav-${label.toLowerCase()}`}
                 className="relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer"
-                style={{ color: active ? "#F5A623" : "#8B949E" }}
+                style={{ color: active ? "#0D7377" : "#6B6560" }}
               >
                 {active && (
                   <motion.div
@@ -89,7 +89,7 @@ export function FloatingPillNav() {
                 size={20}
                 className="relative z-10 transition-transform duration-200"
                 style={{
-                  color: active ? "#F5A623" : "#8B949E",
+                  color: active ? "#0D7377" : "#6B6560",
                   transform: active ? "translateY(-1px)" : "none",
                 }}
               />
@@ -100,7 +100,7 @@ export function FloatingPillNav() {
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     className="relative z-10 text-[9px] font-bold mt-0.5"
-                    style={{ color: "#F5A623" }}
+                    style={{ color: "#0D7377" }}
                   >
                     {label}
                   </motion.span>
