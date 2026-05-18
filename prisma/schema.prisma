@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String           @id @default(cuid())
+  email             String           @unique
+  passwordHash      String
+  baseCurrency      String           @default("INR")
+  monthlyBudget     Decimal?         @db.Decimal(10, 2)
+  emailReminders    Boolean          @default(true)
+  budgetAlertSentAt DateTime?
+  createdAt         DateTime         @default(now())
+  subscriptions     Subscription[]
+  paymentHistory    PaymentHistory[]
+}
+
+model Subscription {
+  id             String           @id @default(cuid())
+  userId         String
+  name           String
+  cost           Decimal          @db.Decimal(10, 2)
+  currency       String           @default("INR")
+  category       String
+  billingCycle   String // "monthly" | "yearly"
+  nextPayment    DateTime
+  status         String           @default("active") // "active" | "cancelled" | "paused"
+  trialEndsOn    DateTime?
+  notes          String?
+  createdAt      DateTime         @default(now())
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentHistory PaymentHistory[]
+}
+
+model PaymentHistory {
+  id             String       @id @default(cuid())
+  subscriptionId String
+  userId         String
+  amount         Decimal      @db.Decimal(10, 2)
+  currency       String
+  paidAt         DateTime     @default(now())
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
