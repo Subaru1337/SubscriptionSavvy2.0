@@ -44,6 +44,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Network first for navigation requests (HTML pages) so redirects are respected instantly
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   // Cache first for app shell
   event.respondWith(
     caches.match(event.request).then(

@@ -1,229 +1,292 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Save, Loader2, Trash2, AlertTriangle } from "lucide-react";
+import { User, Bell, Shield, LogOut, Loader2, Save, Trash2, Smartphone, Target } from "lucide-react";
+import { CATEGORIES } from "@/lib/utils";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency";
-import { formatDate } from "@/lib/utils";
+import { formatDateShort } from "@/lib/utils";
 
-interface User {
-  id: string; email: string; baseCurrency: string;
-  monthlyBudget: string | null; emailReminders: boolean; createdAt: string;
+interface UserProfile {
+  email: string;
+  name?: string;
+  baseCurrency: string;
+  monthlyBudget: number | null;
+  emailReminders: boolean;
 }
 
 export default function SettingsPage() {
-  const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [budgets, setBudgets] = useState<any[]>([]);
+  
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [budgetCat, setBudgetCat] = useState("Entertainment");
+  const [budgetLimit, setBudgetLimit] = useState("");
 
-  // Form state
-  const [budget, setBudget] = useState("");
-  const [currency, setCurrency] = useState("INR");
-  const [reminders, setReminders] = useState(true);
+  const loadSettings = async () => {
+    try {
+      const [res, sessRes, budRes] = await Promise.all([
+        fetch("/api/settings"),
+        fetch("/api/auth/sessions"),
+        fetch("/api/category-budgets")
+      ]);
+      const data = await res.json();
+      const sessData = await sessRes.json();
+      const budData = await budRes.json();
+      
+      setProfile(data.user);
+      if (sessData.sessions) setSessions(sessData.sessions);
+      if (budData.budgets) setBudgets(budData.budgets);
+    } catch {
+      toast.error("Failed to load settings");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.user) {
-          setUser(d.user);
-          setBudget(d.user.monthlyBudget ? String(Number(d.user.monthlyBudget)) : "");
-          setCurrency(d.user.baseCurrency);
-          setReminders(d.user.emailReminders);
-        }
-      })
-      .finally(() => setLoading(false));
+    loadSettings();
   }, []);
 
-  async function save(section: string, data: Record<string, unknown>) {
-    setSaving(section);
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profile) return;
+    setSaving(true);
     try {
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          baseCurrency: profile.baseCurrency,
+          monthlyBudget: profile.monthlyBudget ? Number(profile.monthlyBudget) : null,
+          emailReminders: profile.emailReminders,
+        }),
       });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error || "Failed to save");
-      setUser(d.user);
-      toast.success("Settings saved!");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
-    } finally {
-      setSaving(null);
-    }
-  }
-
-  async function handleDeleteAccount() {
-    setDeleting(true);
-    try {
-      const res = await fetch("/api/auth/delete", { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete account");
-      toast.success("Account deleted. Goodbye!");
-      router.push("/");
+      if (!res.ok) throw new Error();
+      toast.success("Settings saved successfully");
     } catch {
-      toast.error("Failed to delete account");
+      toast.error("Failed to save settings");
     } finally {
-      setDeleting(false); setShowDeleteConfirm(false);
+      setSaving(false);
     }
-  }
+  };
 
-  if (loading) {
+  const handleSaveBudget = async () => {
+    if (!budgetLimit || Number(budgetLimit) <= 0) return;
+    try {
+      const res = await fetch("/api/category-budgets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: budgetCat,
+          limit: Number(budgetLimit),
+          currency: profile?.baseCurrency || "INR"
+        })
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Category budget saved");
+      setBudgetLimit("");
+      loadSettings();
+    } catch {
+      toast.error("Failed to save category budget");
+    }
+  };
+
+  const handleLogoutAll = async () => {
+    if (!confirm("Are you sure you want to log out from all devices? You will be logged out here as well.")) return;
+    setLogoutLoading(true);
+    try {
+      await fetch("/api/auth/logout-all", { method: "POST" });
+      window.location.href = "/auth";
+    } catch {
+      toast.error("Failed to logout all devices");
+      setLogoutLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setLogoutLoading(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/auth";
+    } catch {
+      toast.error("Failed to logout");
+      setLogoutLoading(false);
+    }
+  };
+
+  if (loading || !profile) {
     return (
-      <div className="page-container">
-        <div className="skeleton h-8 w-28 mb-6" />
-        {[1,2,3,4].map((i) => <div key={i} className="card mb-4 skeleton h-32" />)}
+      <div className="page-container flex items-center justify-center min-h-[70vh]">
+        <Loader2 className="animate-spin" style={{ color: "var(--primary)" }} />
       </div>
     );
   }
 
   return (
-    <div className="page-container animate-fade-in max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6" style={{ color: "var(--text-primary)" }}>Settings</h1>
+    <div className="page-container animate-fade-in max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold mb-8" style={{ color: "var(--text-primary)" }}>
+        Settings
+      </h1>
 
-      {/* Account */}
-      <div className="card mb-4">
-        <h2 className="section-title">Account</h2>
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between py-1.5 border-b" style={{ borderColor: "var(--border)" }}>
-            <span style={{ color: "var(--text-secondary)" }}>Email</span>
-            <span className="font-medium" style={{ color: "var(--text-primary)" }}>{user?.email}</span>
-          </div>
-          <div className="flex justify-between py-1.5">
-            <span style={{ color: "var(--text-secondary)" }}>Member since</span>
-            <span style={{ color: "var(--text-primary)" }}>{user?.createdAt ? formatDate(user.createdAt) : "—"}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Budget */}
-      <div className="card mb-4">
-        <h2 className="section-title">Monthly Budget</h2>
-        <p className="text-sm mb-3" style={{ color: "var(--text-secondary)" }}>Set a spending limit to track your subscription budget usage.</p>
-        <div className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-secondary)" }}>
-              Budget ({currency})
-            </label>
-            <input
-              type="number" min="0" step="100"
-              className="input font-mono"
-              placeholder="e.g. 5000"
-              value={budget}
-              onChange={(e) => setBudget(e.target.value)}
-            />
-          </div>
-          <button
-            onClick={() => save("budget", { monthlyBudget: budget ? Number(budget) : null })}
-            className="btn-primary whitespace-nowrap"
-            disabled={saving === "budget"}
-          >
-            {saving === "budget" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-            Save
-          </button>
-          {budget && (
-            <button
-              onClick={() => { setBudget(""); save("budget", { monthlyBudget: null }); }}
-              className="btn-secondary whitespace-nowrap text-sm"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Display Currency */}
-      <div className="card mb-4">
-        <h2 className="section-title">Display Currency</h2>
-        <p className="text-sm mb-3" style={{ color: "var(--text-secondary)" }}>All dashboard totals will be converted to this currency.</p>
-        <div className="flex gap-3">
-          <select className="input flex-1" value={currency} onChange={(e) => setCurrency(e.target.value)}>
-            {SUPPORTED_CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <button
-            onClick={() => save("currency", { baseCurrency: currency })}
-            className="btn-primary whitespace-nowrap"
-            disabled={saving === "currency"}
-          >
-            {saving === "currency" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-            Save
-          </button>
-        </div>
-      </div>
-
-      {/* Email Preferences */}
-      <div className="card mb-4">
-        <h2 className="section-title">Email Preferences</h2>
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Email reminders for upcoming payments</p>
-            <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>Receive reminders 3 days before payments are due</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setReminders(!reminders)}
-              className="w-11 h-6 rounded-full transition-colors cursor-pointer relative flex-shrink-0"
-              style={{ backgroundColor: reminders ? "var(--primary)" : "var(--border)" }}
-            >
-              <span className="absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm" style={{ left: reminders ? "calc(100% - 20px)" : "4px" }} />
-            </button>
-          </div>
-        </div>
-        <button
-          onClick={() => save("reminders", { emailReminders: reminders })}
-          className="btn-primary mt-4 text-sm"
-          disabled={saving === "reminders"}
-        >
-          {saving === "reminders" ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
-          Save Preferences
-        </button>
-      </div>
-
-      {/* Danger Zone */}
-      <div className="card" style={{ borderColor: "rgba(224,92,92,0.3)" }}>
-        <h2 className="section-title" style={{ color: "var(--warning)" }}>Danger Zone</h2>
-        <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>
-          Permanently delete your account and all data. This action cannot be undone.
-        </p>
-        <button
-          onClick={() => setShowDeleteConfirm(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-opacity hover:opacity-80"
-          style={{ backgroundColor: "rgba(224,92,92,0.1)", color: "var(--warning)", border: "1px solid rgba(224,92,92,0.3)" }}
-        >
-          <Trash2 size={15} /> Delete Account
-        </button>
-      </div>
-
-      {/* Delete Account Confirm */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="card w-full max-w-sm animate-fade-in">
-            <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle size={20} style={{ color: "var(--warning)" }} />
-              <h3 className="font-bold text-lg" style={{ color: "var(--text-primary)" }}>Delete Account</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2 space-y-6">
+          {/* General Preferences */}
+          <section className="card">
+            <div className="flex items-center gap-2 mb-6">
+              <User size={18} style={{ color: "var(--primary)" }} />
+              <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>Preferences</h2>
             </div>
-            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
-              This will permanently delete your account, all subscriptions, and payment history. This cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowDeleteConfirm(false)} className="btn-secondary flex-1 justify-center" disabled={deleting}>Cancel</button>
-              <button
-                onClick={handleDeleteAccount}
-                className="flex-1 justify-center py-2 px-4 rounded-lg font-semibold text-sm text-white cursor-pointer hover:opacity-90 flex items-center gap-2"
-                style={{ backgroundColor: "var(--warning)" }}
-                disabled={deleting}
+            
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>Email</label>
+                <input type="email" className="input bg-black/5 cursor-not-allowed" value={profile.email} disabled />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>Display Currency</label>
+                <select
+                  className="input"
+                  value={profile.baseCurrency}
+                  onChange={(e) => setProfile({ ...profile, baseCurrency: e.target.value })}
+                >
+                  {SUPPORTED_CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <p className="mt-1 text-xs" style={{ color: "var(--text-secondary)" }}>
+                  All amounts will be converted and shown in this currency.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>Global Monthly Budget</label>
+                <input
+                  type="number"
+                  className="input font-mono"
+                  placeholder="No limit"
+                  value={profile.monthlyBudget || ""}
+                  onChange={(e) => setProfile({ ...profile, monthlyBudget: e.target.value ? Number(e.target.value) : null })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-3">
+                  <Bell size={18} style={{ color: "var(--text-secondary)" }} />
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Email Reminders</p>
+                    <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Get notified 3 days before a payment</p>
+                  </div>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={profile.emailReminders}
+                    onChange={(e) => setProfile({ ...profile, emailReminders: e.target.checked })}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--primary)]" />
+                </label>
+              </div>
+
+              <div className="pt-4 border-t mt-6" style={{ borderColor: "var(--border)" }}>
+                <button type="submit" disabled={saving} className="btn-primary w-full justify-center">
+                  {saving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Changes</>}
+                </button>
+              </div>
+            </form>
+          </section>
+
+          {/* Category Budgets */}
+          <section className="card">
+            <div className="flex items-center gap-2 mb-6">
+              <Target size={18} style={{ color: "var(--primary)" }} />
+              <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>Category Budgets</h2>
+            </div>
+            
+            <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>Set specific monthly limits for different types of subscriptions.</p>
+            
+            <div className="flex gap-2 items-end mb-6">
+              <div className="flex-1">
+                <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>Category</label>
+                <select className="input text-sm py-2" value={budgetCat} onChange={e => setBudgetCat(e.target.value)}>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>Limit ({profile.baseCurrency})</label>
+                <input type="number" className="input text-sm py-2" placeholder="0.00" value={budgetLimit} onChange={e => setBudgetLimit(e.target.value)} />
+              </div>
+              <button onClick={handleSaveBudget} className="btn-primary py-2 px-4 mb-0.5" disabled={!budgetLimit}>Add</button>
+            </div>
+
+            {budgets.length > 0 ? (
+              <div className="space-y-2">
+                {budgets.map(b => (
+                  <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border" style={{ borderColor: "var(--border)" }}>
+                    <span className="text-sm font-medium">{b.category}</span>
+                    <span className="text-sm font-mono">{b.currency} {Number(b.limit).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm italic" style={{ color: "var(--text-secondary)" }}>No category budgets set yet.</div>
+            )}
+          </section>
+
+          {/* Security & Sessions */}
+          <section className="card">
+            <div className="flex items-center gap-2 mb-6">
+              <Shield size={18} style={{ color: "var(--primary)" }} />
+              <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>Security & Sessions</h2>
+            </div>
+            
+            <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>Recent active sessions on your account.</p>
+            
+            <div className="space-y-3 mb-6">
+              {sessions.map(s => (
+                <div key={s.id} className="flex items-start gap-3 p-3 rounded-lg bg-black/5 border" style={{ borderColor: "var(--border)" }}>
+                  <Smartphone size={16} className="mt-0.5" style={{ color: "var(--text-secondary)" }} />
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{s.ipAddress || "Unknown IP"}</p>
+                    <p className="text-xs max-w-[200px] md:max-w-md truncate" style={{ color: "var(--text-secondary)" }}>{s.userAgent}</p>
+                    <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>{formatDateShort(s.issuedAt)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+              <button 
+                onClick={handleLogoutAll} 
+                disabled={logoutLoading} 
+                className="w-full text-sm font-medium py-3 rounded-lg transition-colors bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/40"
               >
-                {deleting ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                Delete Forever
+                Log Out All Devices
               </button>
             </div>
+          </section>
+        </div>
+
+        {/* Sidebar Actions */}
+        <div className="space-y-4">
+          <div className="card">
+            <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Account Actions</h3>
+            <button
+              onClick={handleLogout}
+              disabled={logoutLoading}
+              className="w-full flex items-center justify-between p-3 rounded-xl transition-colors hover:bg-black/5"
+            >
+              <div className="flex items-center gap-2">
+                <LogOut size={16} style={{ color: "var(--text-secondary)" }} />
+                <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Log Out</span>
+              </div>
+            </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

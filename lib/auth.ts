@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
 
 const COOKIE_NAME = "ss_token";
 const EXPIRY = "7d";
@@ -33,7 +34,21 @@ export async function getAuthUser(): Promise<JWTUserPayload | null> {
     const cookieStore = await cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
     if (!token) return null;
-    return await verifyJWT(token);
+    const payload = await verifyJWT(token);
+    
+    // Check session invalidation
+    if (payload.userId && payload.iat) {
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { lastLogoutAt: true }
+      });
+      if (user?.lastLogoutAt) {
+        const logoutTime = Math.floor(user.lastLogoutAt.getTime() / 1000);
+        if (payload.iat < logoutTime) return null; // Token was issued before last global logout
+      }
+    }
+    
+    return payload;
   } catch {
     return null;
   }

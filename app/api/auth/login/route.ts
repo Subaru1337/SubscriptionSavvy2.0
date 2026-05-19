@@ -61,7 +61,32 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const token = await signJWT({ userId: user.id, email: user.email });
+  // Session Logging
+  const userAgent = request.headers.get('user-agent') ?? 'unknown';
+  await prisma.sessionLog.create({
+    data: {
+      userId: user.id,
+      ipAddress: ip,
+      userAgent: userAgent,
+    }
+  });
+
+  // Keep only 5 most recent sessions
+  const allSessions = await prisma.sessionLog.findMany({
+    where: { userId: user.id },
+    orderBy: { issuedAt: 'desc' },
+    select: { id: true },
+  });
+  if (allSessions.length > 5) {
+    const toDelete = allSessions.slice(5).map(s => s.id);
+    await prisma.sessionLog.deleteMany({ where: { id: { in: toDelete } } });
+  }
+
+  const token = await signJWT({ 
+    userId: user.id, 
+    email: user.email,
+    iat: Math.floor(Date.now() / 1000)
+  });
   const cookieConfig = createAuthCookie(token);
 
   const response = NextResponse.json({

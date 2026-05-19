@@ -24,6 +24,7 @@ const updateSchema = z.object({
   trialEndsOn: z.string().nullable().optional(),
   status: z.enum(["active", "cancelled", "paused"]).optional(),
   notes: z.string().max(500).nullable().optional(),
+  worthItRating: z.number().int().min(1).max(5).optional().nullable(),
 });
 
 export async function PUT(
@@ -61,16 +62,52 @@ export async function PUT(
   }
 
   const data = parsed.data;
-  const updated = await prisma.subscription.update({
-    where: { id: params.id },
-    data: {
-      ...data,
-      nextPayment: data.nextPayment ? new Date(data.nextPayment) : undefined,
-      trialEndsOn: data.trialEndsOn !== undefined
-        ? data.trialEndsOn ? new Date(data.trialEndsOn) : null
-        : undefined,
-    },
-  });
+  
+  // Track price history and cancellation
+  const isCostChanged = data.cost !== undefined && data.cost !== Number(subscription.cost);
+  const isCancelled = data.status === "cancelled" && subscription.status !== "cancelled" && !subscription.cancelledAt;
+
+  const updateData: any = {
+    ...data,
+    nextPayment: data.nextPayment ? new Date(data.nextPayment) : undefined,
+    trialEndsOn: data.trialEndsOn !== undefined
+      ? data.trialEndsOn ? new Date(data.trialEndsOn) : null
+      : undefined,
+  };
+
+  if (isCancelled) {
+    updateData.cancelledAt = new Date();
+  }
+
+  let updated;
+
+  if (isCostChanged) {
+    // Wrap in transaction to record price history
+    updated = await prisma.$transaction(async (tx) => {
+      const sub = await tx.subscription.update({
+        where: { id: params.id },
+        data: updateData,
+      });
+
+      await tx.priceHistory.create({
+        data: {
+          subscriptionId: sub.id,
+          userId: authUser.userId,
+          oldCost: subscription.cost,
+          newCost: data.cost!,
+          currency: subscription.currency,
+        },
+      });
+
+      return sub;
+    });
+  } else {
+    // Normal update
+    updated = await prisma.subscription.update({
+      where: { id: params.id },
+      data: updateData,
+    });
+  }
 
   return NextResponse.json({ subscription: updated });
 }

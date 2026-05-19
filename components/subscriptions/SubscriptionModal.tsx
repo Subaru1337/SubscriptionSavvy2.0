@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { CATEGORIES, BILLING_CYCLES } from "@/lib/utils";
+import { X, Loader2, ChevronLeft, ChevronRight, Star, AlertTriangle, ArrowUpRight } from "lucide-react";
+import { CATEGORIES, BILLING_CYCLES, formatDateShort } from "@/lib/utils";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency";
+import { celebrateFirstSubscription } from "@/lib/confetti";
 
 const QUICK_ADD_TEMPLATES = [
   { name: "Netflix", cost: 649, currency: "INR", billingCycle: "monthly", category: "Entertainment", emoji: "🎬" },
@@ -31,6 +32,7 @@ interface SubscriptionFormData {
   trialEndsOn: string;
   status: string;
   notes: string;
+  worthItRating?: number | null;
 }
 
 interface Subscription {
@@ -44,6 +46,7 @@ interface Subscription {
   trialEndsOn?: string | null;
   status: string;
   notes?: string | null;
+  worthItRating?: number | null;
 }
 
 interface SubscriptionModalProps {
@@ -63,6 +66,7 @@ const defaultForm: SubscriptionFormData = {
   trialEndsOn: "",
   status: "active",
   notes: "",
+  worthItRating: 5,
 };
 
 export function SubscriptionModal({
@@ -74,7 +78,10 @@ export function SubscriptionModal({
   const [form, setForm] = useState<SubscriptionFormData>(defaultForm);
   const [errors, setErrors] = useState<Partial<SubscriptionFormData>>({});
   const [loading, setLoading] = useState(false);
+  const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  const [priceHistory, setPriceHistory] = useState<any[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const typingTimer = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (editSubscription) {
@@ -90,14 +97,75 @@ export function SubscriptionModal({
           : "",
         status: editSubscription.status,
         notes: editSubscription.notes || "",
+        worthItRating: editSubscription.worthItRating || 5,
       });
+
+      // Fetch price history
+      fetch(`/api/subscriptions/${editSubscription.id}/price-history`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.history) setPriceHistory(data.history);
+        })
+        .catch(() => {});
     } else {
       setForm(defaultForm);
+      setPriceHistory([]);
     }
     setErrors({});
+    setDuplicateWarning(null);
   }, [editSubscription, open]);
 
+  // Duplicate Check Debounce
+  useEffect(() => {
+    if (!open || editSubscription) return;
+    clearTimeout(typingTimer.current);
+    if (form.name.trim().length > 2) {
+      typingTimer.current = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/subscriptions/check-duplicate?name=${encodeURIComponent(form.name.trim())}`);
+          const data = await res.json();
+          if (data.isDuplicate) {
+            setDuplicateWarning(`You already have a subscription to ${data.existing.name} (${data.existing.currency}${data.existing.cost}).`);
+          } else {
+            setDuplicateWarning(null);
+          }
+        } catch {
+          setDuplicateWarning(null);
+        }
+      }, 800);
+    } else {
+      setDuplicateWarning(null);
+    }
+    return () => clearTimeout(typingTimer.current);
+  }, [form.name, open, editSubscription]);
+
+  // Smart Next Payment Date
+  function updateNextPayment(cycle: string) {
+    const d = new Date(form.nextPayment);
+    if (isNaN(d.getTime())) return;
+    const now = new Date();
+    
+    // Only auto-suggest if they haven't explicitly picked a far-future date manually
+    if (d.getTime() < now.getTime() + (365 * 24 * 60 * 60 * 1000)) {
+      if (cycle === "yearly") {
+        d.setFullYear(now.getFullYear() + 1);
+      } else {
+        d.setMonth(now.getMonth() + 1);
+      }
+      setForm(f => ({ ...f, billingCycle: cycle, nextPayment: d.toISOString().split("T")[0] }));
+    } else {
+      setForm(f => ({ ...f, billingCycle: cycle }));
+    }
+  }
+
   function applyTemplate(t: (typeof QUICK_ADD_TEMPLATES)[number]) {
+    const nextPay = new Date();
+    if (t.billingCycle === "yearly") {
+      nextPay.setFullYear(nextPay.getFullYear() + 1);
+    } else {
+      nextPay.setMonth(nextPay.getMonth() + 1);
+    }
+    
     setForm((f) => ({
       ...f,
       name: t.name,
@@ -105,6 +173,7 @@ export function SubscriptionModal({
       currency: t.currency,
       category: t.category,
       billingCycle: t.billingCycle,
+      nextPayment: nextPay.toISOString().split("T")[0],
     }));
   }
 
@@ -133,6 +202,7 @@ export function SubscriptionModal({
         trialEndsOn: form.trialEndsOn ? new Date(form.trialEndsOn).toISOString() : null,
         status: form.status,
         notes: form.notes.trim() || null,
+        worthItRating: form.worthItRating,
       };
 
       const url = editSubscription
@@ -150,6 +220,16 @@ export function SubscriptionModal({
       if (!res.ok) throw new Error(data.error || "Failed to save subscription");
 
       toast.success(editSubscription ? "Subscription updated!" : "Subscription added!");
+      
+      if (!editSubscription) {
+        // Confetti for first sub! We check via local storage or by fetching
+        const isFirst = localStorage.getItem("ss-first-sub-done") !== "true";
+        if (isFirst) {
+          celebrateFirstSubscription();
+          localStorage.setItem("ss-first-sub-done", "true");
+        }
+      }
+
       onSuccess();
       onClose();
     } catch (err) {
@@ -177,9 +257,8 @@ export function SubscriptionModal({
         className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl animate-fade-in"
         style={{ backgroundColor: "var(--card)" }}
       >
-        {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-4 border-b sticky top-0"
+          className="flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10"
           style={{ borderColor: "var(--border)", backgroundColor: "var(--card)" }}
         >
           <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>
@@ -195,7 +274,6 @@ export function SubscriptionModal({
         </div>
 
         <div className="px-6 py-5">
-          {/* Quick Add Templates */}
           {!editSubscription && (
             <div className="mb-6">
               <p className="text-xs font-semibold uppercase tracking-wide mb-3" style={{ color: "var(--text-secondary)" }}>
@@ -246,8 +324,14 @@ export function SubscriptionModal({
             </div>
           )}
 
+          {duplicateWarning && (
+            <div className="mb-4 p-3 rounded-lg flex gap-2 items-start text-sm" style={{ backgroundColor: "#Fef3c7", color: "#92400e", border: "1px solid #fcd34d" }}>
+              <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+              <span>{duplicateWarning}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} noValidate>
-            {/* Name */}
             <Field label="Name" required error={errors.name}>
               <input
                 id="sub-name"
@@ -260,7 +344,6 @@ export function SubscriptionModal({
               />
             </Field>
 
-            {/* Cost + Currency */}
             <div className="grid grid-cols-2 gap-3">
               <Field label="Cost" required error={errors.cost}>
                 <input
@@ -289,7 +372,6 @@ export function SubscriptionModal({
               </Field>
             </div>
 
-            {/* Category */}
             <Field label="Category" required>
               <select
                 id="sub-category"
@@ -301,7 +383,6 @@ export function SubscriptionModal({
               </select>
             </Field>
 
-            {/* Billing Cycle */}
             <div className="mb-4">
               <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>
                 Billing Cycle <span style={{ color: "var(--warning)" }}>*</span>
@@ -311,7 +392,7 @@ export function SubscriptionModal({
                   <button
                     key={cycle}
                     type="button"
-                    onClick={() => setForm({ ...form, billingCycle: cycle })}
+                    onClick={() => updateNextPayment(cycle)}
                     className="flex-1 py-2 text-sm font-medium transition-colors cursor-pointer capitalize"
                     style={
                       form.billingCycle === cycle
@@ -325,7 +406,6 @@ export function SubscriptionModal({
               </div>
             </div>
 
-            {/* Next Payment */}
             <Field label="Next Payment" required error={errors.nextPayment}>
               <input
                 id="sub-next-payment"
@@ -337,7 +417,6 @@ export function SubscriptionModal({
               />
             </Field>
 
-            {/* Trial End Date */}
             <Field label="Trial End Date">
               <input
                 id="sub-trial-ends"
@@ -348,7 +427,6 @@ export function SubscriptionModal({
               />
             </Field>
 
-            {/* Status */}
             <Field label="Status" required>
               <select
                 id="sub-status"
@@ -361,8 +439,25 @@ export function SubscriptionModal({
                 <option value="cancelled">Cancelled</option>
               </select>
             </Field>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "var(--text-primary)" }}>
+                "Worth it?" Rating
+              </label>
+              <div className="flex items-center gap-2">
+                {[1,2,3,4,5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setForm(f => ({...f, worthItRating: star}))}
+                    className="p-1 cursor-pointer transition-transform hover:scale-110"
+                  >
+                    <Star size={24} fill={star <= (form.worthItRating || 0) ? "#F59E0B" : "none"} color={star <= (form.worthItRating || 0) ? "#F59E0B" : "var(--border)"} />
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            {/* Notes */}
             <Field label="Notes">
               <textarea
                 id="sub-notes"
@@ -374,7 +469,33 @@ export function SubscriptionModal({
               />
             </Field>
 
-            {/* Actions */}
+            {/* Price History Timeline for Edit Mode */}
+            {editSubscription && priceHistory.length > 0 && (
+              <div className="mb-6 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+                <label className="block text-sm font-medium mb-3" style={{ color: "var(--text-primary)" }}>Price History</label>
+                <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+                  {priceHistory.map((ph, idx) => (
+                    <div key={ph.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-white bg-slate-200 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow flex-shrink-0 z-10">
+                        <ArrowUpRight size={10} style={{ color: "var(--primary)" }} />
+                      </div>
+                      <div className="w-[calc(100%-2.5rem)] md:w-[calc(50%-2.5rem)] card !p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="font-bold text-xs" style={{ color: "var(--text-primary)" }}>Price Change</div>
+                          <time className="font-mono text-[10px]" style={{ color: "var(--text-secondary)" }}>{formatDateShort(ph.changedAt)}</time>
+                        </div>
+                        <div className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                          <span className="line-through">{ph.currency}{Number(ph.oldCost)}</span>
+                          <span className="mx-2">→</span>
+                          <span className="font-bold text-red-500">{ph.currency}{Number(ph.newCost)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-2">
               <button
                 type="button"

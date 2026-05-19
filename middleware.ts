@@ -38,12 +38,22 @@ export async function middleware(request: NextRequest) {
     if (isProtectedApi) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.redirect(new URL("/auth", request.url));
+    if (isProtectedPage) {
+      return NextResponse.redirect(new URL("/auth", request.url));
+    }
+    return NextResponse.next();
   }
+
+  // Token exists, check if they are visiting a guest-only page
+  const isGuestPage = pathname === "/" || pathname === "/auth";
 
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
     await jwtVerify(token, secret);
+    
+    if (isGuestPage) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
     return NextResponse.next();
   } catch {
     if (isProtectedApi) {
@@ -57,6 +67,8 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
+    "/auth",
     "/dashboard/:path*",
     "/subscriptions/:path*",
     "/reminders/:path*",

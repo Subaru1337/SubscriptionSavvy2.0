@@ -5,6 +5,7 @@ import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { DarkModeToggle } from "./DarkModeToggle";
 import { CreditCard } from "lucide-react";
+import { setFaviconBadge, clearFaviconBadge } from "@/lib/favicon-badge";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -18,15 +19,25 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [alertState, setAlertState] = useState<AlertState>({ hasAlerts: false });
 
   useEffect(() => {
-    // Check for overdue/due-today subscriptions for badge
-    fetch("/api/reminders/upcoming")
-      .then((r) => r.json())
-      .then((data) => {
-        if (typeof data.overdueCount === "number") {
-          setAlertState({ hasAlerts: data.overdueCount > 0 });
-        }
-      })
-      .catch(() => {});
+    function checkReminders() {
+      fetch("/api/reminders/upcoming")
+        .then((r) => r.json())
+        .then((data) => {
+          if (typeof data.overdueCount === "number") {
+            setAlertState({ hasAlerts: data.overdueCount > 0 });
+            setFaviconBadge(data.overdueCount);
+          }
+        })
+        .catch(() => {});
+    }
+
+    checkReminders();
+    const interval = setInterval(checkReminders, 5 * 60 * 1000); // Check every 5 mins
+
+    return () => {
+      clearInterval(interval);
+      clearFaviconBadge();
+    };
   }, []);
 
   return (
