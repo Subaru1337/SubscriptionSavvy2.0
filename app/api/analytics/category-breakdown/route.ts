@@ -7,16 +7,18 @@ export async function GET() {
   const authUser = await getAuthUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = await prisma.user.findUnique({
-    where: { id: authUser.userId },
-    select: { baseCurrency: true },
-  });
+  const [user, subscriptions] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: authUser.userId },
+      select: { baseCurrency: true },
+    }),
+    prisma.subscription.findMany({
+      where: { userId: authUser.userId, status: "active" },
+      select: { category: true, cost: true, billingCycle: true, currency: true },
+    }),
+  ]);
 
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-  const subscriptions = await prisma.subscription.findMany({
-    where: { userId: authUser.userId, status: "active" },
-  });
 
   // Group by category and sum monthly totals
   const categoryMap = new Map<string, { count: number; monthly_total: number }>();

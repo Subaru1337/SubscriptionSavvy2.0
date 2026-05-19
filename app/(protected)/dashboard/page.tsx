@@ -74,25 +74,21 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadAll() {
       try {
-        const [summaryRes, catRes, trendRes, userRes, subsRes] = await Promise.all([
-          fetch("/api/analytics/summary"),
-          fetch("/api/analytics/category-breakdown"),
-          fetch("/api/analytics/trends"),
+        const [allRes, userRes, subsRes] = await Promise.all([
+          fetch("/api/analytics/all"),
           fetch("/api/auth/me"),
           fetch("/api/subscriptions"),
         ]);
 
-        const [summaryData, catData, trendData, userData, subsData] = await Promise.all([
-          summaryRes.json(),
-          catRes.json(),
-          trendRes.json(),
+        const [allData, userData, subsData] = await Promise.all([
+          allRes.json(),
           userRes.json(),
           subsRes.json(),
         ]);
 
-        setSummary(summaryData);
-        setCategories(catData);
-        setTrends(trendData);
+        setSummary(allData.summary);
+        setCategories(allData.breakdown);
+        setTrends(allData.trends);
         setUser(userData.user);
 
         // Due in next 7 days

@@ -8,15 +8,26 @@ export async function GET() {
   const authUser = await getAuthUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = await prisma.user.findUnique({
-    where: { id: authUser.userId },
-    select: { baseCurrency: true },
-  });
+  const now = new Date();
+  const sixMonthsAgo = startOfMonth(subMonths(now, 5));
+
+  const [user, allPayments] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: authUser.userId },
+      select: { baseCurrency: true },
+    }),
+    prisma.paymentHistory.findMany({
+      where: {
+        userId: authUser.userId,
+        paidAt: { gte: sixMonthsAgo },
+      },
+      select: { amount: true, currency: true, paidAt: true },
+    }),
+  ]);
 
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
   // Build 6-month range
-  const now = new Date();
   const months = Array.from({ length: 6 }, (_, i) => {
     const date = subMonths(now, 5 - i);
     return {
@@ -30,12 +41,7 @@ export async function GET() {
   const results = [];
 
   for (const month of months) {
-    const payments = await prisma.paymentHistory.findMany({
-      where: {
-        userId: authUser.userId,
-        paidAt: { gte: month.start, lte: month.end },
-      },
-    });
+    const payments = allPayments.filter(p => p.paidAt >= month.start && p.paidAt <= month.end);
 
     let total = 0;
     for (const payment of payments) {

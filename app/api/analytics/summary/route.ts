@@ -13,16 +13,24 @@ export async function GET() {
   const authUser = await getAuthUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = await prisma.user.findUnique({
-    where: { id: authUser.userId },
-    select: { baseCurrency: true, monthlyBudget: true },
-  });
+  const [user, subscriptions] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: authUser.userId },
+      select: { baseCurrency: true, monthlyBudget: true },
+    }),
+    prisma.subscription.findMany({
+      where: { userId: authUser.userId, status: "active" },
+      select: {
+        cost: true,
+        currency: true,
+        billingCycle: true,
+        trialEndsOn: true,
+        nextPayment: true,
+      },
+    }),
+  ]);
 
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-  const subscriptions = await prisma.subscription.findMany({
-    where: { userId: authUser.userId, status: "active" },
-  });
 
   const today = startOfDay(new Date());
   const in7Days = addDays(today, 7);

@@ -1,3 +1,4 @@
+// SERVER ONLY — do not import this file from client components
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -9,17 +10,18 @@ export async function GET(request: NextRequest) {
   const authUser = await getAuthUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const user = await prisma.user.findUnique({
-    where: { id: authUser.userId },
-    select: { email: true, baseCurrency: true },
-  });
+  const [user, subscriptions] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: authUser.userId },
+      select: { email: true, baseCurrency: true },
+    }),
+    prisma.subscription.findMany({
+      where: { userId: authUser.userId },
+      orderBy: [{ category: "asc" }, { name: "asc" }],
+    }),
+  ]);
 
   if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-  const subscriptions = await prisma.subscription.findMany({
-    where: { userId: authUser.userId },
-    orderBy: [{ category: "asc" }, { name: "asc" }],
-  });
 
   // Group by category
   const grouped: Record<string, typeof subscriptions> = {};

@@ -1,13 +1,11 @@
 // Frankfurter API currency conversion with 24-hour in-memory cache
 
-interface RateCache {
+const FRANKFURTER_BASE = 'https://api.frankfurter.app/latest';
+
+type RatesResponse = {
   rates: Record<string, number>;
   base: string;
-  fetchedAt: number;
-}
-
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
-const cache: Map<string, RateCache> = new Map();
+};
 
 export const SUPPORTED_CURRENCIES = ["INR", "USD", "EUR", "GBP", "AED", "SGD", "AUD", "CAD"] as const;
 export type Currency = (typeof SUPPORTED_CURRENCIES)[number];
@@ -23,56 +21,39 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   CAD: "C$",
 };
 
-async function fetchRates(base: string): Promise<Record<string, number>> {
-  const cached = cache.get(base);
-  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
-    return cached.rates;
+export async function getRates(baseCurrency: string): Promise<Record<string, number>> {
+  const res = await fetch(`${FRANKFURTER_BASE}?base=${baseCurrency}`, {
+    next: { revalidate: 86400 }, // Cache at the edge for 24 hours — survives cold starts
+  });
+
+  if (!res.ok) {
+    console.error('Frankfurter API error:', res.status);
+    return {}; // Return empty rates — callers should handle gracefully
   }
 
-  try {
-    const res = await fetch(`https://api.frankfurter.app/latest?base=${base}`, {
-      next: { revalidate: 86400 }, // Next.js cache 24hr
-    });
-
-    if (!res.ok) throw new Error(`Frankfurter API error: ${res.status}`);
-
-    const data = await res.json();
-    const rates: Record<string, number> = { ...data.rates, [base]: 1 };
-
-    cache.set(base, {
-      rates,
-      base,
-      fetchedAt: Date.now(),
-    });
-
-    return rates;
-  } catch (error) {
-    console.error("Failed to fetch exchange rates:", error);
-    // Return fallback 1:1 rates on error
-    return Object.fromEntries(SUPPORTED_CURRENCIES.map((c) => [c, 1]));
-  }
+  const data: RatesResponse = await res.json();
+  return { ...data.rates, [baseCurrency]: 1 };
 }
 
 export async function convertAmount(
   amount: number,
-  from: string,
-  to: string
+  fromCurrency: string,
+  toCurrency: string
 ): Promise<number> {
-  if (from === to) return amount;
+  if (fromCurrency === toCurrency) return amount;
 
-  const rates = await fetchRates(from);
-  const rate = rates[to];
+  const rates = await getRates(fromCurrency);
 
-  if (!rate) {
-    console.warn(`No rate found for ${from} → ${to}, using 1:1`);
-    return amount;
+  if (!rates[toCurrency]) {
+    console.warn(`No rate found for ${fromCurrency} -> ${toCurrency}`);
+    return amount; // Fallback: return unconverted
   }
 
-  return amount * rate;
+  return amount * rates[toCurrency];
 }
 
 export async function getRatesForBase(base: string): Promise<Record<string, number>> {
-  return fetchRates(base);
+  return getRates(base);
 }
 
 export function formatAmount(amount: number, currency: string): string {

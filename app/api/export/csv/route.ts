@@ -1,3 +1,4 @@
+// SERVER ONLY — do not import this file from client components
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";

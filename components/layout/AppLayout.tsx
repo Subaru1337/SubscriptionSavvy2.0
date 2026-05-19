@@ -19,18 +19,11 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   useEffect(() => {
     // Check for overdue/due-today subscriptions for badge
-    fetch("/api/subscriptions")
+    fetch("/api/reminders/upcoming")
       .then((r) => r.json())
       .then((data) => {
-        if (data.subscriptions) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const hasAlerts = data.subscriptions.some((s: { nextPayment: string }) => {
-            const date = new Date(s.nextPayment);
-            date.setHours(0, 0, 0, 0);
-            return date <= today;
-          });
-          setAlertState({ hasAlerts });
+        if (typeof data.overdueCount === "number") {
+          setAlertState({ hasAlerts: data.overdueCount > 0 });
         }
       })
       .catch(() => {});
