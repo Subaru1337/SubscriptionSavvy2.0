@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Search, Filter, Inbox, Star, TrendingUp, CheckSquare, Square, Trash2, PauseCircle } from "lucide-react";
 import { CardSkeleton } from "@/components/ui/Skeleton";
-import { StatusBadge } from "@/components/ui/StatusBadge";
+import { StatusBadge, SubscriptionStatusBadge } from "@/components/ui/StatusBadge";
 import { formatDateShort } from "@/lib/utils";
 import { CURRENCY_SYMBOLS } from "@/lib/currency";
 import { SubscriptionModal } from "@/components/subscriptions/SubscriptionModal";
@@ -244,7 +244,11 @@ export default function SubscriptionsPage() {
 
                   {/* Desktop Status */}
                   <div className="hidden md:flex md:col-span-2 justify-end">
-                    <StatusBadge nextPayment={sub.nextPayment} status={sub.status as any} />
+                    {sub.status === 'active' ? (
+                      <StatusBadge nextPayment={sub.nextPayment} />
+                    ) : (
+                      <SubscriptionStatusBadge status={sub.status} />
+                    )}
                   </div>
 
                   {/* Mobile Bottom Row */}
@@ -253,7 +257,11 @@ export default function SubscriptionsPage() {
                       <p className="text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Next Payment</p>
                       <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{formatDateShort(sub.nextPayment)}</p>
                     </div>
-                    <StatusBadge nextPayment={sub.nextPayment} status={sub.status as any} />
+                    {sub.status === 'active' ? (
+                      <StatusBadge nextPayment={sub.nextPayment} />
+                    ) : (
+                      <SubscriptionStatusBadge status={sub.status} />
+                    )}
                   </div>
 
                 </div>

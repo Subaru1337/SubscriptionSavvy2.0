@@ -1,6 +1,5 @@
-const CACHE_NAME = "subscriptionsavvy-v1";
+const CACHE_NAME = "subscriptionsavvy-v2";
 const APP_SHELL = [
-  "/",
   "/dashboard",
   "/subscriptions",
   "/reminders",

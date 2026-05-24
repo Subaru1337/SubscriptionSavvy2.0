@@ -14,9 +14,10 @@ function getSecret(): Uint8Array {
 export interface JWTUserPayload extends JWTPayload {
   userId: string;
   email: string;
+  sessionId?: string;
 }
 
-export async function signJWT(payload: { userId: string; email: string }): Promise<string> {
+export async function signJWT(payload: { userId: string; email: string; sessionId?: string }): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -36,7 +37,7 @@ export async function getAuthUser(): Promise<JWTUserPayload | null> {
     if (!token) return null;
     const payload = await verifyJWT(token);
     
-    // Check session invalidation
+    // Global logout check
     if (payload.userId && payload.iat) {
       const user = await prisma.user.findUnique({
         where: { id: payload.userId },
@@ -44,8 +45,14 @@ export async function getAuthUser(): Promise<JWTUserPayload | null> {
       });
       if (user?.lastLogoutAt) {
         const logoutTime = Math.floor(user.lastLogoutAt.getTime() / 1000);
-        if (payload.iat < logoutTime) return null; // Token was issued before last global logout
+        if (payload.iat < logoutTime) return null;
       }
+    }
+
+    // Selective device logout check
+    if (payload.sessionId) {
+      const session = await prisma.sessionLog.findUnique({ where: { id: payload.sessionId } });
+      if (!session) return null; // Session was specifically logged out
     }
     
     return payload;

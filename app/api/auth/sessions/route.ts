@@ -13,5 +13,10 @@ export async function GET() {
     select: { id: true, issuedAt: true, ipAddress: true, userAgent: true },
   });
 
-  return NextResponse.json({ sessions });
+  const sessionsWithCurrent = sessions.map(s => ({
+    ...s,
+    isCurrentDevice: s.id === user.sessionId
+  }));
+
+  return NextResponse.json({ sessions: sessionsWithCurrent });
 }

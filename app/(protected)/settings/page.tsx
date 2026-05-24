@@ -118,6 +118,21 @@ export default function SettingsPage() {
     }
   };
 
+  const handleLogoutDevice = async (sessionId: string) => {
+    try {
+      const res = await fetch("/api/auth/logout-device", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId })
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Device logged out successfully");
+      loadSettings(); // Reload to remove the session from the list
+    } catch {
+      toast.error("Failed to logout device");
+    }
+  };
+
   if (loading || !profile) {
     return (
       <div className="page-container flex items-center justify-center min-h-[70vh]">
@@ -247,13 +262,27 @@ export default function SettingsPage() {
             
             <div className="space-y-3 mb-6">
               {sessions.map(s => (
-                <div key={s.id} className="flex items-start gap-3 p-3 rounded-lg bg-black/5 border" style={{ borderColor: "var(--border)" }}>
-                  <Smartphone size={16} className="mt-0.5" style={{ color: "var(--text-secondary)" }} />
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{s.ipAddress || "Unknown IP"}</p>
-                    <p className="text-xs max-w-[200px] md:max-w-md truncate" style={{ color: "var(--text-secondary)" }}>{s.userAgent}</p>
-                    <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>{formatDateShort(s.issuedAt)}</p>
+                <div key={s.id} className="flex items-center justify-between p-3 rounded-lg bg-black/5 border" style={{ borderColor: "var(--border)" }}>
+                  <div className="flex items-start gap-3">
+                    <Smartphone size={16} className="mt-0.5" style={{ color: "var(--text-secondary)" }} />
+                    <div>
+                      <p className="text-sm font-medium flex items-center gap-2" style={{ color: "var(--text-primary)" }}>
+                        {s.ipAddress || "Unknown IP"}
+                        {s.isCurrentDevice && <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--primary)] text-white">Current Device</span>}
+                      </p>
+                      <p className="text-xs max-w-[150px] md:max-w-xs truncate" style={{ color: "var(--text-secondary)" }}>{s.userAgent}</p>
+                      <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>{formatDateShort(s.issuedAt)}</p>
+                    </div>
                   </div>
+                  {!s.isCurrentDevice && (
+                    <button 
+                      onClick={() => handleLogoutDevice(s.id)}
+                      className="btn-secondary text-xs !py-1.5 !px-3"
+                      style={{ color: "var(--warning)" }}
+                    >
+                      Log Out
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

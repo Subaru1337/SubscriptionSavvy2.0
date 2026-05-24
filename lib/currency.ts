@@ -21,18 +21,43 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
   CAD: "C$",
 };
 
-export async function getRates(baseCurrency: string): Promise<Record<string, number>> {
-  const res = await fetch(`${FRANKFURTER_BASE}?base=${baseCurrency}`, {
-    next: { revalidate: 86400 }, // Cache at the edge for 24 hours — survives cold starts
-  });
+const rateCache = new Map<string, { rates: Record<string, number>, timestamp: number }>();
+const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
 
-  if (!res.ok) {
-    console.error('Frankfurter API error:', res.status);
-    return {}; // Return empty rates — callers should handle gracefully
+export async function getRates(baseCurrency: string): Promise<Record<string, number>> {
+  const now = Date.now();
+  const cached = rateCache.get(baseCurrency);
+  
+  // Return from fast memory cache if valid
+  if (cached && now - cached.timestamp < CACHE_DURATION) {
+    return cached.rates;
   }
 
-  const data: RatesResponse = await res.json();
-  return { ...data.rates, [baseCurrency]: 1 };
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // Strict 2-second timeout
+
+    const res = await fetch(`${FRANKFURTER_BASE}?base=${baseCurrency}`, {
+      next: { revalidate: 86400 },
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      console.error('Frankfurter API error:', res.status);
+      return cached ? cached.rates : {}; 
+    }
+
+    const data: RatesResponse = await res.json();
+    const rates = { ...data.rates, [baseCurrency]: 1 };
+    
+    // Save to memory cache
+    rateCache.set(baseCurrency, { rates, timestamp: now });
+    return rates;
+  } catch (error) {
+    console.error('Frankfurter API network error:', error);
+    return cached ? cached.rates : {};
+  }
 }
 
 export async function convertAmount(

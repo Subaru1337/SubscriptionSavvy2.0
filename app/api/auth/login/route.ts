@@ -61,9 +61,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Session Logging
   const userAgent = request.headers.get('user-agent') ?? 'unknown';
-  await prisma.sessionLog.create({
+  const newSession = await prisma.sessionLog.create({
     data: {
       userId: user.id,
       ipAddress: ip,
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
   const token = await signJWT({ 
     userId: user.id, 
     email: user.email,
-    iat: Math.floor(Date.now() / 1000)
+    sessionId: newSession.id
   });
   const cookieConfig = createAuthCookie(token);
 

@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
   const subscriptions = await prisma.subscription.findMany({
     where,
     orderBy: { nextPayment: "asc" },
+    include: { priceHistory: { orderBy: { changedAt: "desc" } } },
   });
 
   return NextResponse.json({ subscriptions });
@@ -64,6 +65,18 @@ export async function POST(request: NextRequest) {
   }
 
   const data = parsed.data;
+
+  const existing = await prisma.subscription.findFirst({
+    where: {
+      userId: authUser.userId,
+      name: { equals: data.name, mode: "insensitive" },
+    },
+  });
+
+  if (existing) {
+    return NextResponse.json({ error: "Duplicate subscription", existing }, { status: 409 });
+  }
+
   const subscription = await prisma.subscription.create({
     data: {
       userId: authUser.userId, // Always from JWT, never from body

@@ -1,33 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { convertAmount } from '@/lib/currency';
+import { getRates } from '@/lib/currency';
 import { addDays, startOfDay, format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 
 function monthlyAmount(cost: number, billingCycle: string): number {
   return billingCycle === "yearly" ? cost / 12 : cost;
 }
 
-async function getSummary(userId: string) {
-  const [user, subscriptions] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { baseCurrency: true, monthlyBudget: true },
-    }),
-    prisma.subscription.findMany({
-      where: { userId, status: 'active' },
-      select: {
-        cost: true,
-        currency: true,
-        billingCycle: true,
-        trialEndsOn: true,
-        nextPayment: true,
-      },
-    }),
-  ]);
-
-  if (!user) throw new Error("User not found");
-
+function getSummary(
+  user: any,
+  subscriptions: any[],
+  rates: Record<string, number>
+) {
   const today = startOfDay(new Date());
   const in7Days = addDays(today, 7);
 
@@ -40,7 +25,8 @@ async function getSummary(userId: string) {
   let monthlyTotal = 0;
   for (const sub of subscriptions) {
     const monthly = monthlyAmount(Number(sub.cost), sub.billingCycle);
-    const converted = await convertAmount(monthly, sub.currency, user.baseCurrency);
+    const rate = rates[sub.currency] || 1;
+    const converted = monthly / rate;
     monthlyTotal += converted;
   }
 
@@ -60,60 +46,59 @@ async function getSummary(userId: string) {
   };
 }
 
-async function getCategoryBreakdown(userId: string) {
-  const [user, subscriptions] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { baseCurrency: true },
-    }),
-    prisma.subscription.findMany({
-      where: { userId, status: 'active' },
-      select: { category: true, cost: true, billingCycle: true, currency: true },
-    }),
-  ]);
+function getCategoryBreakdown(
+  user: any,
+  subscriptions: any[],
+  rates: Record<string, number>,
+  budgets: any[]
+) {
+  const categoryMap = new Map<string, { count: number; monthly_total: number; budget_limit: number | null }>();
 
-  if (!user) throw new Error("User not found");
-
-  const categoryMap = new Map<string, { count: number; monthly_total: number }>();
+  for (const b of budgets) {
+    categoryMap.set(b.category, { count: 0, monthly_total: 0, budget_limit: Number(b.limit) });
+  }
 
   for (const sub of subscriptions) {
     const monthly = sub.billingCycle === "yearly"
       ? Number(sub.cost) / 12
       : Number(sub.cost);
-    const converted = await convertAmount(monthly, sub.currency, user.baseCurrency);
+    const rate = rates[sub.currency] || 1;
+    const converted = monthly / rate;
 
     const existing = categoryMap.get(sub.category);
     if (existing) {
       existing.count++;
       existing.monthly_total += converted;
     } else {
-      categoryMap.set(sub.category, { count: 1, monthly_total: converted });
+      categoryMap.set(sub.category, { count: 1, monthly_total: converted, budget_limit: null });
     }
   }
 
   return Array.from(categoryMap.entries())
-    .map(([category, data]) => ({
-      category,
-      count: data.count,
-      monthly_total: Math.round(data.monthly_total * 100) / 100,
-    }))
+    .map(([category, data]) => {
+      let budget_used_percent = null;
+      let over_budget = false;
+      if (data.budget_limit) {
+        budget_used_percent = (data.monthly_total / data.budget_limit) * 100;
+        over_budget = budget_used_percent > 100;
+      }
+      return {
+        category,
+        count: data.count,
+        monthly_total: Math.round(data.monthly_total * 100) / 100,
+        budget_limit: data.budget_limit,
+        budget_used_percent,
+        over_budget,
+      };
+    })
     .sort((a, b) => b.monthly_total - a.monthly_total);
 }
 
-async function getTrends(userId: string) {
-  const [user, allPayments] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { baseCurrency: true },
-    }),
-    prisma.paymentHistory.findMany({
-      where: { userId },
-      select: { amount: true, currency: true, paidAt: true },
-    }),
-  ]);
-
-  if (!user) throw new Error("User not found");
-
+function getTrends(
+  user: any,
+  allPayments: any[],
+  rates: Record<string, number>
+) {
   const now = new Date();
   const months = Array.from({ length: 6 }, (_, i) => {
     const date = subMonths(now, 5 - i);
@@ -132,11 +117,8 @@ async function getTrends(userId: string) {
 
     let total = 0;
     for (const payment of payments) {
-      const converted = await convertAmount(
-        Number(payment.amount),
-        payment.currency,
-        user.baseCurrency
-      );
+      const rate = rates[payment.currency] || 1;
+      const converted = Number(payment.amount) / rate;
       total += converted;
     }
 
@@ -155,17 +137,46 @@ export async function GET() {
   if (!authUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    const [summary, breakdown, trends] = await Promise.all([
-      getSummary(authUser.userId),
-      getCategoryBreakdown(authUser.userId),
-      getTrends(authUser.userId),
+    const [user, subscriptions, paymentHistory, categoryBudgets] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: authUser.userId },
+        select: { baseCurrency: true, monthlyBudget: true },
+      }),
+      prisma.subscription.findMany({
+        where: { userId: authUser.userId, status: 'active' },
+        select: {
+          category: true,
+          cost: true,
+          billingCycle: true,
+          currency: true,
+          trialEndsOn: true,
+          nextPayment: true,
+        },
+      }),
+      prisma.paymentHistory.findMany({
+        where: { userId: authUser.userId },
+        select: { amount: true, currency: true, paidAt: true },
+      }),
+      prisma.categoryBudget.findMany({
+        where: { userId: authUser.userId },
+      }),
     ]);
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const rates = await getRates(user.baseCurrency);
+
+    const summary = getSummary(user, subscriptions, rates);
+    const breakdown = getCategoryBreakdown(user, subscriptions, rates, categoryBudgets);
+    const trends = getTrends(user, paymentHistory, rates);
 
     return NextResponse.json(
       { summary, breakdown, trends },
       {
         headers: {
-          'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
+          'Cache-Control': 'no-store, max-age=0',
         },
       }
     );

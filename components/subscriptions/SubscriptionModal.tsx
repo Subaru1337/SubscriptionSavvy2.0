@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { X, Loader2, ChevronLeft, ChevronRight, Star, AlertTriangle, ArrowUpRight } from "lucide-react";
 import { CATEGORIES, BILLING_CYCLES, formatDateShort } from "@/lib/utils";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency";
-import { celebrateFirstSubscription } from "@/lib/confetti";
+import confetti from "canvas-confetti";
 
 const QUICK_ADD_TEMPLATES = [
   { name: "Netflix", cost: 649, currency: "INR", billingCycle: "monthly", category: "Entertainment", emoji: "🎬" },
@@ -47,6 +47,7 @@ interface Subscription {
   status: string;
   notes?: string | null;
   worthItRating?: number | null;
+  priceHistory?: any[];
 }
 
 interface SubscriptionModalProps {
@@ -85,28 +86,44 @@ export function SubscriptionModal({
 
   useEffect(() => {
     if (editSubscription) {
+      let parsedNext = new Date().toISOString().split("T")[0];
+      try {
+        if (editSubscription.nextPayment) {
+          parsedNext = new Date(editSubscription.nextPayment).toISOString().split("T")[0];
+        }
+      } catch (e) {}
+
+      let parsedTrial = "";
+      try {
+        if (editSubscription.trialEndsOn) {
+          parsedTrial = new Date(editSubscription.trialEndsOn).toISOString().split("T")[0];
+        }
+      } catch (e) {}
+
       setForm({
         name: editSubscription.name,
-        cost: String(Number(editSubscription.cost)),
+        cost: String(Number(editSubscription.cost) || 0),
         currency: editSubscription.currency,
         category: editSubscription.category,
         billingCycle: editSubscription.billingCycle,
-        nextPayment: new Date(editSubscription.nextPayment).toISOString().split("T")[0],
-        trialEndsOn: editSubscription.trialEndsOn
-          ? new Date(editSubscription.trialEndsOn).toISOString().split("T")[0]
-          : "",
+        nextPayment: parsedNext,
+        trialEndsOn: parsedTrial,
         status: editSubscription.status,
         notes: editSubscription.notes || "",
         worthItRating: editSubscription.worthItRating || 5,
       });
 
-      // Fetch price history
-      fetch(`/api/subscriptions/${editSubscription.id}/price-history`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.history) setPriceHistory(data.history);
-        })
-        .catch(() => {});
+        if (editSubscription.priceHistory) {
+          setPriceHistory(editSubscription.priceHistory);
+        } else {
+          // Fallback if not populated
+          fetch(`/api/subscriptions/${editSubscription.id}/price-history`)
+            .then(r => r.json())
+            .then(data => {
+              if (data.history) setPriceHistory(data.history);
+            })
+            .catch(() => {});
+        }
     } else {
       setForm(defaultForm);
       setPriceHistory([]);
@@ -141,18 +158,19 @@ export function SubscriptionModal({
 
   // Smart Next Payment Date
   function updateNextPayment(cycle: string) {
+    const now = new Date();
     const d = new Date(form.nextPayment);
     if (isNaN(d.getTime())) return;
-    const now = new Date();
     
     // Only auto-suggest if they haven't explicitly picked a far-future date manually
     if (d.getTime() < now.getTime() + (365 * 24 * 60 * 60 * 1000)) {
+      const newDate = new Date();
       if (cycle === "yearly") {
-        d.setFullYear(now.getFullYear() + 1);
+        newDate.setFullYear(newDate.getFullYear() + 1);
       } else {
-        d.setMonth(now.getMonth() + 1);
+        newDate.setMonth(newDate.getMonth() + 1);
       }
-      setForm(f => ({ ...f, billingCycle: cycle, nextPayment: d.toISOString().split("T")[0] }));
+      setForm(f => ({ ...f, billingCycle: cycle, nextPayment: newDate.toISOString().split("T")[0] }));
     } else {
       setForm(f => ({ ...f, billingCycle: cycle }));
     }
@@ -217,7 +235,13 @@ export function SubscriptionModal({
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save subscription");
+      if (!res.ok) {
+        if (res.status === 409 && data.existing) {
+          setDuplicateWarning(`You already have a subscription to ${data.existing.name} (${data.existing.currency}${data.existing.cost}). Please use a different name or edit the existing one.`);
+          throw new Error("Duplicate subscription found");
+        }
+        throw new Error(data.error || "Failed to save subscription");
+      }
 
       toast.success(editSubscription ? "Subscription updated!" : "Subscription added!");
       
@@ -225,7 +249,7 @@ export function SubscriptionModal({
         // Confetti for first sub! We check via local storage or by fetching
         const isFirst = localStorage.getItem("ss-first-sub-done") !== "true";
         if (isFirst) {
-          celebrateFirstSubscription();
+          confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
           localStorage.setItem("ss-first-sub-done", "true");
         }
       }

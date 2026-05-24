@@ -74,7 +74,6 @@ export default function DashboardPage() {
   const [forecast, setForecast] = useState<any>(null);
   const [savings, setSavings] = useState<any>(null);
   const [healthScore, setHealthScore] = useState<any>(null);
-  const [worthIt, setWorthIt] = useState<any>(null);
   const [annualRecap, setAnnualRecap] = useState<any>(null);
   const [nudges, setNudges] = useState<any[]>([]);
   const [dismissedNudges, setDismissedNudges] = useState<string[]>([]);
@@ -94,20 +93,15 @@ export default function DashboardPage() {
 
   const loadAll = async () => {
     try {
-      const [allRes, userRes, subsRes, forecastRes, savingsRes, healthRes, worthRes, recapRes, nudgeRes] = await Promise.all([
+      const [allRes, userRes, subsRes, extendedRes] = await Promise.all([
         fetch("/api/analytics/all"),
         fetch("/api/auth/me"),
         fetch("/api/subscriptions"),
-        fetch("/api/analytics/forecast"),
-        fetch("/api/analytics/savings"),
-        fetch("/api/analytics/health-score"),
-        fetch("/api/analytics/worth-it"),
-        fetch("/api/analytics/annual-recap"),
-        fetch("/api/analytics/nudges"),
+        fetch("/api/analytics/extended"),
       ]);
 
-      const [allData, userData, subsData, forecastData, savingsData, healthData, worthData, recapData, nudgeData] = await Promise.all([
-        allRes.json(), userRes.json(), subsRes.json(), forecastRes.json(), savingsRes.json(), healthRes.json(), worthRes.json(), recapRes.json(), nudgeRes.json()
+      const [allData, userData, subsData, extendedData] = await Promise.all([
+        allRes.json(), userRes.json(), subsRes.json(), extendedRes.json()
       ]);
 
       setSummary(allData.summary);
@@ -115,11 +109,10 @@ export default function DashboardPage() {
       setTrends(allData.trends);
       setUser(userData.user);
       
-      setForecast(forecastData);
-      setSavings(savingsData);
-      setHealthScore(healthData);
-      setWorthIt(worthData);
-      setAnnualRecap(recapData);
+      setForecast(extendedData.forecast);
+      setSavings(extendedData.savings);
+      setHealthScore(extendedData.healthScore);
+      setAnnualRecap(extendedData.annualRecap);
       
       if (subsData.subscriptions) {
         const today = new Date();
@@ -131,8 +124,8 @@ export default function DashboardPage() {
       // Nudges and dismissed state
       const localDismissed = JSON.parse(localStorage.getItem('ss-dismissed-nudges') || '[]');
       setDismissedNudges(localDismissed);
-      if (nudgeData.nudges) {
-        setNudges(nudgeData.nudges.filter((n: any) => !localDismissed.includes(n.id)));
+      if (extendedData.nudges) {
+        setNudges(extendedData.nudges.filter((n: any) => !localDismissed.includes(n.id)));
       }
 
       // Check onboarding
@@ -465,30 +458,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Consider Cancelling */}
-      {worthIt?.low_rated && worthIt.low_rated.length > 0 && (
-        <div className="card mb-6">
-          <h2 className="section-title mb-4">Consider Cancelling</h2>
-          <div className="space-y-3">
-            {worthIt.low_rated.map((sub: any) => (
-              <div key={sub.id} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
-                <div>
-                  <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{sub.name}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {[1,2,3,4,5].map(star => (
-                      <Star key={star} size={12} fill={star <= sub.worthItRating ? "#F59E0B" : "none"} color={star <= sub.worthItRating ? "#F59E0B" : "var(--border)"} />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="font-mono text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{CURRENCY_SYMBOLS[sub.currency] || sub.currency}{Number(sub.cost).toLocaleString()}</span>
-                  <button onClick={() => handleCancelSub(sub.id)} className="btn-secondary text-xs !py-1 !px-2" style={{ color: "var(--warning)" }}>Cancel</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Reconsider These (Nudges) */}
       {nudges.length > 0 && (
