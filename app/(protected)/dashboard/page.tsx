@@ -88,6 +88,10 @@ export default function DashboardPage() {
   const [editRatingSub, setEditRatingSub] = useState<any>(null);
   const [modalOpen, setModalOpen] = useState(false);
   
+  // Rating mini modal
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [ratingUpdating, setRatingUpdating] = useState(false);
+  const [newRating, setNewRating] = useState(0);
   // Personalized Empty State
   const [emptyTip, setEmptyTip] = useState("");
 
@@ -184,6 +188,27 @@ export default function DashboardPage() {
       loadAll();
     } catch {
       toast.error("Failed to cancel subscription");
+    }
+  }
+
+  async function saveNewRating() {
+    if (!editRatingSub) return;
+    setRatingUpdating(true);
+    try {
+      const res = await fetch(`/api/subscriptions/${editRatingSub.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ worthItRating: newRating })
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Rating updated");
+      setRatingModalOpen(false);
+      setEditRatingSub(null);
+      loadAll();
+    } catch {
+      toast.error("Failed to update rating");
+    } finally {
+      setRatingUpdating(false);
     }
   }
 
@@ -478,7 +503,7 @@ export default function DashboardPage() {
                 <p className="text-xs mb-3" style={{ color: "var(--text-secondary)" }}>Paid {nudge.timesRenewed} times · {formatAmount(nudge.totalSpent)} spent total</p>
                 <div className="flex gap-2">
                   <button onClick={() => handleCancelSub(nudge.id)} className="btn-primary text-xs flex-1 justify-center !bg-red-500 !border-red-500">Cancel It</button>
-                  <button onClick={() => { setEditRatingSub(nudge); setModalOpen(true); }} className="btn-secondary text-xs flex-1 justify-center">Update Rating</button>
+                  <button onClick={() => { setEditRatingSub(nudge); setNewRating(nudge.worthItRating || 0); setRatingModalOpen(true); }} className="btn-secondary text-xs flex-1 justify-center">Update Rating</button>
                 </div>
               </div>
             ))}
@@ -582,6 +607,36 @@ export default function DashboardPage() {
       
       {modalOpen && editRatingSub && (
         <SubscriptionModal open={modalOpen} onClose={() => { setModalOpen(false); setEditRatingSub(null); }} onSuccess={loadAll} editSubscription={editRatingSub} />
+      )}
+      
+      {ratingModalOpen && editRatingSub && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={(e) => e.target === e.currentTarget && setRatingModalOpen(false)}>
+          <div className="card w-full max-w-sm animate-fade-in relative" style={{ backgroundColor: "var(--card)" }}>
+            <button onClick={() => setRatingModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:opacity-70"><X size={16} /></button>
+            <h2 className="text-lg font-bold mb-1" style={{ color: "var(--text-primary)" }}>Update Rating</h2>
+            <p className="text-xs mb-4" style={{ color: "var(--text-secondary)" }}>How do you feel about <strong style={{ color: "var(--text-primary)" }}>{editRatingSub.name}</strong> now?</p>
+            
+            <div className="flex items-center justify-center gap-2 mb-6">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setNewRating(star)}
+                  className="p-2 cursor-pointer transition-transform hover:scale-110"
+                >
+                  <Star size={32} fill={star <= newRating ? "#F59E0B" : "none"} color={star <= newRating ? "#F59E0B" : "var(--border)"} />
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setRatingModalOpen(false)} className="btn-secondary flex-1 justify-center" disabled={ratingUpdating}>Cancel</button>
+              <button onClick={saveNewRating} className="btn-primary flex-1 justify-center" disabled={ratingUpdating}>
+                {ratingUpdating ? "Saving..." : "Save Rating"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
