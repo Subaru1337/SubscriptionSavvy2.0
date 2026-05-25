@@ -152,7 +152,7 @@ export async function GET() {
   const startOfYear = new Date(`${currentYear}-01-01T00:00:00.000Z`);
   const endOfYear = new Date(`${currentYear}-12-31T23:59:59.999Z`);
   
-  const currentYearPayments = paymentHistory.filter(p => p.paidAt >= startOfYear && p.paidAt <= endOfYear);
+  const currentYearPayments = paymentHistory.filter((p: any) => p.paidAt >= startOfYear && p.paidAt <= endOfYear);
   let yearTotal = 0;
   const categoryTotals: Record<string, number> = {};
   const subTotals: Record<string, number> = {};
@@ -199,7 +199,7 @@ export async function GET() {
   const nudges = [];
   for (const sub of activeSubs) {
     if (sub.worthItRating && sub.worthItRating <= 2) {
-      const subPayments = paymentHistory.filter(p => p.subscriptionId === sub.id);
+      const subPayments = paymentHistory.filter((p: any) => p.subscriptionId === sub.id);
       if (subPayments.length >= 3) {
         let totalSpent = 0;
         for (const p of subPayments) {
