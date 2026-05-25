@@ -26,9 +26,9 @@ export async function GET() {
 
   const rates = await getRates(dbUser.baseCurrency);
 
-  const activeSubs = allSubscriptions.filter(s => s.status === "active");
-  const pausedSubs = allSubscriptions.filter(s => s.status === "paused");
-  const cancelledSubs = allSubscriptions.filter(s => s.status === "cancelled" && s.cancelledAt);
+  const activeSubs = allSubscriptions.filter((s: any) => s.status === "active");
+  const pausedSubs = allSubscriptions.filter((s: any) => s.status === "paused");
+  const cancelledSubs = allSubscriptions.filter((s: any) => s.status === "cancelled" && s.cancelledAt);
 
   const today = startOfDay(new Date());
   const next30Days = addDays(today, 30);
