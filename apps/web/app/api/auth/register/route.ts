@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
   const token = await signJWT({ userId: user.id, email: user.email });
   const cookieConfig = createAuthCookie(token);
 
-  const response = NextResponse.json({ user }, { status: 201 });
+  const response = NextResponse.json({ user, token }, { status: 201 });
   response.cookies.set(cookieConfig);
   return response;
 }

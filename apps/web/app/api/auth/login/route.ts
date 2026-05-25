@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
 
   const response = NextResponse.json({
     user: { id: user.id, email: user.email },
+    token: token,
   });
   response.cookies.set(cookieConfig);
   return response;
