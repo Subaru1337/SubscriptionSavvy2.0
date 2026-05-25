@@ -36,7 +36,7 @@ export async function GET() {
   const in7Days = addDays(today, 7);
 
   // Count trials expiring within 7 days
-  const trialsExpiringSoon = subscriptions.filter((s) => {
+  const trialsExpiringSoon = subscriptions.filter((s: any) => {
     if (!s.trialEndsOn) return false;
     const trialEnd = startOfDay(new Date(s.trialEndsOn));
     return trialEnd >= today && trialEnd <= in7Days;

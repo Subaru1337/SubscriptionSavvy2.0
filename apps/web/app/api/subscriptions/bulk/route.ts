@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     affected = res.count;
   } else if (action === "cancel") {
     // For cancel, we only update cancelledAt if it wasn't already cancelled
-    const toCancelIds = subs.filter(s => s.status !== "cancelled").map(s => s.id);
+    const toCancelIds = subs.filter((s: any) => s.status !== "cancelled").map((s: any) => s.id);
     if (toCancelIds.length > 0) {
       const res = await prisma.subscription.updateMany({
         where: { id: { in: toCancelIds } },

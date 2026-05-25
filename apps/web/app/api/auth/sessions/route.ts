@@ -13,7 +13,7 @@ export async function GET() {
     select: { id: true, issuedAt: true, ipAddress: true, userAgent: true },
   });
 
-  const sessionsWithCurrent = sessions.map(s => ({
+  const sessionsWithCurrent = sessions.map((s: any) => ({
     ...s,
     isCurrentDevice: s.id === user.sessionId
   }));

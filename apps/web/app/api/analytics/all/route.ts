@@ -113,7 +113,7 @@ function getTrends(
   const results = [];
 
   for (const month of months) {
-    const payments = allPayments.filter(p => p.paidAt >= month.start && p.paidAt <= month.end);
+    const payments = allPayments.filter((p: any) => p.paidAt >= month.start && p.paidAt <= month.end);
 
     let total = 0;
     for (const payment of payments) {

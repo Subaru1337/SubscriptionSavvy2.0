@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     select: { id: true },
   });
   if (allSessions.length > 5) {
-    const toDelete = allSessions.slice(5).map(s => s.id);
+    const toDelete = allSessions.slice(5).map((s: any) => s.id);
     await prisma.sessionLog.deleteMany({ where: { id: { in: toDelete } } });
   }
 
