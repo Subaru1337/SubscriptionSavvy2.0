@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     orderBy: { nextPayment: "asc" },
   });
 
-  const rows = subscriptions.map((sub) => ({
+  const rows = subscriptions.map((sub: any) => ({
     Name: sub.name,
     Category: sub.category,
     Cost: Number(sub.cost).toFixed(2),
