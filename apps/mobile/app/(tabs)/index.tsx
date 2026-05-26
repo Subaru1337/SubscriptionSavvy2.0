@@ -1,53 +1,67 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import { View, Text, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '../../lib/api';
 
 export default function DashboardScreen() {
-  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
 
-  const handleLogout = async () => {
-    await SecureStore.deleteItemAsync('auth_token');
-    await SecureStore.deleteItemAsync('user_data');
-    router.replace('/');
-  };
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await api.get('/analytics/summary');
+      setData(response.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (loading && !data) {
+    return (
+      <View className="flex-1 justify-center items-center bg-background">
+        <ActivityIndicator size="large" color="#0D7377" />
+      </View>
+    );
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome to Dashboard</Text>
-      <Text style={styles.subtitle}>You are securely logged in!</Text>
+    <ScrollView 
+      className="flex-1 bg-background p-4"
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
+    >
+      <Text className="text-2xl font-bold text-text-primary mb-6">Overview</Text>
+
+      <View className="bg-card p-6 rounded-2xl shadow-sm border border-border mb-4">
+        <Text className="text-text-secondary text-sm font-medium mb-1">Total Monthly Spend</Text>
+        <Text className="text-4xl font-bold text-primary">
+          {data?.currency} {data?.monthly_total?.toFixed(2) || '0.00'}
+        </Text>
+      </View>
       
-      <TouchableOpacity style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Log Out</Text>
-      </TouchableOpacity>
-    </View>
+      <View className="bg-card p-6 rounded-2xl shadow-sm border border-border mb-4">
+        <Text className="text-text-secondary text-sm font-medium mb-2">Budget Usage</Text>
+        <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <View 
+            className={`h-full ${data?.budget_used_percent > 90 ? 'bg-overdue' : 'bg-primary'}`} 
+            style={{ width: `${Math.min(data?.budget_used_percent || 0, 100)}%` }} 
+          />
+        </View>
+        <Text className="text-xs text-text-secondary mt-2 text-right">
+          {data?.budget_used_percent?.toFixed(1) || '0.0'}% of Budget
+        </Text>
+      </View>
+
+      <View className="bg-card p-6 rounded-2xl shadow-sm border border-border mb-4">
+        <Text className="text-text-secondary text-sm font-medium mb-1">Annual Projected Spend</Text>
+        <Text className="text-2xl font-bold text-text-primary">
+          {data?.currency} {data?.annual_total?.toFixed(2) || '0.00'}
+        </Text>
+      </View>
+    </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#0D7377',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6B6560',
-    marginTop: 8,
-  },
-  button: {
-    marginTop: 32,
-    padding: 16,
-    backgroundColor: '#FF4D4D',
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  }
-});

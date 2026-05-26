@@ -1,9 +1,50 @@
 import { Tabs } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 
 export default function TabLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen name="index" options={{ title: "Dashboard" }} />
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: "#0D7377",
+        tabBarInactiveTintColor: "#6B6560",
+        tabBarStyle: {
+          backgroundColor: "#FFFFFF",
+          borderTopColor: "#E8E2D9",
+        },
+        headerStyle: {
+          backgroundColor: "#FFFFFF",
+        },
+        headerTintColor: "#1A1A1A",
+      }}
+    >
+      <Tabs.Screen 
+        name="index" 
+        options={{ 
+          title: "Dashboard",
+          tabBarIcon: ({ color, size }) => <Feather name="pie-chart" size={size} color={color} />
+        }} 
+      />
+      <Tabs.Screen 
+        name="subscriptions" 
+        options={{ 
+          title: "Subscriptions",
+          tabBarIcon: ({ color, size }) => <Feather name="list" size={size} color={color} />
+        }} 
+      />
+      <Tabs.Screen 
+        name="calendar" 
+        options={{ 
+          title: "Calendar",
+          tabBarIcon: ({ color, size }) => <Feather name="calendar" size={size} color={color} />
+        }} 
+      />
+      <Tabs.Screen 
+        name="settings" 
+        options={{ 
+          title: "Settings",
+          tabBarIcon: ({ color, size }) => <Feather name="settings" size={size} color={color} />
+        }} 
+      />
     </Tabs>
   );
 }
