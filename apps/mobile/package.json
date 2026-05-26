@@ -4,6 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/metro-runtime": "55.0.11",
+    "@react-native/virtualized-lists": "0.83.6",
     "axios": "^1.16.1",
     "expo": "~55.0.26",
     "expo-constants": "~55.0.16",

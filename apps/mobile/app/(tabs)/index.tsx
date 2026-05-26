@@ -17,7 +17,11 @@ export default function DashboardScreen() {
         api.get('/subscriptions')
       ]);
       setData(summaryRes.data);
-      setSubscriptions(subsRes.data);
+      // API may return an array directly or { subscriptions: [...] }
+      const subs = Array.isArray(subsRes.data)
+        ? subsRes.data
+        : subsRes.data?.subscriptions ?? [];
+      setSubscriptions(subs);
     } catch (error) {
       console.error(error);
     } finally {
@@ -38,7 +42,8 @@ export default function DashboardScreen() {
   }
 
   // Calculate category breakdown for the pie chart
-  const categoryTotals = subscriptions.reduce((acc, sub) => {
+  const safeSubs = Array.isArray(subscriptions) ? subscriptions : [];
+  const categoryTotals = safeSubs.reduce((acc, sub) => {
     const cost = parseFloat(sub.cost);
     acc[sub.category] = (acc[sub.category] || 0) + cost;
     return acc;
