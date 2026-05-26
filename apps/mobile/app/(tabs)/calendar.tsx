@@ -9,8 +9,11 @@ export default function CalendarScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await api.get('/subscriptions');
-      setSubscriptions(response.data);
+      // API may return an array directly or { subscriptions: [...] }
+      const subs = Array.isArray(response.data)
+        ? response.data
+        : response.data?.subscriptions ?? [];
+      setSubscriptions(subs);
     } catch (error) {
       console.error(error);
     } finally {
