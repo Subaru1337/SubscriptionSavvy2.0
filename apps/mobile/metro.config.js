@@ -11,15 +11,22 @@ const config = getDefaultConfig(projectRoot);
 // 1. Watch all files in the monorepo
 config.watchFolders = [workspaceRoot];
 
-// 2. Let Metro resolve from all node_modules locations (local, root, and nested)
+// 2. Resolve order: local first, then root
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),
   path.resolve(workspaceRoot, "node_modules"),
-  path.resolve(projectRoot, "node_modules/expo-router/node_modules"),
-  path.resolve(workspaceRoot, "node_modules/expo-router/node_modules"),
 ];
 
-// 3. Disable the "package exports" resolver so Metro falls back to classic resolution
+// 3. Explicitly map all @react-native/* sub-packages that live nested
+//    inside the root react-native copy (they are not hoisted)
+config.resolver.extraNodeModules = {
+  "@react-native/virtualized-lists": path.resolve(
+    workspaceRoot,
+    "node_modules/react-native/node_modules/@react-native/virtualized-lists"
+  ),
+};
+
+// 4. Disable package exports so Metro uses classic node resolution
 config.resolver.unstable_enablePackageExports = false;
 
 module.exports = withNativeWind(config, { input: "./global.css" });
