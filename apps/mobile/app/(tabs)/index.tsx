@@ -1,15 +1,23 @@
-import { View, Text, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, ActivityIndicator, ScrollView, RefreshControl, Dimensions } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
+import { PieChart } from 'react-native-chart-kit';
+
+const screenWidth = Dimensions.get("window").width;
 
 export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
-      const response = await api.get('/analytics/summary');
-      setData(response.data);
+      const [summaryRes, subsRes] = await Promise.all([
+        api.get('/analytics/summary'),
+        api.get('/subscriptions')
+      ]);
+      setData(summaryRes.data);
+      setSubscriptions(subsRes.data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -28,6 +36,22 @@ export default function DashboardScreen() {
       </View>
     );
   }
+
+  // Calculate category breakdown for the pie chart
+  const categoryTotals = subscriptions.reduce((acc, sub) => {
+    const cost = parseFloat(sub.cost);
+    acc[sub.category] = (acc[sub.category] || 0) + cost;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const chartColors = ['#0D7377', '#14B8A6', '#F59E0B', '#EF4444', '#8B5CF6', '#3B82F6', '#EC4899'];
+  const chartData = Object.keys(categoryTotals).map((category, index) => ({
+    name: category,
+    total: categoryTotals[category],
+    color: chartColors[index % chartColors.length],
+    legendFontColor: "#1A1A1A",
+    legendFontSize: 12
+  }));
 
   return (
     <ScrollView 
@@ -56,7 +80,26 @@ export default function DashboardScreen() {
         </Text>
       </View>
 
-      <View className="bg-card p-6 rounded-2xl shadow-sm border border-border mb-4">
+      {chartData.length > 0 && (
+        <View className="bg-card p-4 rounded-2xl shadow-sm border border-border mb-4 items-center">
+          <Text className="text-text-secondary text-sm font-medium mb-2 w-full text-left">Spending by Category</Text>
+          <PieChart
+            data={chartData}
+            width={screenWidth - 64}
+            height={200}
+            chartConfig={{
+              color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+            }}
+            accessor={"total"}
+            backgroundColor={"transparent"}
+            paddingLeft={"15"}
+            center={[10, 0]}
+            absolute
+          />
+        </View>
+      )}
+
+      <View className="bg-card p-6 rounded-2xl shadow-sm border border-border mb-8">
         <Text className="text-text-secondary text-sm font-medium mb-1">Annual Projected Spend</Text>
         <Text className="text-2xl font-bold text-text-primary">
           {data?.currency} {data?.annual_total?.toFixed(2) || '0.00'}

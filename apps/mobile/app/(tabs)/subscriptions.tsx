@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as Notifications from 'expo-notifications';
 
 export default function SubscriptionsScreen() {
   const [loading, setLoading] = useState(true);
@@ -24,9 +25,39 @@ export default function SubscriptionsScreen() {
     fetchData();
   }, [fetchData]);
 
-  const handlePay = async (id: string) => {
+  const scheduleReminder = async (name: string, originalDateStr: string, cost: string, cycle: string) => {
+    const triggerDate = new Date(originalDateStr);
+    
+    // Increment date for the next cycle
+    if (cycle === 'monthly') {
+      triggerDate.setMonth(triggerDate.getMonth() + 1);
+    } else {
+      triggerDate.setFullYear(triggerDate.getFullYear() + 1);
+    }
+    
+    triggerDate.setDate(triggerDate.getDate() - 1); // 1 day before
+    triggerDate.setHours(9, 0, 0, 0); // 9:00 AM
+
+    if (triggerDate > new Date()) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Payment Reminder 📅",
+          body: `Your subscription to ${name} (${cost}) is due tomorrow!`,
+        },
+        trigger: triggerDate,
+      });
+    }
+  };
+
+  const handlePay = async (sub: any) => {
     try {
-      await api.post(`/subscriptions/${id}/pay`);
+      await api.post(`/subscriptions/${sub.id}/pay`);
+      
+      const settings = await Notifications.getPermissionsAsync();
+      if (settings.granted) {
+        await scheduleReminder(sub.name, sub.nextPayment, `${sub.currency} ${sub.cost}`, sub.billingCycle);
+      }
+      
       fetchData();
     } catch (error) {
       console.error(error);
@@ -68,7 +99,7 @@ export default function SubscriptionsScreen() {
               
               <View className="flex-row justify-end space-x-2">
                 <TouchableOpacity 
-                  onPress={() => handlePay(sub.id)}
+                  onPress={() => handlePay(sub)}
                   className={`px-4 py-2 rounded-lg flex-row items-center space-x-2 ${isOverdue ? 'bg-overdue' : 'bg-primary'}`}
                 >
                   <Feather name="check" size={16} color="white" />

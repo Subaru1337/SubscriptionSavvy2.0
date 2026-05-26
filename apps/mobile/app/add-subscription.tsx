@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityInd
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { api } from '../lib/api';
+import * as Notifications from 'expo-notifications';
 
 export default function AddSubscriptionScreen() {
   const router = useRouter();
@@ -16,6 +17,22 @@ export default function AddSubscriptionScreen() {
     nextPayment: new Date().toISOString().split('T')[0]
   });
 
+  const scheduleReminder = async (name: string, dateStr: string, cost: string) => {
+    const triggerDate = new Date(dateStr);
+    triggerDate.setDate(triggerDate.getDate() - 1); // 1 day before
+    triggerDate.setHours(9, 0, 0, 0); // 9:00 AM
+
+    if (triggerDate > new Date()) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Payment Reminder 📅",
+          body: `Your subscription to ${name} (${cost}) is due tomorrow!`,
+        },
+        trigger: triggerDate,
+      });
+    }
+  };
+
   const handleSubmit = async () => {
     if (!form.name || !form.cost) {
       Alert.alert('Error', 'Please fill in name and cost');
@@ -28,6 +45,13 @@ export default function AddSubscriptionScreen() {
         ...form,
         cost: parseFloat(form.cost)
       });
+      
+      // Schedule reminder if permission is granted
+      const settings = await Notifications.getPermissionsAsync();
+      if (settings.granted) {
+        await scheduleReminder(form.name, form.nextPayment, `${form.currency} ${form.cost}`);
+      }
+
       router.back();
     } catch (error) {
       console.error(error);
@@ -64,6 +88,13 @@ export default function AddSubscriptionScreen() {
           value={form.currency}
           onChangeText={(text) => setForm({...form, currency: text})}
           autoCapitalize="characters"
+        />
+
+        <Text className="text-text-primary font-medium mb-2">Category</Text>
+        <TextInput 
+          className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
+          value={form.category}
+          onChangeText={(text) => setForm({...form, category: text})}
         />
 
         <Text className="text-text-primary font-medium mb-2">Billing Cycle</Text>
