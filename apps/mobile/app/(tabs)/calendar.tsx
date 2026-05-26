@@ -9,6 +9,7 @@ export default function CalendarScreen() {
 
   const fetchData = useCallback(async () => {
     try {
+      const response = await api.get('/subscriptions');
       // API may return an array directly or { subscriptions: [...] }
       const subs = Array.isArray(response.data)
         ? response.data
