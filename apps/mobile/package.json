@@ -6,7 +6,7 @@
     "axios": "^1.16.1",
     "expo": "~55.0.26",
     "expo-constants": "~55.0.16",
-    "expo-dev-client": "^56.0.16",
+    "expo-dev-client": "~55.0.35",
     "expo-linking": "~55.0.15",
     "expo-notifications": "~55.0.23",
     "expo-router": "~55.0.16",
