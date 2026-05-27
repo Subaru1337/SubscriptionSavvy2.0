@@ -1,64 +1,11 @@
 import {
-  View, Text, ScrollView, TextInput, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl
+  View, Text, ScrollView, TouchableOpacity,
+  ActivityIndicator, Alert, RefreshControl, Image
 } from 'react-native';
-import { useState, useEffect, useCallback } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState, useCallback, useEffect } from 'react';
+import { useLocalSearchParams, useRouter, Stack } from 'react-router';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
-import * as Notifications from 'expo-notifications';
-
-const CATEGORIES = ['Entertainment', 'Productivity', 'Health', 'Education', 'Finance', 'Shopping', 'Developer Tools', 'Other'];
-const CURRENCIES = ['USD', 'INR', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD'];
-const STATUSES = ['active', 'paused', 'cancelled'];
-
-const STATUS_COLORS: Record<string, string> = {
-  active: '#10B981',
-  paused: '#F59E0B',
-  cancelled: '#EF4444',
-};
-
-function ChipSelector({ label, options, value, onChange }: {
-  label: string; options: string[]; value: string; onChange: (v: string) => void;
-}) {
-  return (
-    <View className="mb-4">
-      <Text className="text-text-secondary text-xs mb-1">{label}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View className="flex-row space-x-2">
-          {options.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              onPress={() => onChange(opt)}
-              className={`px-3 py-1.5 rounded-full border ${value === opt ? 'bg-primary border-primary' : 'bg-background border-border'}`}
-            >
-              <Text className={value === opt ? 'text-white font-medium text-xs' : 'text-text-primary text-xs'}>
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
-    </View>
-  );
-}
-
-function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  return (
-    <View className="flex-row space-x-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <TouchableOpacity key={star} onPress={() => onChange(star)}>
-          <Text className={`text-xl ${star <= value ? 'text-yellow-400' : 'text-gray-300'}`}>★</Text>
-        </TouchableOpacity>
-      ))}
-      {value > 0 && (
-        <TouchableOpacity onPress={() => onChange(0)} className="ml-2 self-center">
-          <Text className="text-text-secondary text-xs">Clear</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-}
 
 type PriceRecord = {
   id: string;
@@ -68,22 +15,20 @@ type PriceRecord = {
   changedAt: string;
 };
 
+// Assuming payment records are somehow available, otherwise we use price history or mock a bit 
+// based on the fact we only have price-history API in the current backend.
+// In a real app we'd fetch /payment-history. For now I'll use the price history as the table.
+
 export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [paying, setPaying] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [priceHistory, setPriceHistory] = useState<PriceRecord[]>([]);
-
   const [sub, setSub] = useState<any>(null);
-  const [form, setForm] = useState<any>(null);
+  const [priceHistory, setPriceHistory] = useState<PriceRecord[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch sub from list (no single-sub GET endpoint)
       const res = await api.get('/subscriptions?status=all');
       const subs = Array.isArray(res.data) ? res.data : res.data?.subscriptions ?? [];
       const found = subs.find((s: any) => s.id === id);
@@ -93,20 +38,7 @@ export default function SubscriptionDetailScreen() {
         return;
       }
       setSub(found);
-      setForm({
-        name: found.name,
-        cost: String(Number(found.cost).toFixed(2)),
-        currency: found.currency,
-        billingCycle: found.billingCycle,
-        category: found.category,
-        nextPayment: found.nextPayment?.split('T')[0] ?? '',
-        status: found.status,
-        notes: found.notes ?? '',
-        trialEndsOn: found.trialEndsOn ? found.trialEndsOn.split('T')[0] : '',
-        worthItRating: found.worthItRating ?? 0,
-      });
 
-      // Price history
       const histRes = await api.get(`/subscriptions/${id}/price-history`);
       setPriceHistory(histRes.data?.history ?? []);
     } catch (err) {
@@ -118,96 +50,31 @@ export default function SubscriptionDetailScreen() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleSave = async () => {
-    if (!form.name || !form.cost) {
-      Alert.alert('Error', 'Name and Cost are required');
-      return;
-    }
-    const costNum = parseFloat(form.cost);
-    if (isNaN(costNum) || costNum <= 0) {
-      Alert.alert('Error', 'Cost must be a positive number');
-      return;
-    }
-    setSaving(true);
+  const handlePause = async () => {
+    const newStatus = sub.status === 'paused' ? 'active' : 'paused';
     try {
-      await api.put(`/subscriptions/${id}`, {
-        name: form.name,
-        cost: costNum,
-        currency: form.currency,
-        billingCycle: form.billingCycle,
-        category: form.category,
-        nextPayment: form.nextPayment,
-        status: form.status,
-        notes: form.notes || null,
-        trialEndsOn: form.trialEndsOn || null,
-        worthItRating: form.worthItRating > 0 ? form.worthItRating : null,
-      });
-      setEditing(false);
+      await api.put(`/subscriptions/${id}`, { status: newStatus });
       fetchData();
-      Alert.alert('Saved', 'Subscription updated successfully');
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.error ?? 'Failed to save');
-    } finally {
-      setSaving(false);
+    } catch (err) {
+      Alert.alert('Error', 'Failed to update status');
     }
   };
 
-  const handlePay = async () => {
+  const handleCancel = () => {
     Alert.alert(
-      'Mark as Paid',
-      `Mark "${sub.name}" as paid? The next payment date will be advanced by one ${sub.billingCycle === 'yearly' ? 'year' : 'month'}.`,
+      'Cancel Subscription',
+      `Once cancelled, you will lose access to your benefits at the end of the current billing cycle.`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: 'Keep', style: 'cancel' },
         {
-          text: 'Confirm',
-          onPress: async () => {
-            setPaying(true);
-            try {
-              await api.post(`/subscriptions/${id}/pay`);
-              const perms = await Notifications.getPermissionsAsync();
-              if (perms.granted) {
-                const triggerDate = new Date(sub.nextPayment);
-                if (sub.billingCycle === 'monthly') triggerDate.setMonth(triggerDate.getMonth() + 1);
-                else triggerDate.setFullYear(triggerDate.getFullYear() + 1);
-                triggerDate.setDate(triggerDate.getDate() - 1);
-                triggerDate.setHours(9, 0, 0, 0);
-                if (triggerDate > new Date()) {
-                  await Notifications.scheduleNotificationAsync({
-                    content: {
-                      title: 'Payment Reminder 📅',
-                      body: `${sub.name} (${sub.currency} ${Number(sub.cost).toFixed(2)}) is due tomorrow!`,
-                    },
-                    trigger: triggerDate,
-                  });
-                }
-              }
-              fetchData();
-            } catch (err: any) {
-              Alert.alert('Error', err?.response?.data?.error ?? 'Failed to mark as paid');
-            } finally {
-              setPaying(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete Subscription',
-      `Delete "${sub?.name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
+          text: 'Cancel Now',
           style: 'destructive',
           onPress: async () => {
             try {
-              await api.delete(`/subscriptions/${id}`);
-              router.back();
+              await api.put(`/subscriptions/${id}`, { status: 'cancelled' });
+              fetchData();
             } catch {
-              Alert.alert('Error', 'Failed to delete subscription');
+              Alert.alert('Error', 'Failed to cancel subscription');
             }
           },
         },
@@ -215,232 +82,192 @@ export default function SubscriptionDetailScreen() {
     );
   };
 
-  if (loading || !sub || !form) {
+  if (loading || !sub) {
     return (
-      <View className="flex-1 justify-center items-center bg-background">
+      <View className="flex-1 justify-center items-center bg-[#F9FAFB]">
         <ActivityIndicator size="large" color="#0D7377" />
       </View>
     );
   }
 
   const nextPaymentDate = new Date(sub.nextPayment);
-  const isOverdue = nextPaymentDate < new Date();
-  const statusColor = STATUS_COLORS[sub.status] ?? '#6B6560';
-
+  const daysRemaining = Math.ceil((nextPaymentDate.getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+  
   return (
-    <ScrollView
-      className="flex-1 bg-background"
-      contentContainerStyle={{ padding: 16 }}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
-    >
-      {/* Header card */}
-      <View className="bg-card rounded-2xl border border-border mb-4 overflow-hidden">
-        <View style={{ height: 4, backgroundColor: statusColor }} />
-        <View className="p-4">
-          <View className="flex-row justify-between items-start mb-2">
-            <Text className="text-2xl font-bold text-text-primary flex-1 mr-2">{sub.name}</Text>
-            <View
-              className="px-3 py-1 rounded-full"
-              style={{ backgroundColor: `${statusColor}20` }}
-            >
-              <Text className="text-xs font-medium capitalize" style={{ color: statusColor }}>
-                {sub.status}
-              </Text>
+    <View className="flex-1 bg-[#F9FAFB]">
+      <Stack.Screen 
+        options={{
+          headerShown: true,
+          headerTitle: "SubscriptionSavvy",
+          headerTitleAlign: "center",
+          headerTitleStyle: { color: "#0D7377", fontWeight: "bold" },
+          headerStyle: { backgroundColor: "#F9FAFB" },
+          headerShadowVisible: false,
+          headerRight: () => (
+            <View className="flex-row items-center space-x-3">
+              <Feather name="search" size={20} color="#4B5563" />
+              <Image 
+                source={{ uri: 'https://i.pravatar.cc/150?img=11' }} 
+                className="w-8 h-8 rounded-full bg-gray-200"
+              />
             </View>
-          </View>
-          <Text className="text-3xl font-bold text-primary">
-            {sub.currency} {Number(sub.cost).toFixed(2)}
-            <Text className="text-base font-normal text-text-secondary"> / {sub.billingCycle}</Text>
-          </Text>
-          <Text className="text-text-secondary text-sm mt-1">{sub.category}</Text>
-          {sub.worthItRating > 0 && (
-            <Text className="text-yellow-400 mt-1">
-              {'★'.repeat(sub.worthItRating)}{'☆'.repeat(5 - sub.worthItRating)}
-              <Text className="text-text-secondary text-xs"> worth-it rating</Text>
-            </Text>
-          )}
-        </View>
-      </View>
-
-      {/* Next payment info */}
-      <View className="bg-card p-4 rounded-2xl border border-border mb-4">
-        <View className="flex-row items-center justify-between">
-          <View>
-            <Text className="text-text-secondary text-xs">Next Payment</Text>
-            <Text className={`text-lg font-bold ${isOverdue ? 'text-overdue' : 'text-text-primary'}`}>
-              {nextPaymentDate.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
-            </Text>
-            {isOverdue && <Text className="text-overdue text-xs">⚠ Overdue</Text>}
-          </View>
-          {sub.status === 'active' && (
-            <TouchableOpacity
-              onPress={handlePay}
-              disabled={paying}
-              className={`px-4 py-2.5 rounded-xl flex-row items-center space-x-2 ${isOverdue ? 'bg-overdue' : 'bg-primary'} ${!isOverdue ? 'opacity-60' : ''}`}
-            >
-              {paying ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <>
-                  <Feather name="check-circle" size={16} color="white" />
-                  <Text className="text-white font-medium">Mark Paid</Text>
-                </>
-              )}
+          ),
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} className="mr-2">
+              <Feather name="arrow-left" size={24} color="#0D7377" />
             </TouchableOpacity>
-          )}
-        </View>
-        {sub.trialEndsOn && (
-          <View className="mt-3 pt-3 border-t border-border">
-            <Text className="text-text-secondary text-xs">Trial Ends</Text>
-            <Text className="text-text-primary font-medium">
-              {new Date(sub.trialEndsOn).toLocaleDateString()}
+          )
+        }} 
+      />
+
+      <ScrollView 
+        contentContainerStyle={{ padding: 16, paddingBottom: 60 }}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
+      >
+        {/* Main Logo & Header */}
+        <View className="items-center mb-6">
+          <View className="w-20 h-20 bg-gray-900 rounded-2xl items-center justify-center mb-4 border-2 border-transparent" style={{ borderColor: sub.status === 'active' ? '#10B981' : 'transparent' }}>
+             <Text className="text-white text-3xl font-bold uppercase">{sub.name.charAt(0)}</Text>
+          </View>
+          <View className="bg-[#059669] px-3 py-1 rounded-full mb-3">
+            <Text className="text-white text-[10px] font-bold tracking-widest uppercase">
+              {sub.category}
             </Text>
           </View>
-        )}
-        {sub.notes && (
-          <View className="mt-3 pt-3 border-t border-border">
-            <Text className="text-text-secondary text-xs mb-1">Notes</Text>
-            <Text className="text-text-primary text-sm">{sub.notes}</Text>
-          </View>
-        )}
-      </View>
+          <Text className="text-2xl font-bold text-gray-900 mb-1">{sub.name}</Text>
+          <Text className="text-sm text-gray-500 capitalize">
+            {sub.notes ? `${sub.notes} • ` : ''}{sub.billingCycle} Billing
+          </Text>
 
-      {/* Edit / Delete buttons */}
-      <View className="flex-row space-x-3 mb-4">
-        <TouchableOpacity
-          onPress={() => setEditing(!editing)}
-          className="flex-1 flex-row items-center justify-center space-x-2 p-3 rounded-xl border border-primary"
-        >
-          <Feather name={editing ? 'x' : 'edit-2'} size={16} color="#0D7377" />
-          <Text className="text-primary font-medium">{editing ? 'Cancel Edit' : 'Edit'}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleDelete}
-          className="flex-1 flex-row items-center justify-center space-x-2 p-3 rounded-xl border border-red-300 bg-red-50"
-        >
-          <Feather name="trash-2" size={16} color="#EF4444" />
-          <Text className="text-overdue font-medium">Delete</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Edit form */}
-      {editing && (
-        <View className="bg-card p-4 rounded-2xl border border-border mb-4">
-          <Text className="text-text-primary font-bold text-lg mb-4">Edit Subscription</Text>
-
-          <Text className="text-text-secondary text-xs mb-1">Name</Text>
-          <TextInput
-            className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
-            value={form.name}
-            onChangeText={(t) => setForm({ ...form, name: t })}
-            placeholderTextColor="#9CA3AF"
-          />
-
-          <Text className="text-text-secondary text-xs mb-1">Cost</Text>
-          <TextInput
-            className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
-            value={form.cost}
-            onChangeText={(t) => setForm({ ...form, cost: t })}
-            keyboardType="decimal-pad"
-            placeholderTextColor="#9CA3AF"
-          />
-
-          <ChipSelector label="Currency" options={CURRENCIES} value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} />
-          <ChipSelector label="Category" options={CATEGORIES} value={form.category} onChange={(v) => setForm({ ...form, category: v })} />
-
-          <Text className="text-text-secondary text-xs mb-2">Billing Cycle</Text>
-          <View className="flex-row space-x-2 mb-4">
-            {['monthly', 'yearly'].map((cycle) => (
-              <TouchableOpacity
-                key={cycle}
-                className={`flex-1 p-2.5 rounded-lg border items-center ${form.billingCycle === cycle ? 'bg-primary border-primary' : 'bg-background border-border'}`}
-                onPress={() => setForm({ ...form, billingCycle: cycle })}
+          {/* Action Buttons */}
+          <View className="flex-row space-x-3 mt-5">
+            <TouchableOpacity 
+              onPress={() => router.push(`/add-subscription?edit=${sub.id}`)}
+              className="flex-1 border border-[#0D7377] bg-white py-2.5 rounded-lg items-center"
+            >
+              <Text className="text-[#0D7377] font-bold text-sm">EDIT</Text>
+            </TouchableOpacity>
+            {sub.status !== 'cancelled' && (
+              <TouchableOpacity 
+                onPress={handlePause}
+                className="flex-1 bg-[#0D7377] py-2.5 rounded-lg items-center"
               >
-                <Text className={form.billingCycle === cycle ? 'text-white font-medium text-sm' : 'text-text-primary text-sm capitalize'}>
-                  {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
+                <Text className="text-white font-bold text-sm">
+                  {sub.status === 'paused' ? 'RESUME' : 'PAUSE'}
                 </Text>
               </TouchableOpacity>
-            ))}
-          </View>
-
-          <ChipSelector label="Status" options={STATUSES} value={form.status} onChange={(v) => setForm({ ...form, status: v })} />
-
-          <Text className="text-text-secondary text-xs mb-1">Next Payment (YYYY-MM-DD)</Text>
-          <TextInput
-            className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
-            value={form.nextPayment}
-            onChangeText={(t) => setForm({ ...form, nextPayment: t })}
-            placeholderTextColor="#9CA3AF"
-          />
-
-          <Text className="text-text-secondary text-xs mb-1">Trial Ends On (optional)</Text>
-          <TextInput
-            className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
-            value={form.trialEndsOn}
-            onChangeText={(t) => setForm({ ...form, trialEndsOn: t })}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor="#9CA3AF"
-          />
-
-          <Text className="text-text-secondary text-xs mb-1">Notes (optional)</Text>
-          <TextInput
-            className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
-            value={form.notes}
-            onChangeText={(t) => setForm({ ...form, notes: t })}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-            placeholderTextColor="#9CA3AF"
-          />
-
-          <Text className="text-text-secondary text-xs mb-2">Worth It Rating</Text>
-          <View className="mb-4">
-            <StarRating value={form.worthItRating} onChange={(v) => setForm({ ...form, worthItRating: v })} />
-          </View>
-
-          <TouchableOpacity
-            onPress={handleSave}
-            disabled={saving}
-            className="bg-primary p-4 rounded-xl items-center"
-          >
-            {saving ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="text-white font-bold text-base">Save Changes</Text>
             )}
-          </TouchableOpacity>
+          </View>
         </View>
-      )}
 
-      {/* Price History */}
-      {priceHistory.length > 0 && (
-        <View className="bg-card p-4 rounded-2xl border border-border mb-4">
-          <Text className="text-text-primary font-bold mb-3">Price History</Text>
-          {priceHistory.map((record) => {
-            const old = Number(record.oldCost);
-            const nw = Number(record.newCost);
-            const increased = nw > old;
-            return (
-              <View key={record.id} className="flex-row justify-between items-center py-2 border-b border-border last:border-0">
-                <View>
-                  <View className="flex-row items-center space-x-1">
-                    <Feather name={increased ? 'arrow-up' : 'arrow-down'} size={12} color={increased ? '#EF4444' : '#10B981'} />
-                    <Text className="font-medium text-sm" style={{ color: increased ? '#EF4444' : '#10B981' }}>
-                      {record.currency} {old.toFixed(2)} → {nw.toFixed(2)}
-                    </Text>
-                  </View>
-                  <Text className="text-text-secondary text-xs">
-                    {new Date(record.changedAt).toLocaleDateString()}
-                  </Text>
-                </View>
-                <Text className={`text-sm font-bold ${increased ? 'text-overdue' : 'text-green-600'}`}>
-                  {increased ? '+' : '-'}{record.currency} {Math.abs(nw - old).toFixed(2)}
-                </Text>
-              </View>
-            );
-          })}
+        {/* Cost Card */}
+        <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
+          <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">
+            Monthly Cost
+          </Text>
+          <Text className="text-2xl font-bold text-[#0D7377] mb-1">
+            {sub.currency} {Number(sub.cost).toFixed(2)}
+          </Text>
+          <Text className="text-xs text-gray-500">
+            Next increase: Not scheduled
+          </Text>
         </View>
-      )}
-    </ScrollView>
+
+        {/* Payment Card */}
+        <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-4">
+          <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
+            Next Payment
+          </Text>
+          <View className="flex-row items-center mb-1">
+            <Feather name="calendar" size={16} color="#4B5563" className="mr-2" />
+            <Text className="text-base font-bold text-gray-900 ml-2">
+              {nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </Text>
+          </View>
+          <Text className="text-xs text-gray-500">
+            {daysRemaining > 0 ? `${daysRemaining} days remaining` : daysRemaining === 0 ? 'Due today' : `${Math.abs(daysRemaining)} days overdue`}
+          </Text>
+        </View>
+
+        {/* Worth It Rating Card */}
+        {sub.worthItRating > 0 && (
+          <View className="bg-[#FDE68A] p-5 rounded-2xl shadow-sm mb-4 items-center">
+            <Text className="text-[10px] font-bold text-gray-700 uppercase tracking-widest mb-2">
+              Worth It Rating
+            </Text>
+            <Text className="text-4xl font-bold text-gray-900 mb-1">
+              {sub.worthItRating.toFixed(1)}
+            </Text>
+            <View className="flex-row space-x-1 mb-3">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Feather 
+                  key={star} 
+                  name="star" 
+                  size={16} 
+                  color={star <= sub.worthItRating ? '#000' : 'transparent'} 
+                  style={{ opacity: star <= sub.worthItRating ? 1 : 0.3 }}
+                />
+              ))}
+            </View>
+            <Text className="text-xs text-gray-800 text-center px-4">
+              {sub.worthItRating >= 4 ? 'Great value. Keep this sub.' : 'Consider reviewing this subscription.'}
+            </Text>
+          </View>
+        )}
+
+        {/* Payment History (using Price History as proxy for now) */}
+        {priceHistory.length > 0 && (
+          <View className="mb-8">
+            <Text className="text-base font-bold text-gray-900 mb-3 ml-1">Price History</Text>
+            <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <View className="flex-row items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+                <Text className="text-[10px] font-bold text-gray-500 flex-1">DATE</Text>
+                <Text className="text-[10px] font-bold text-gray-500 flex-1 text-center">CHANGE</Text>
+                <Text className="text-[10px] font-bold text-gray-500 flex-1 text-right">STATUS</Text>
+              </View>
+              {priceHistory.map((record, i) => (
+                <View key={record.id} className={`flex-row items-center justify-between px-4 py-4 ${i !== priceHistory.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                  <Text className="text-xs text-gray-700 flex-1">
+                    {new Date(record.changedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </Text>
+                  <Text className="text-sm font-medium text-gray-900 flex-1 text-center">
+                    {record.currency} {Number(record.oldCost).toFixed(2)} → {Number(record.newCost).toFixed(2)}
+                  </Text>
+                  <View className="flex-1 items-end">
+                    <View className="bg-[#059669] px-2 py-0.5 rounded flex-row items-center">
+                      <Text className="text-[9px] font-bold text-white uppercase">UPDATED</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+              <TouchableOpacity className="py-4 border-t border-gray-100 items-center justify-center">
+                <Text className="text-[10px] font-bold text-[#0D7377] uppercase tracking-widest">View All Records</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Danger Zone */}
+        {sub.status !== 'cancelled' && (
+          <View className="mb-4">
+            <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">
+              Danger Zone
+            </Text>
+            <View className="bg-[#FEF2F2] p-5 rounded-2xl border border-[#FECACA]">
+              <Text className="text-base font-bold text-[#DC2626] mb-2">Cancel Subscription</Text>
+              <Text className="text-sm text-gray-700 mb-4">
+                Once cancelled, you will lose access to your benefits at the end of the current billing cycle.
+              </Text>
+              <TouchableOpacity 
+                onPress={handleCancel}
+                className="bg-[#EF4444] py-3 rounded-lg items-center"
+              >
+                <Text className="text-white font-bold text-sm">CANCEL NOW</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </View>
   );
 }

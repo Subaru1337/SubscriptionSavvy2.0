@@ -1,6 +1,6 @@
 import {
   View, Text, ActivityIndicator, ScrollView, RefreshControl,
-  TouchableOpacity, Alert
+  TouchableOpacity, Alert, TextInput
 } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
@@ -22,237 +22,168 @@ type Subscription = {
   trialEndsOn?: string | null;
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  active: '#10B981',
-  paused: '#F59E0B',
-  cancelled: '#EF4444',
+const CATEGORY_COLORS: Record<string, string> = {
+  Entertainment: '#E50914', // Netflix red style
+  Productivity: '#0061FF',
+  Health: '#10B981',
+  Education: '#F59E0B',
+  Finance: '#0D7377',
+  Shopping: '#EC4899',
+  'Developer Tools': '#8B5CF6',
+  Other: '#9CA3AF',
 };
 
-const FILTER_TABS = ['Active', 'All', 'Paused', 'Cancelled'];
+const FILTER_TABS = ['ALL', 'ENTERTAINMENT', 'PRODUCTIVITY', 'HEALTH', 'EDUCATION', 'FINANCE', 'SHOPPING'];
 
 export default function SubscriptionsScreen() {
   const [loading, setLoading] = useState(true);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [filter, setFilter] = useState('Active');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('ALL');
   const router = useRouter();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const statusParam = filter === 'Active' ? '' : '?status=all';
-      const response = await api.get(`/subscriptions${statusParam}`);
+      const response = await api.get('/subscriptions?status=all');
       let subs: Subscription[] = Array.isArray(response.data)
         ? response.data
         : response.data?.subscriptions ?? [];
-
-      // Client-side filter for Paused/Cancelled (API returns all when ?status=all)
-      if (filter === 'Paused') {
-        subs = subs.filter((s) => s.status === 'paused');
-      } else if (filter === 'Cancelled') {
-        subs = subs.filter((s) => s.status === 'cancelled');
-      }
-
       setSubscriptions(subs);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const scheduleReminder = async (
-    name: string, originalDateStr: string, cost: string, cycle: string
-  ) => {
-    const triggerDate = new Date(originalDateStr);
-    if (cycle === 'monthly') {
-      triggerDate.setMonth(triggerDate.getMonth() + 1);
-    } else {
-      triggerDate.setFullYear(triggerDate.getFullYear() + 1);
-    }
-    triggerDate.setDate(triggerDate.getDate() - 1);
-    triggerDate.setHours(9, 0, 0, 0);
-    if (triggerDate > new Date()) {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Payment Reminder 📅",
-          body: `Your subscription to ${name} (${cost}) is due tomorrow!`,
-        },
-        trigger: triggerDate,
-      });
-    }
-  };
-
-  const handlePay = async (sub: Subscription) => {
-    try {
-      await api.post(`/subscriptions/${sub.id}/pay`);
-      const settings = await Notifications.getPermissionsAsync();
-      if (settings.granted) {
-        await scheduleReminder(
-          sub.name, sub.nextPayment,
-          `${sub.currency} ${sub.cost}`, sub.billingCycle
-        );
-      }
-      fetchData();
-    } catch (error: any) {
-      const msg = error?.response?.data?.error || 'Failed to mark as paid';
-      Alert.alert('Error', msg);
-    }
-  };
-
-  const handleDelete = (sub: Subscription) => {
-    Alert.alert(
-      'Delete Subscription',
-      `Are you sure you want to delete "${sub.name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.delete(`/subscriptions/${sub.id}`);
-              fetchData();
-            } catch {
-              Alert.alert('Error', 'Failed to delete subscription');
-            }
-          },
-        },
-      ]
-    );
-  };
+  const filteredSubscriptions = subscriptions.filter(sub => {
+    const matchesSearch = sub.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = activeFilter === 'ALL' || sub.category.toUpperCase() === activeFilter;
+    return matchesSearch && matchesFilter;
+  });
 
   if (loading && subscriptions.length === 0) {
     return (
-      <View className="flex-1 justify-center items-center bg-background">
+      <View className="flex-1 justify-center items-center bg-[#F9FAFB]">
         <ActivityIndicator size="large" color="#0D7377" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-background">
-      {/* Filter Tabs */}
-      <View className="flex-row border-b border-border bg-white">
-        {FILTER_TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            onPress={() => setFilter(tab)}
-            className="flex-1 py-3 items-center"
-          >
-            <Text
-              className={`text-sm font-medium ${filter === tab ? 'text-primary' : 'text-text-secondary'}`}
-            >
-              {tab}
-            </Text>
-            {filter === tab && (
-              <View className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </TouchableOpacity>
-        ))}
+    <View className="flex-1 bg-[#F9FAFB]">
+      {/* Search Bar */}
+      <View className="px-4 pt-4 pb-2">
+        <View className="flex-row items-center bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
+          <Feather name="search" size={20} color="#6B7280" />
+          <TextInput
+            className="flex-1 ml-3 text-base text-gray-900"
+            placeholder="Search subscriptions..."
+            placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+      </View>
+
+      {/* Filter Pills */}
+      <View className="pl-4 pb-4">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {FILTER_TABS.map((tab) => {
+            const isActive = activeFilter === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setActiveFilter(tab)}
+                className={`px-4 py-2 rounded-lg mr-2 ${isActive ? 'bg-[#0D7377]' : 'bg-[#E5E7EB]'}`}
+              >
+                <Text className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-700'}`}>
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       <ScrollView
-        className="flex-1 p-4"
+        className="flex-1 px-4"
         refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
       >
-        <Text className="text-2xl font-bold text-text-primary mb-4">Your Subscriptions</Text>
-
-        {subscriptions.map((sub) => {
+        {filteredSubscriptions.map((sub) => {
           const nextPaymentDate = new Date(sub.nextPayment);
-          const isOverdue = nextPaymentDate < new Date();
-          const statusColor = STATUS_COLORS[sub.status] || '#6B6560';
+          const isOverdue = nextPaymentDate < new Date(new Date().setHours(0,0,0,0));
+          
+          let statusBadge = { label: 'ACTIVE', color: 'bg-[#059669]', text: 'text-white' };
+          if (isOverdue) statusBadge = { label: 'OVERDUE', color: 'bg-[#EF4444]', text: 'text-white' };
+          if (sub.trialEndsOn && new Date(sub.trialEndsOn) >= new Date()) statusBadge = { label: 'TRIAL', color: 'bg-[#E0F2FE]', text: 'text-[#0284C7]' };
+          if (sub.status === 'paused') statusBadge = { label: 'PAUSED', color: 'bg-[#F59E0B]', text: 'text-white' };
+          if (sub.status === 'cancelled') statusBadge = { label: 'CANCELLED', color: 'bg-gray-200', text: 'text-gray-500' };
+
+          const logoColor = CATEGORY_COLORS[sub.category] || '#0D7377';
 
           return (
             <TouchableOpacity
               key={sub.id}
               onPress={() => router.push(`/subscription/${sub.id}`)}
-              className="bg-card rounded-2xl shadow-sm border border-border mb-4 overflow-hidden"
+              className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex-row items-center mb-3"
             >
-              {/* Status bar */}
-              <View style={{ height: 4, backgroundColor: statusColor }} />
+              {/* Logo Placeholder */}
+              <View className="w-14 h-14 rounded-xl items-center justify-center mr-4" style={{ backgroundColor: logoColor }}>
+                <Text className="text-white font-bold text-2xl uppercase">
+                  {sub.name.charAt(0)}
+                </Text>
+              </View>
 
-              <View className="p-4">
-                <View className="flex-row justify-between items-start mb-1">
-                  <View className="flex-1 mr-2">
-                    <Text className="text-lg font-bold text-text-primary" numberOfLines={1}>
-                      {sub.name}
-                    </Text>
-                    <Text className="text-text-secondary text-xs capitalize">{sub.category}</Text>
-                  </View>
-                  <View className="items-end">
-                    <Text className="text-lg font-bold text-primary">
-                      {sub.currency} {Number(sub.cost).toFixed(2)}
-                    </Text>
-                    <Text className="text-text-secondary text-xs capitalize">{sub.billingCycle}</Text>
-                  </View>
-                </View>
+              {/* Info */}
+              <View className="flex-1 justify-center">
+                <Text className="text-base font-medium text-gray-900 mb-1" numberOfLines={1}>
+                  {sub.name}
+                </Text>
+                <Text className="text-sm text-gray-500 capitalize">
+                  {sub.category} • {sub.billingCycle}
+                </Text>
+              </View>
 
-                <View className="flex-row items-center justify-between mt-2">
-                  <View className="flex-row items-center space-x-1">
-                    <Feather name="clock" size={12} color={isOverdue ? '#EF4444' : '#6B6560'} />
-                    <Text className={`text-xs ${isOverdue ? 'text-overdue font-medium' : 'text-text-secondary'}`}>
-                      {isOverdue ? 'Overdue · ' : 'Due · '}
-                      {nextPaymentDate.toLocaleDateString()}
-                    </Text>
-                  </View>
-                  <View
-                    className="px-2 py-0.5 rounded-full"
-                    style={{ backgroundColor: `${statusColor}20` }}
-                  >
-                    <Text className="text-xs font-medium capitalize" style={{ color: statusColor }}>
-                      {sub.status}
-                    </Text>
-                  </View>
-                </View>
-
-                {sub.worthItRating && (
-                  <Text className="text-yellow-400 text-xs mt-1">
-                    {'★'.repeat(sub.worthItRating)}{'☆'.repeat(5 - sub.worthItRating)}
+              {/* Status and Price */}
+              <View className="items-end justify-between h-14">
+                <View className={`${statusBadge.color} px-2 py-0.5 rounded-full`}>
+                  <Text className={`${statusBadge.text} text-[9px] font-bold tracking-wider`}>
+                    {statusBadge.label}
                   </Text>
-                )}
-
-                {/* Actions */}
-                <View className="flex-row justify-end space-x-2 mt-3 pt-3 border-t border-border">
-                  <TouchableOpacity
-                    onPress={() => handleDelete(sub)}
-                    className="flex-row items-center space-x-1 px-3 py-2 rounded-lg border border-red-200 bg-red-50"
-                  >
-                    <Feather name="trash-2" size={14} color="#EF4444" />
-                    <Text className="text-overdue text-sm font-medium">Delete</Text>
-                  </TouchableOpacity>
-
-                  {sub.status === 'active' && isOverdue && (
-                    <TouchableOpacity
-                      onPress={() => handlePay(sub)}
-                      className="flex-row items-center space-x-1 px-3 py-2 rounded-lg bg-primary"
-                    >
-                      <Feather name="check" size={14} color="white" />
-                      <Text className="text-white text-sm font-medium">Mark Paid</Text>
-                    </TouchableOpacity>
-                  )}
+                </View>
+                <View className="items-end mt-1">
+                  <Text className="text-base font-medium text-gray-900">
+                    ${Number(sub.cost).toFixed(2)}
+                  </Text>
+                  <Text className={`text-[10px] font-bold uppercase mt-0.5 ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
+                    {isOverdue ? 'PAST DUE' : nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </Text>
                 </View>
               </View>
             </TouchableOpacity>
           );
         })}
 
-        {subscriptions.length === 0 && !loading && (
+        {filteredSubscriptions.length === 0 && !loading && (
           <View className="flex-1 items-center justify-center mt-20">
-            <Feather name="inbox" size={48} color="#9CA3AF" />
-            <Text className="text-center text-text-secondary mt-4 text-base">
-              No {filter.toLowerCase()} subscriptions found.
+            <Feather name="search" size={48} color="#9CA3AF" />
+            <Text className="text-center text-gray-500 mt-4 text-base">
+              No subscriptions found.
             </Text>
           </View>
         )}
       </ScrollView>
 
+      {/* FAB */}
       <TouchableOpacity
         onPress={() => router.push('/add-subscription')}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-primary rounded-full items-center justify-center shadow-lg"
+        className="absolute bottom-6 right-6 w-14 h-14 bg-[#0D7377] rounded-full items-center justify-center shadow-lg elevation-5"
       >
         <Feather name="plus" size={24} color="white" />
       </TouchableOpacity>

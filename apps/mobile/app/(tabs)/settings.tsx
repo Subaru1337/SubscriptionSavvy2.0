@@ -159,34 +159,34 @@ export default function SettingsScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 justify-center items-center bg-background">
+      <View className="flex-1 justify-center items-center bg-[#F9FAFB]">
         <ActivityIndicator size="large" color="#0D7377" />
       </View>
     );
   }
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerStyle={{ padding: 16 }}>
-      <Text className="text-2xl font-bold text-text-primary mb-4">Settings</Text>
+    <ScrollView className="flex-1 bg-[#F9FAFB]" contentContainerStyle={{ padding: 16 }}>
+      <Text className="text-2xl font-bold text-gray-900 mb-4">Settings</Text>
 
       {/* ── Account ──────────────────────────────────── */}
-      <View className="bg-card p-4 rounded-2xl border border-border mb-4">
+      <View className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-4">
         <View className="flex-row items-center space-x-3">
-          <View className="w-12 h-12 rounded-full bg-[#E6F4FE] items-center justify-center">
+          <View className="w-12 h-12 rounded-full bg-teal-50 items-center justify-center">
             <Feather name="user" size={22} color="#0D7377" />
           </View>
           <View>
-            <Text className="text-text-secondary text-xs">Logged in as</Text>
-            <Text className="text-text-primary font-bold text-base">{email}</Text>
+            <Text className="text-gray-500 text-xs">Logged in as</Text>
+            <Text className="text-gray-900 font-bold text-base">{email}</Text>
           </View>
         </View>
       </View>
 
       {/* ── Financial Settings ────────────────────────── */}
-      <View className="bg-card p-4 rounded-2xl border border-border mb-4">
-        <Text className="text-text-primary font-bold text-base mb-4">💰 Financial Settings</Text>
+      <View className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-4">
+        <Text className="text-gray-900 font-bold text-base mb-4">💰 Financial Settings</Text>
 
-        <Text className="text-text-secondary text-xs mb-2">Base Currency</Text>
+        <Text className="text-gray-500 text-xs mb-2">Base Currency</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
           <View className="flex-row space-x-2">
             {CURRENCIES.map((cur) => (
@@ -203,9 +203,9 @@ export default function SettingsScreen() {
           </View>
         </ScrollView>
 
-        <Text className="text-text-secondary text-xs mb-1">Monthly Budget ({baseCurrency})</Text>
+        <Text className="text-gray-500 text-xs mb-1">Monthly Budget ({baseCurrency})</Text>
         <TextInput
-          className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
+          className="bg-[#F9FAFB] border border-gray-200 rounded-lg p-3 mb-4 text-gray-900"
           placeholder="e.g. 500 (leave empty for no budget)"
           placeholderTextColor="#9CA3AF"
           keyboardType="decimal-pad"
@@ -215,8 +215,8 @@ export default function SettingsScreen() {
 
         <View className="flex-row items-center justify-between mb-4">
           <View>
-            <Text className="text-text-primary font-medium">Email Reminders</Text>
-            <Text className="text-text-secondary text-xs">Get notified before renewals</Text>
+            <Text className="text-gray-900 font-medium">Email Reminders</Text>
+            <Text className="text-gray-500 text-xs">Get notified before renewals</Text>
           </View>
           <Switch
             value={emailReminders}
@@ -239,15 +239,15 @@ export default function SettingsScreen() {
       </View>
 
       {/* ── Push Notifications ───────────────────────── */}
-      <View className="bg-card p-4 rounded-xl border border-border mb-4">
+      <View className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-4">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center space-x-3">
             <View className="w-10 h-10 rounded-full bg-orange-100 items-center justify-center">
               <Feather name="bell" size={18} color="#F59E0B" />
             </View>
             <View>
-              <Text className="text-text-primary font-medium">Push Notifications</Text>
-              <Text className="text-text-secondary text-xs">Notify 1 day before payment due</Text>
+              <Text className="text-gray-900 font-medium">Push Notifications</Text>
+              <Text className="text-gray-500 text-xs">Notify 1 day before payment due</Text>
             </View>
           </View>
           <Switch
@@ -259,21 +259,21 @@ export default function SettingsScreen() {
       </View>
 
       {/* ── Category Budgets ─────────────────────────── */}
-      <View className="bg-card p-4 rounded-2xl border border-border mb-4">
-        <Text className="text-text-primary font-bold text-base mb-3">📂 Category Budgets</Text>
-        <Text className="text-text-secondary text-xs mb-4">
+      <View className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-4">
+        <Text className="text-gray-900 font-bold text-base mb-3">📂 Category Budgets</Text>
+        <Text className="text-gray-500 text-xs mb-4">
           Set spending limits per category (in {baseCurrency})
         </Text>
         {CATEGORIES.map((cat) => {
           const existing = categoryBudgets.find((b) => b.category === cat);
           const isEditing = editingBudget === cat;
           return (
-            <View key={cat} className="flex-row items-center justify-between py-2 border-b border-border last:border-0">
-              <Text className="text-text-primary text-sm flex-1">{cat}</Text>
+            <View key={cat} className="flex-row items-center justify-between py-2 border-b border-gray-100 last:border-0">
+              <Text className="text-gray-900 text-sm flex-1">{cat}</Text>
               {isEditing ? (
                 <View className="flex-row items-center space-x-2">
                   <TextInput
-                    className="bg-background border border-primary rounded-lg px-2 py-1 text-text-primary text-sm w-24"
+                    className="bg-[#F9FAFB] border border-[#0D7377] rounded-lg px-2 py-1 text-gray-900 text-sm w-24"
                     placeholder="Amount"
                     placeholderTextColor="#9CA3AF"
                     keyboardType="decimal-pad"
@@ -296,10 +296,10 @@ export default function SettingsScreen() {
                   }}
                   className="flex-row items-center space-x-1"
                 >
-                  <Text className={existing ? 'text-primary text-sm font-medium' : 'text-text-secondary text-sm'}>
+                  <Text className={existing ? 'text-[#0D7377] text-sm font-medium' : 'text-gray-500 text-sm'}>
                     {existing ? `${baseCurrency} ${Number(existing.limit).toFixed(0)}` : 'Set limit'}
                   </Text>
-                  <Feather name="edit-2" size={12} color="#6B6560" />
+                  <Feather name="edit-2" size={12} color="#9CA3AF" />
                 </TouchableOpacity>
               )}
             </View>
@@ -308,8 +308,8 @@ export default function SettingsScreen() {
       </View>
 
       {/* ── Import / Export ──────────────────────────── */}
-      <View className="bg-card p-4 rounded-2xl border border-border mb-4">
-        <Text className="text-text-primary font-bold text-base mb-3">📤 Export Data</Text>
+      <View className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-4">
+        <Text className="text-gray-900 font-bold text-base mb-3">📤 Export Data</Text>
         <View className="flex-row space-x-3">
           <TouchableOpacity
             onPress={handleExportCSV}
@@ -324,22 +324,22 @@ export default function SettingsScreen() {
             className="flex-1 flex-row items-center justify-center space-x-2 p-3 rounded-xl border border-primary"
           >
             <Feather name="file" size={16} color="#0D7377" />
-            <Text className="text-primary font-medium">Export PDF</Text>
+            <Text className="text-[#0D7377] font-medium">Export PDF</Text>
           </TouchableOpacity>
         </View>
-        <Text className="text-text-secondary text-xs mt-2">
+        <Text className="text-gray-500 text-xs mt-2">
           Opens the export in your browser. Log in to the web app if prompted.
         </Text>
       </View>
 
       {/* ── Log Out ──────────────────────────────────── */}
       <TouchableOpacity
-        className="bg-card p-4 rounded-xl border border-border flex-row items-center justify-between mb-8"
+        className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex-row items-center justify-between mb-8"
         onPress={handleLogout}
       >
         <View className="flex-row items-center space-x-3">
           <Feather name="log-out" size={20} color="#EF4444" />
-          <Text className="text-overdue font-medium text-lg">Log Out</Text>
+          <Text className="text-[#EF4444] font-medium text-lg">Log Out</Text>
         </View>
         <Feather name="chevron-right" size={20} color="#EF4444" />
       </TouchableOpacity>
