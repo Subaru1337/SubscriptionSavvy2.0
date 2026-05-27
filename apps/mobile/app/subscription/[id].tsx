@@ -3,7 +3,7 @@ import {
   ActivityIndicator, Alert, RefreshControl, Image
 } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
-import { useLocalSearchParams, useRouter, Stack } from 'react-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 
