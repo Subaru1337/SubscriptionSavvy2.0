@@ -31,12 +31,10 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
 
         let iconName = 'circle';
         if (route.name === 'index') iconName = 'grid';
-        if (route.name === 'subscriptions') iconName = 'play-circle'; // looks like a stack/play in design, we can use play-circle or layers
+        if (route.name === 'subscriptions') iconName = 'youtube'; // matches media icon
+        if (route.name === 'analytics') iconName = 'pie-chart';
         if (route.name === 'calendar') iconName = 'calendar';
         if (route.name === 'settings') iconName = 'settings';
-        
-        // Match specific icons from the image:
-        if (route.name === 'subscriptions') iconName = 'youtube'; // close to the media icon in the design
         
         return (
           <TouchableOpacity

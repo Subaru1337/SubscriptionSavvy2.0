@@ -6,7 +6,6 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
-import DonutChart from '../../components/DonutChart';
 
 type Summary = {
   monthly_total: number;
@@ -15,56 +14,30 @@ type Summary = {
   budget_used_percent: number | null;
 };
 
-type Subscription = {
-  id: string;
-  name: string;
-  cost: string | number;
-  currency: string;
-  category: string;
-  nextPayment: string;
-};
-
-type CategoryBreakdown = {
-  category: string;
-  monthly_total: number;
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Entertainment: '#0D7377',
-  Productivity: '#064E3B',
-  Health: '#34D399',
-  Education: '#60A5FA',
-  Finance: '#F59E0B',
-  Shopping: '#EC4899',
-  'Developer Tools': '#8B5CF6',
-  Other: '#9CA3AF',
-};
-
-// Fallback logic for remaining budget if budget is null
-const DEFAULT_BUDGET = 2000;
-
 export default function DashboardScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<Summary | null>(null);
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [breakdown, setBreakdown] = useState<CategoryBreakdown[]>([]);
+  const [forecast, setForecast] = useState<any>(null);
+  const [savings, setSavings] = useState<any>(null);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [sumRes, subsRes, bdRes] = await Promise.all([
-        api.get('/analytics/summary'),
+      const [allRes, subsRes, extRes] = await Promise.all([
+        api.get('/analytics/all'),
         api.get('/subscriptions'),
-        api.get('/analytics/category-breakdown'),
+        api.get('/analytics/extended'),
       ]);
-      setSummary(sumRes.data);
+      setSummary(allRes.data?.summary ?? null);
       setSubscriptions(
         Array.isArray(subsRes.data)
           ? subsRes.data
           : subsRes.data?.subscriptions ?? []
       );
-      setBreakdown(bdRes.data?.breakdown ?? bdRes.data ?? []);
+      setForecast(extRes.data?.forecast ?? null);
+      setSavings(extRes.data?.savings ?? null);
     } catch (error) {
       console.error(error);
     } finally {
@@ -89,27 +62,11 @@ export default function DashboardScreen() {
     .sort((a, b) => new Date(a.nextPayment).getTime() - new Date(b.nextPayment).getTime())
     .slice(0, 3);
 
-  const budgetLimit = summary?.budget_used_percent
-    ? (summary.monthly_total / summary.budget_used_percent) * 100
-    : DEFAULT_BUDGET; // mock budget if not set
-  
-  const remaining = Math.max(0, budgetLimit - (summary?.monthly_total || 0));
-
-  let statusBadge = { label: 'Great', color: 'bg-[#10B981]' };
-  if (summary?.budget_used_percent && summary.budget_used_percent > 90) {
-    statusBadge = { label: 'Warning', color: 'bg-[#EF4444]' };
-  } else if (summary?.budget_used_percent && summary.budget_used_percent > 75) {
-    statusBadge = { label: 'Careful', color: 'bg-[#F59E0B]' };
-  }
-
-  const chartData = breakdown.map(cat => ({
-    label: cat.category,
-    value: cat.monthly_total,
-    color: CATEGORY_COLORS[cat.category] || '#9CA3AF',
-  }));
-
-  // Group smaller categories if there are too many (for the legend)
-  const topCategories = breakdown.slice(0, 3);
+  // Reminders / Due This Week
+  const today = new Date();
+  const in7 = new Date(today);
+  in7.setDate(in7.getDate() + 7);
+  const dueSoon = subscriptions.filter(s => new Date(s.nextPayment) <= in7 && new Date(s.nextPayment) >= new Date(new Date().setHours(0,0,0,0)));
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
@@ -118,76 +75,123 @@ export default function DashboardScreen() {
         refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
       >
         {/* Header Section */}
-        <View className="flex-row items-center justify-between mb-4 mt-2">
-          <View>
-            <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-              Budget Status
-            </Text>
-            <Text className="text-2xl font-bold text-gray-900">
-              Monthly Overview
-            </Text>
-          </View>
-          <View className={`${statusBadge.color} flex-row items-center px-3 py-1.5 rounded-full space-x-1`}>
-            <Feather name="check-circle" size={14} color="white" />
-            <Text className="text-white font-bold text-xs">{statusBadge.label}</Text>
-          </View>
+        <View className="mb-4 mt-2">
+          <Text className="text-2xl font-bold text-gray-900">
+            Dashboard
+          </Text>
         </View>
 
-        {/* Overview Cards */}
-        <View className="flex-row space-x-4 mb-6">
-          <View className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-            <View className="w-10 h-10 rounded-xl bg-teal-50 items-center justify-center mb-4">
-              <Feather name="calendar" size={20} color="#0D7377" />
-            </View>
+        {/* Overview Cards (Stack instead of grid for mobile) */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6 -mx-4 px-4 pb-2">
+          <View className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mr-4 w-40">
             <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-              Total Monthly
+              Monthly Spend
             </Text>
             <Text className="text-2xl font-bold text-[#0D7377]">
-              ${summary?.monthly_total?.toFixed(2) || '0.00'}
+              ${summary?.monthly_total?.toFixed(0) || '0'}
             </Text>
+            <Text className="text-[10px] text-gray-400 mt-1">per month</Text>
           </View>
-          <View className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-            <View className="w-10 h-10 rounded-xl bg-green-50 items-center justify-center mb-4">
-              <Feather name="dollar-sign" size={20} color="#10B981" />
-            </View>
+
+          <View className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mr-4 w-40">
             <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-              Remaining
+              Annual Projection
             </Text>
-            <Text className="text-2xl font-bold text-[#10B981]">
-              ${remaining.toFixed(2)}
+            <Text className="text-2xl font-bold text-gray-900">
+              ${summary?.annual_total?.toFixed(0) || '0'}
             </Text>
+            <Text className="text-[10px] text-gray-400 mt-1">per year</Text>
           </View>
+
+          <View className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mr-4 w-40">
+            <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+              Active Subs
+            </Text>
+            <Text className="text-2xl font-bold text-gray-900">
+              {summary?.active_subscriptions || 0}
+            </Text>
+            <Text className="text-[10px] text-gray-400 mt-1">services tracked</Text>
+          </View>
+        </ScrollView>
+
+        {/* Short term outlook */}
+        <View className="flex-row space-x-4 mb-6">
+          {forecast && (
+            <View className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <Feather name="trending-up" size={14} color="#0D7377" />
+                <Text className="text-[10px] font-bold text-gray-900 ml-1">Next 30 Days</Text>
+              </View>
+              <Text className="text-2xl font-bold text-gray-900">${forecast.next_month_total?.toFixed(0) || 0}</Text>
+              <Text className="text-[9px] text-gray-500 mt-1 leading-3">
+                across {forecast.billing_count} upcoming payments
+              </Text>
+              {forecast.largest_upcoming && (
+                <View className="mt-3 pt-2 border-t border-gray-100">
+                  <Text className="text-[9px] text-gray-500">
+                    Largest: {forecast.largest_upcoming.name} — ${forecast.largest_upcoming.amount}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {savings && (
+            <View className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <Feather name="heart" size={14} color="#10B981" />
+                <Text className="text-[10px] font-bold text-gray-900 ml-1">Saved by Cancelling</Text>
+              </View>
+              <Text className="text-2xl font-bold text-[#10B981]">${savings.total_saved?.toFixed(0) || 0}</Text>
+              <Text className="text-[9px] text-gray-500 mt-1 leading-3">
+                from {savings.cancelled_count} cancelled
+              </Text>
+              <View className="mt-3 pt-2 border-t border-gray-100">
+                <Text className="text-[9px] text-gray-500">
+                  Cancel unused subs to track savings
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
 
-        {/* Spending by Category Chart */}
-        <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6">
-          <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-              Spending by Category
-            </Text>
-            <Feather name="more-horizontal" size={20} color="#9CA3AF" />
-          </View>
-          <View className="flex-row items-center justify-between">
-            <DonutChart data={chartData} activeCount={summary?.active_subscriptions || 0} />
-            <View className="flex-1 ml-6 space-y-4">
-              {topCategories.map(cat => {
-                const pct = summary?.monthly_total 
-                  ? ((cat.monthly_total / summary.monthly_total) * 100).toFixed(0) 
-                  : 0;
-                return (
-                  <View key={cat.category} className="flex-row items-center justify-between">
-                    <View className="flex-row items-center">
-                      <View 
-                        className="w-2.5 h-2.5 rounded-full mr-2" 
-                        style={{ backgroundColor: CATEGORY_COLORS[cat.category] || '#9CA3AF' }} 
-                      />
-                      <Text className="text-sm text-gray-600">{cat.category}</Text>
-                    </View>
-                    <Text className="text-sm font-bold text-gray-900">{pct}%</Text>
-                  </View>
-                );
-              })}
+        {/* Reminders / Due This Week */}
+        <View className="mb-6">
+          <Text className="text-lg font-bold text-gray-900 mb-3">
+            Reminders
+          </Text>
+          <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <View className="bg-teal-50 px-4 py-2 flex-row items-center border-b border-gray-100">
+              <Feather name="calendar" size={14} color="#0D7377" />
+              <Text className="text-xs font-bold text-[#0D7377] ml-2">Due This Week</Text>
+              <View className="bg-white px-2 py-0.5 rounded-full ml-2">
+                <Text className="text-[10px] font-bold text-[#0D7377]">{dueSoon.length}</Text>
+              </View>
             </View>
+            {dueSoon.length > 0 ? dueSoon.map((sub, i) => (
+              <TouchableOpacity
+                key={sub.id}
+                onPress={() => router.push(`/subscription/${sub.id}`)}
+                className={`p-4 flex-row items-center justify-between ${i !== dueSoon.length - 1 ? 'border-b border-gray-100' : ''}`}
+              >
+                <View>
+                  <Text className="text-sm font-medium text-gray-900 mb-1">{sub.name}</Text>
+                  <Text className="text-xs text-gray-500">
+                    Due: {new Date(sub.nextPayment).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </Text>
+                </View>
+                <View className="items-end">
+                  <Text className="text-base font-bold text-gray-900 mb-1">
+                    ${Number(sub.cost).toFixed(0)}
+                  </Text>
+                  <Text className="text-[10px] text-gray-400">Due This Week</Text>
+                </View>
+              </TouchableOpacity>
+            )) : (
+              <View className="p-6 items-center justify-center">
+                <Text className="text-gray-500 text-sm">No payments due this week 🎉</Text>
+              </View>
+            )}
           </View>
         </View>
 
