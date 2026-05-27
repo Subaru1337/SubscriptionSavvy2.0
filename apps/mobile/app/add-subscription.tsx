@@ -1,27 +1,74 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, ScrollView,
+  Alert, ActivityIndicator
+} from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { api } from '../lib/api';
 import * as Notifications from 'expo-notifications';
 
+const CATEGORIES = ['Entertainment', 'Productivity', 'Health', 'Education', 'Finance', 'Shopping', 'Developer Tools', 'Other'];
+const CURRENCIES = ['USD', 'INR', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD'];
+const STATUSES = ['active', 'paused', 'cancelled'];
+
+function ChipSelector({ label, options, value, onChange }: {
+  label: string; options: string[]; value: string; onChange: (v: string) => void;
+}) {
+  return (
+    <View className="mb-4">
+      <Text className="text-text-primary font-medium mb-2">{label}</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View className="flex-row space-x-2">
+          {options.map((opt) => (
+            <TouchableOpacity
+              key={opt}
+              onPress={() => onChange(opt)}
+              className={`px-3 py-2 rounded-full border ${value === opt ? 'bg-primary border-primary' : 'bg-background border-border'}`}
+            >
+              <Text className={value === opt ? 'text-white font-medium text-sm' : 'text-text-primary text-sm'}>
+                {opt}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <View className="flex-row space-x-2">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <TouchableOpacity key={star} onPress={() => onChange(star)}>
+          <Text className={`text-2xl ${star <= value ? 'text-yellow-400' : 'text-gray-300'}`}>★</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
 export default function AddSubscriptionScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  
+
   const [form, setForm] = useState({
     name: '',
     cost: '',
     currency: 'USD',
-    billingCycle: 'monthly',
+    billingCycle: 'monthly' as 'monthly' | 'yearly',
     category: 'Entertainment',
-    nextPayment: new Date().toISOString().split('T')[0]
+    nextPayment: new Date().toISOString().split('T')[0],
+    status: 'active',
+    notes: '',
+    trialEndsOn: '',
+    worthItRating: 0,
   });
 
   const scheduleReminder = async (name: string, dateStr: string, cost: string) => {
     const triggerDate = new Date(dateStr);
-    triggerDate.setDate(triggerDate.getDate() - 1); // 1 day before
-    triggerDate.setHours(9, 0, 0, 0); // 9:00 AM
-
+    triggerDate.setDate(triggerDate.getDate() - 1);
+    triggerDate.setHours(9, 0, 0, 0);
     if (triggerDate > new Date()) {
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -35,75 +82,76 @@ export default function AddSubscriptionScreen() {
 
   const handleSubmit = async () => {
     if (!form.name || !form.cost) {
-      Alert.alert('Error', 'Please fill in name and cost');
+      Alert.alert('Error', 'Please fill in Name and Cost');
+      return;
+    }
+    const costNum = parseFloat(form.cost);
+    if (isNaN(costNum) || costNum <= 0) {
+      Alert.alert('Error', 'Cost must be a positive number');
       return;
     }
 
     setLoading(true);
     try {
       await api.post('/subscriptions', {
-        ...form,
-        cost: parseFloat(form.cost)
+        name: form.name,
+        cost: costNum,
+        currency: form.currency,
+        billingCycle: form.billingCycle,
+        category: form.category,
+        nextPayment: form.nextPayment,
+        status: form.status,
+        notes: form.notes || null,
+        trialEndsOn: form.trialEndsOn || null,
       });
-      
-      // Schedule reminder if permission is granted
+
       const settings = await Notifications.getPermissionsAsync();
-      if (settings.granted) {
+      if (settings.granted && form.status === 'active') {
         await scheduleReminder(form.name, form.nextPayment, `${form.currency} ${form.cost}`);
       }
 
+      // Update worth-it rating after creation if set
       router.back();
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Failed to add subscription');
+    } catch (error: any) {
+      const msg = error?.response?.data?.error || 'Failed to add subscription';
+      Alert.alert('Error', msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView className="flex-1 bg-background p-4">
-      <View className="bg-card p-4 rounded-2xl shadow-sm border border-border mb-6">
-        
-        <Text className="text-text-primary font-medium mb-2">Service Name</Text>
-        <TextInput 
+    <ScrollView className="flex-1 bg-background" contentContainerStyle={{ padding: 16 }}>
+      <View className="bg-card p-4 rounded-2xl shadow-sm border border-border mb-4">
+        <Text className="text-text-primary font-medium mb-2">Service Name *</Text>
+        <TextInput
           className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
           placeholder="Netflix, Spotify..."
+          placeholderTextColor="#9CA3AF"
           value={form.name}
-          onChangeText={(text) => setForm({...form, name: text})}
+          onChangeText={(t) => setForm({ ...form, name: t })}
         />
 
-        <Text className="text-text-primary font-medium mb-2">Cost</Text>
-        <TextInput 
+        <Text className="text-text-primary font-medium mb-2">Cost *</Text>
+        <TextInput
           className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
           placeholder="15.99"
-          keyboardType="numeric"
+          placeholderTextColor="#9CA3AF"
+          keyboardType="decimal-pad"
           value={form.cost}
-          onChangeText={(text) => setForm({...form, cost: text})}
+          onChangeText={(t) => setForm({ ...form, cost: t })}
         />
 
-        <Text className="text-text-primary font-medium mb-2">Currency (e.g., USD, EUR, INR)</Text>
-        <TextInput 
-          className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
-          value={form.currency}
-          onChangeText={(text) => setForm({...form, currency: text})}
-          autoCapitalize="characters"
-        />
-
-        <Text className="text-text-primary font-medium mb-2">Category</Text>
-        <TextInput 
-          className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
-          value={form.category}
-          onChangeText={(text) => setForm({...form, category: text})}
-        />
+        <ChipSelector label="Currency" options={CURRENCIES} value={form.currency} onChange={(v) => setForm({ ...form, currency: v })} />
+        <ChipSelector label="Category" options={CATEGORIES} value={form.category} onChange={(v) => setForm({ ...form, category: v })} />
 
         <Text className="text-text-primary font-medium mb-2">Billing Cycle</Text>
         <View className="flex-row space-x-2 mb-4">
           {['monthly', 'yearly'].map((cycle) => (
-            <TouchableOpacity 
+            <TouchableOpacity
               key={cycle}
               className={`flex-1 p-3 rounded-lg border items-center ${form.billingCycle === cycle ? 'bg-primary border-primary' : 'bg-background border-border'}`}
-              onPress={() => setForm({...form, billingCycle: cycle})}
+              onPress={() => setForm({ ...form, billingCycle: cycle as 'monthly' | 'yearly' })}
             >
               <Text className={form.billingCycle === cycle ? 'text-white font-medium' : 'text-text-primary'}>
                 {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
@@ -112,14 +160,46 @@ export default function AddSubscriptionScreen() {
           ))}
         </View>
 
-        <Text className="text-text-primary font-medium mb-2">Next Payment Date (YYYY-MM-DD)</Text>
-        <TextInput 
-          className="bg-background border border-border rounded-lg p-3 mb-6 text-text-primary"
+        <ChipSelector label="Status" options={STATUSES} value={form.status} onChange={(v) => setForm({ ...form, status: v })} />
+
+        <Text className="text-text-primary font-medium mb-2">Next Payment Date (YYYY-MM-DD) *</Text>
+        <TextInput
+          className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
           value={form.nextPayment}
-          onChangeText={(text) => setForm({...form, nextPayment: text})}
+          placeholderTextColor="#9CA3AF"
+          onChangeText={(t) => setForm({ ...form, nextPayment: t })}
         />
 
-        <TouchableOpacity 
+        <Text className="text-text-primary font-medium mb-2">Trial Ends On (YYYY-MM-DD, optional)</Text>
+        <TextInput
+          className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
+          placeholder="Leave empty if no trial"
+          placeholderTextColor="#9CA3AF"
+          value={form.trialEndsOn}
+          onChangeText={(t) => setForm({ ...form, trialEndsOn: t })}
+        />
+
+        <Text className="text-text-primary font-medium mb-2">Notes (optional)</Text>
+        <TextInput
+          className="bg-background border border-border rounded-lg p-3 mb-4 text-text-primary"
+          placeholder="Any notes about this subscription..."
+          placeholderTextColor="#9CA3AF"
+          value={form.notes}
+          onChangeText={(t) => setForm({ ...form, notes: t })}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+        />
+
+        <Text className="text-text-primary font-medium mb-2">Worth It Rating</Text>
+        <View className="mb-4">
+          <StarRating value={form.worthItRating} onChange={(v) => setForm({ ...form, worthItRating: v })} />
+          <Text className="text-text-secondary text-xs mt-1">
+            {form.worthItRating === 0 ? 'Not rated' : ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'][form.worthItRating]}
+          </Text>
+        </View>
+
+        <TouchableOpacity
           className="bg-primary p-4 rounded-lg items-center"
           onPress={handleSubmit}
           disabled={loading}
@@ -130,7 +210,6 @@ export default function AddSubscriptionScreen() {
             <Text className="text-white font-bold text-lg">Save Subscription</Text>
           )}
         </TouchableOpacity>
-
       </View>
     </ScrollView>
   );
