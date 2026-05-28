@@ -50,7 +50,8 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 
 export default function AddSubscriptionScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const id = params.id || params.edit;
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(!!id);
 
