@@ -27,6 +27,28 @@ const updateSchema = z.object({
   worthItRating: z.number().int().min(1).max(5).optional().nullable(),
 });
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const authUser = await getAuthUser();
+  if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const subscription = await prisma.subscription.findUnique({
+    where: { id: params.id },
+  });
+
+  if (!subscription) {
+    return NextResponse.json({ error: "Subscription not found" }, { status: 404 });
+  }
+
+  if (subscription.userId !== authUser.userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return NextResponse.json({ subscription });
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
