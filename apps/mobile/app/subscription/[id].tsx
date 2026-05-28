@@ -23,6 +23,7 @@ export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
   const [sub, setSub] = useState<any>(null);
   const [priceHistory, setPriceHistory] = useState<PriceRecord[]>([]);
 
@@ -102,6 +103,19 @@ export default function SubscriptionDetailScreen() {
         },
       ]
     );
+  };
+
+  const handleMarkAsPaid = async () => {
+    setPaying(true);
+    try {
+      await api.post(`/subscriptions/${id}/pay`);
+      fetchData();
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Failed to mark as paid';
+      Alert.alert('Error', msg);
+    } finally {
+      setPaying(false);
+    }
   };
 
   if (loading || !sub) {
@@ -200,13 +214,28 @@ export default function SubscriptionDetailScreen() {
           <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
             Next Payment
           </Text>
-          <View className="flex-row items-center mb-1">
-            <Feather name="calendar" size={16} color="#4B5563" className="mr-2" />
-            <Text className="text-base font-bold text-gray-900 ml-2">
-              {nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-            </Text>
+          <View className="flex-row items-center justify-between mb-1">
+            <View className="flex-row items-center">
+              <Feather name="calendar" size={16} color="#4B5563" className="mr-2" />
+              <Text className="text-base font-bold text-gray-900">
+                {nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </Text>
+            </View>
+            {daysRemaining <= 0 && sub.status === 'active' && (
+              <TouchableOpacity 
+                onPress={handleMarkAsPaid}
+                disabled={paying}
+                className="bg-[#10B981] px-3 py-1.5 rounded-lg flex-row items-center"
+              >
+                {paying ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="text-white text-[10px] font-bold">MARK AS PAID</Text>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
-          <Text className="text-xs text-gray-500">
+          <Text className="text-xs text-gray-500 mt-1">
             {daysRemaining > 0 ? `${daysRemaining} days remaining` : daysRemaining === 0 ? 'Due today' : `${Math.abs(daysRemaining)} days overdue`}
           </Text>
         </View>
