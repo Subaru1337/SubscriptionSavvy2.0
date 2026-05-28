@@ -71,21 +71,28 @@ export default function AddSubscriptionScreen() {
   useEffect(() => {
     if (id) {
       setFetching(true);
-      api.get(`/subscriptions/${id}`)
+      api.get('/subscriptions?status=all')
         .then(res => {
-          const sub = res.data.subscription;
-          setForm({
-            name: sub.name,
-            cost: String(sub.cost),
-            currency: sub.currency,
-            billingCycle: sub.billingCycle,
-            category: sub.category,
-            nextPayment: sub.nextPayment ? sub.nextPayment.split('T')[0] : '',
-            status: sub.status,
-            notes: sub.notes || '',
-            trialEndsOn: sub.trialEndsOn ? sub.trialEndsOn.split('T')[0] : '',
-            worthItRating: sub.worthItRating || 0,
-          });
+          const subs = Array.isArray(res.data) ? res.data : res.data?.subscriptions ?? [];
+          const sub = subs.find((s: any) => s.id === id);
+          
+          if (sub) {
+            setForm({
+              name: sub.name,
+              cost: String(sub.cost),
+              currency: sub.currency,
+              billingCycle: sub.billingCycle,
+              category: sub.category,
+              nextPayment: sub.nextPayment ? sub.nextPayment.split('T')[0] : '',
+              status: sub.status,
+              notes: sub.notes || '',
+              trialEndsOn: sub.trialEndsOn ? sub.trialEndsOn.split('T')[0] : '',
+              worthItRating: sub.worthItRating || 0,
+            });
+          } else {
+            Alert.alert('Error', 'Subscription not found');
+            router.back();
+          }
         })
         .catch(() => Alert.alert('Error', 'Failed to load subscription details'))
         .finally(() => setFetching(false));
