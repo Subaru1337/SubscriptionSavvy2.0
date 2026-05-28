@@ -157,9 +157,9 @@ export default function SubscriptionsScreen() {
                     {statusBadge.label}
                   </Text>
                 </View>
-                <View className="items-end mt-1">
-                  <Text className="text-base font-medium text-gray-900">
-                    ${Number(sub.cost).toFixed(2)}
+                <View className="items-end">
+                  <Text className="text-base font-bold text-gray-900">
+                    ₹{Number(sub.cost).toFixed(2)}
                   </Text>
                   <Text className={`text-[10px] font-bold uppercase mt-0.5 ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
                     {isOverdue ? 'PAST DUE' : nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

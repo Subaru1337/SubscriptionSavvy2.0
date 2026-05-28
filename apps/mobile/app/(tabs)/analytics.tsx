@@ -140,11 +140,11 @@ export default function AnalyticsScreen() {
                 <View className="flex-row flex-wrap mb-2">
                   <View className="w-1/2 mb-4">
                     <Text className="text-[10px] text-gray-500 font-bold uppercase mb-1">Spent This Year</Text>
-                    <Text className="text-lg font-bold text-gray-900">${annualRecap.year_total?.toFixed(0)}</Text>
+                    <Text className="text-lg font-bold text-gray-900">₹{annualRecap.year_total?.toFixed(0)}</Text>
                   </View>
                   <View className="w-1/2 mb-4">
                     <Text className="text-[10px] text-gray-500 font-bold uppercase mb-1">Monthly Avg</Text>
-                    <Text className="text-lg font-bold text-gray-900">${annualRecap.avg_monthly?.toFixed(0)}</Text>
+                    <Text className="text-lg font-bold text-gray-900">₹{annualRecap.avg_monthly?.toFixed(0)}</Text>
                   </View>
                   <View className="w-1/2">
                     <Text className="text-[10px] text-gray-500 font-bold uppercase mb-1">Payments Made</Text>
@@ -160,7 +160,7 @@ export default function AnalyticsScreen() {
                 {annualRecap.most_expensive_sub && (
                   <View className="mt-2 pt-3 border-t border-gray-100">
                     <Text className="text-xs text-gray-600">
-                      Most expensive this year: <Text className="font-bold text-gray-900">{annualRecap.most_expensive_sub.name}</Text> at ${annualRecap.most_expensive_sub.total_paid}
+                      Most expensive this year: <Text className="font-bold text-gray-900">{annualRecap.most_expensive_sub.name}</Text> at ₹{annualRecap.most_expensive_sub.total_paid}
                     </Text>
                   </View>
                 )}
@@ -174,7 +174,7 @@ export default function AnalyticsScreen() {
           <View className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-6">
             <View className="flex-row justify-between items-center mb-3">
               <Text className="text-sm font-medium text-gray-900">
-                ${monthlyTotal.toFixed(0)} monthly budget used
+                ₹{monthlyTotal.toFixed(0)} monthly budget used
               </Text>
               <Text className="text-sm font-bold" style={{ color: getBudgetColor(budgetPercent) }}>
                 {budgetPercent.toFixed(1)}%
@@ -231,7 +231,7 @@ export default function AnalyticsScreen() {
                   return (
                     <View key={i} className="items-center flex-1">
                       {t.total > 0 && (
-                        <Text className="text-[8px] font-bold text-gray-500 mb-1">${t.total.toFixed(0)}</Text>
+                        <Text className="text-[8px] font-bold text-gray-500 mb-1">₹{t.total.toFixed(0)}</Text>
                       )}
                       <View 
                         className="w-full max-w-[24px] bg-[#0D7377] rounded-t-sm" 
@@ -260,12 +260,12 @@ export default function AnalyticsScreen() {
                       <View className="w-2.5 h-2.5 rounded-full mr-2" style={{ backgroundColor: CATEGORY_COLORS[cat.category] || '#9CA3AF' }} />
                       <Text className="text-sm font-medium text-gray-900">{cat.category}</Text>
                     </View>
-                    <Text className="text-sm font-bold text-gray-900">${cat.monthly_total.toFixed(0)}/mo</Text>
+                    <Text className="text-sm font-bold text-gray-900">₹{cat.monthly_total.toFixed(0)}/mo</Text>
                   </View>
                   {cat.budget_limit && (
                     <View>
                       <View className="flex-row justify-between items-center text-xs mb-1">
-                        <Text className="text-[10px] text-gray-500">${cat.monthly_total.toFixed(0)} of ${cat.budget_limit.toFixed(0)}</Text>
+                        <Text className="text-[10px] text-gray-500">₹{cat.monthly_total.toFixed(0)} of ₹{cat.budget_limit.toFixed(0)}</Text>
                         <Text className="text-[10px] font-bold" style={{ color: getBudgetColor(cat.budget_used_percent) }}>
                           {cat.budget_used_percent?.toFixed(0)}%
                         </Text>

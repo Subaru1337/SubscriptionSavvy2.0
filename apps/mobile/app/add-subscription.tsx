@@ -2,8 +2,8 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   Alert, ActivityIndicator
 } from 'react-native';
-import { useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { api } from '../lib/api';
 import * as Notifications from 'expo-notifications';
 
@@ -50,7 +50,9 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 
 export default function AddSubscriptionScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(!!id);
 
   const [form, setForm] = useState({
     name: '',
@@ -64,6 +66,30 @@ export default function AddSubscriptionScreen() {
     trialEndsOn: '',
     worthItRating: 0,
   });
+
+  useEffect(() => {
+    if (id) {
+      setFetching(true);
+      api.get(`/subscriptions/${id}`)
+        .then(res => {
+          const sub = res.data.subscription;
+          setForm({
+            name: sub.name,
+            cost: String(sub.cost),
+            currency: sub.currency,
+            billingCycle: sub.billingCycle,
+            category: sub.category,
+            nextPayment: sub.nextPayment ? sub.nextPayment.split('T')[0] : '',
+            status: sub.status,
+            notes: sub.notes || '',
+            trialEndsOn: sub.trialEndsOn ? sub.trialEndsOn.split('T')[0] : '',
+            worthItRating: sub.worthItRating || 0,
+          });
+        })
+        .catch(() => Alert.alert('Error', 'Failed to load subscription details'))
+        .finally(() => setFetching(false));
+    }
+  }, [id]);
 
   const scheduleReminder = async (name: string, dateStr: string, cost: string) => {
     const triggerDate = new Date(dateStr);
@@ -93,7 +119,7 @@ export default function AddSubscriptionScreen() {
 
     setLoading(true);
     try {
-      await api.post('/subscriptions', {
+      const payload = {
         name: form.name,
         cost: costNum,
         currency: form.currency,
@@ -103,7 +129,14 @@ export default function AddSubscriptionScreen() {
         status: form.status,
         notes: form.notes || null,
         trialEndsOn: form.trialEndsOn || null,
-      });
+        worthItRating: form.worthItRating,
+      };
+
+      if (id) {
+        await api.put(`/subscriptions/${id}`, payload);
+      } else {
+        await api.post('/subscriptions', payload);
+      }
 
       const settings = await Notifications.getPermissionsAsync();
       if (settings.granted && form.status === 'active') {
@@ -113,12 +146,25 @@ export default function AddSubscriptionScreen() {
       // Update worth-it rating after creation if set
       router.back();
     } catch (error: any) {
-      const msg = error?.response?.data?.error || 'Failed to add subscription';
-      Alert.alert('Error', msg);
+      if (error?.response?.status === 409 && error?.response?.data?.existing) {
+        const ext = error.response.data.existing;
+        Alert.alert('Duplicate Found', `You already have a subscription to ${ext.name} (${ext.currency}${ext.cost}). Please use a different name or edit the existing one.`);
+      } else {
+        const msg = error?.response?.data?.error || 'Failed to save subscription';
+        Alert.alert('Error', msg);
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  if (fetching) {
+    return (
+      <View className="flex-1 bg-background justify-center items-center">
+        <ActivityIndicator size="large" color="#0D7377" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView className="flex-1 bg-background" contentContainerStyle={{ padding: 16 }}>
@@ -207,7 +253,7 @@ export default function AddSubscriptionScreen() {
           {loading ? (
             <ActivityIndicator color="white" />
           ) : (
-            <Text className="text-white font-bold text-lg">Save Subscription</Text>
+            <Text className="text-white font-bold text-lg">{id ? 'Save Changes' : 'Save Subscription'}</Text>
           )}
         </TouchableOpacity>
       </View>

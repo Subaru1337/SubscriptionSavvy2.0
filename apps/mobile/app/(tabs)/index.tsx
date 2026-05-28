@@ -88,7 +88,7 @@ export default function DashboardScreen() {
               Monthly Spend
             </Text>
             <Text className="text-2xl font-bold text-[#0D7377]">
-              ${summary?.monthly_total?.toFixed(0) || '0'}
+              ₹{summary?.monthly_total?.toFixed(0) || '0'}
             </Text>
             <Text className="text-[10px] text-gray-400 mt-1">per month</Text>
           </View>
@@ -98,7 +98,7 @@ export default function DashboardScreen() {
               Annual Projection
             </Text>
             <Text className="text-2xl font-bold text-gray-900">
-              ${summary?.annual_total?.toFixed(0) || '0'}
+              ₹{summary?.annual_total?.toFixed(0) || '0'}
             </Text>
             <Text className="text-[10px] text-gray-400 mt-1">per year</Text>
           </View>
@@ -122,14 +122,14 @@ export default function DashboardScreen() {
                 <Feather name="trending-up" size={14} color="#0D7377" />
                 <Text className="text-[10px] font-bold text-gray-900 ml-1">Next 30 Days</Text>
               </View>
-              <Text className="text-2xl font-bold text-gray-900">${forecast.next_month_total?.toFixed(0) || 0}</Text>
+              <Text className="text-2xl font-bold text-gray-900">₹{forecast.next_month_total?.toFixed(0) || 0}</Text>
               <Text className="text-[9px] text-gray-500 mt-1 leading-3">
                 across {forecast.billing_count} upcoming payments
               </Text>
               {forecast.largest_upcoming && (
                 <View className="mt-3 pt-2 border-t border-gray-100">
                   <Text className="text-[9px] text-gray-500">
-                    Largest: {forecast.largest_upcoming.name} — ${forecast.largest_upcoming.amount}
+                    Largest: {forecast.largest_upcoming.name} — ₹{forecast.largest_upcoming.amount}
                   </Text>
                 </View>
               )}
@@ -142,7 +142,7 @@ export default function DashboardScreen() {
                 <Feather name="heart" size={14} color="#10B981" />
                 <Text className="text-[10px] font-bold text-gray-900 ml-1">Saved by Cancelling</Text>
               </View>
-              <Text className="text-2xl font-bold text-[#10B981]">${savings.total_saved?.toFixed(0) || 0}</Text>
+              <Text className="text-2xl font-bold text-[#10B981]">₹{savings.total_saved?.toFixed(0) || 0}</Text>
               <Text className="text-[9px] text-gray-500 mt-1 leading-3">
                 from {savings.cancelled_count} cancelled
               </Text>
@@ -182,7 +182,7 @@ export default function DashboardScreen() {
                 </View>
                 <View className="items-end">
                   <Text className="text-base font-bold text-gray-900 mb-1">
-                    ${Number(sub.cost).toFixed(0)}
+                    ₹{Number(sub.cost).toFixed(0)}
                   </Text>
                   <Text className="text-[10px] text-gray-400">Due This Week</Text>
                 </View>
@@ -226,7 +226,7 @@ export default function DashboardScreen() {
               </View>
               <View className="items-end">
                 <Text className="text-base font-bold text-[#0D7377] mb-1">
-                  ${Number(sub.cost).toFixed(2)}
+                  ₹{Number(sub.cost).toFixed(2)}
                 </Text>
                 <View className="bg-gray-100 px-2 py-0.5 rounded-md">
                   <Text className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">

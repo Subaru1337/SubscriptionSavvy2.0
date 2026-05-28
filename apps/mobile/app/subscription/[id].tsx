@@ -82,6 +82,28 @@ export default function SubscriptionDetailScreen() {
     );
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Subscription',
+      'Are you sure you want to permanently delete this subscription? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.delete(`/subscriptions/${id}`);
+              router.back();
+            } catch {
+              Alert.alert('Error', 'Failed to delete subscription');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   if (loading || !sub) {
     return (
       <View className="flex-1 justify-center items-center bg-[#F9FAFB]">
@@ -166,7 +188,7 @@ export default function SubscriptionDetailScreen() {
             Monthly Cost
           </Text>
           <Text className="text-2xl font-bold text-[#0D7377] mb-1">
-            {sub.currency} {Number(sub.cost).toFixed(2)}
+            ₹{Number(sub.cost).toFixed(2)}
           </Text>
           <Text className="text-xs text-gray-500">
             Next increase: Not scheduled
@@ -231,7 +253,7 @@ export default function SubscriptionDetailScreen() {
                     {new Date(record.changedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </Text>
                   <Text className="text-sm font-medium text-gray-900 flex-1 text-center">
-                    {record.currency} {Number(record.oldCost).toFixed(2)} → {Number(record.newCost).toFixed(2)}
+                    ₹{Number(record.oldCost).toFixed(2)} → ₹{Number(record.newCost).toFixed(2)}
                   </Text>
                   <View className="flex-1 items-end">
                     <View className="bg-[#059669] px-2 py-0.5 rounded flex-row items-center">
@@ -248,11 +270,11 @@ export default function SubscriptionDetailScreen() {
         )}
 
         {/* Danger Zone */}
-        {sub.status !== 'cancelled' && (
-          <View className="mb-4">
-            <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">
-              Danger Zone
-            </Text>
+        <View className="mb-4">
+          <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">
+            Danger Zone
+          </Text>
+          {sub.status !== 'cancelled' ? (
             <View className="bg-[#FEF2F2] p-5 rounded-2xl border border-[#FECACA]">
               <Text className="text-base font-bold text-[#DC2626] mb-2">Cancel Subscription</Text>
               <Text className="text-sm text-gray-700 mb-4">
@@ -265,8 +287,21 @@ export default function SubscriptionDetailScreen() {
                 <Text className="text-white font-bold text-sm">CANCEL NOW</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        )}
+          ) : (
+            <View className="bg-[#FEF2F2] p-5 rounded-2xl border border-[#FECACA]">
+              <Text className="text-base font-bold text-[#DC2626] mb-2">Delete Subscription</Text>
+              <Text className="text-sm text-gray-700 mb-4">
+                This subscription is currently cancelled. Deleting it will remove it permanently from your history and analytics.
+              </Text>
+              <TouchableOpacity 
+                onPress={handleDelete}
+                className="bg-[#DC2626] py-3 rounded-lg items-center border border-[#B91C1C]"
+              >
+                <Text className="text-white font-bold text-sm">PERMANENTLY DELETE</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </View>
   );

@@ -199,9 +199,9 @@ export default function CalendarScreen() {
             Upcoming ({MONTH_NAMES[selectedDate.getMonth()].slice(0,3)} {selectedDate.getDate()})
           </Text>
           {selectedTotal > 0 && (
-            <View className="bg-yellow-400 px-3 py-1 rounded-full">
-              <Text className="text-[10px] font-bold text-gray-900">
-                Total ${selectedTotal.toFixed(2)}
+            <View className="bg-teal-50 px-3 py-1 rounded-full">
+              <Text className="text-xs font-bold text-[#0D7377]">
+                Total ₹{selectedTotal.toFixed(2)}
               </Text>
             </View>
           )}
@@ -230,8 +230,8 @@ export default function CalendarScreen() {
               </View>
             </View>
             <View className="items-end">
-              <Text className="text-base font-bold text-gray-900 mb-1">
-                ${Number(sub.cost).toFixed(2)}
+              <Text className="text-base font-bold text-[#0D7377] mb-1">
+                ₹{Number(sub.cost).toFixed(2)}
               </Text>
               <Text className="text-[9px] font-medium text-gray-500 uppercase">
                 {sub.billingCycle}
