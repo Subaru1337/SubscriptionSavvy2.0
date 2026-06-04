@@ -66,7 +66,11 @@ export default function DashboardScreen() {
   const today = new Date();
   const in7 = new Date(today);
   in7.setDate(in7.getDate() + 7);
-  const dueSoon = subscriptions.filter(s => new Date(s.nextPayment) <= in7 && new Date(s.nextPayment) >= new Date(new Date().setHours(0,0,0,0)));
+  const dueSoon = subscriptions.filter(s => s.status === 'active' && new Date(s.nextPayment) <= in7 && new Date(s.nextPayment) >= new Date(new Date().setHours(0,0,0,0)));
+  
+  // Overdue
+  const overdue = subscriptions.filter(s => s.status === 'active' && new Date(s.nextPayment) < new Date(new Date().setHours(0,0,0,0)))
+    .sort((a, b) => new Date(a.nextPayment).getTime() - new Date(b.nextPayment).getTime());
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
@@ -194,6 +198,43 @@ export default function DashboardScreen() {
             )}
           </View>
         </View>
+
+        {/* Overdue (Only show if there are any) */}
+        {overdue.length > 0 && (
+          <View className="mb-6">
+            <View className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
+              <View className="bg-red-50 px-4 py-2 flex-row items-center border-b border-red-100">
+                <Feather name="alert-circle" size={14} color="#DC2626" />
+                <Text className="text-xs font-bold text-[#DC2626] ml-2 uppercase">Overdue</Text>
+                <View className="bg-white px-2 py-0.5 rounded-full ml-2">
+                  <Text className="text-[10px] font-bold text-[#DC2626]">{overdue.length}</Text>
+                </View>
+              </View>
+              {overdue.map((sub, i) => (
+                <TouchableOpacity
+                  key={sub.id}
+                  onPress={() => router.push(`/subscription/${sub.id}`)}
+                  className={`p-4 flex-row items-center justify-between ${i !== overdue.length - 1 ? 'border-b border-gray-100' : ''}`}
+                >
+                  <View>
+                    <Text className="text-sm font-medium text-gray-900 mb-1">{sub.name}</Text>
+                    <Text className="text-xs text-red-500 font-medium">
+                      Due: {new Date(sub.nextPayment).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </Text>
+                  </View>
+                  <View className="items-end">
+                    <Text className="text-base font-bold text-gray-900 mb-1">
+                      ₹{Number(sub.cost).toFixed(0)}
+                    </Text>
+                    <View className="bg-red-100 px-2 py-0.5 rounded-md">
+                      <Text className="text-[10px] text-red-600 font-bold uppercase tracking-widest">Past Due</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Upcoming Renewals */}
         <View className="flex-row items-center justify-between mb-4">
