@@ -1,6 +1,6 @@
 import {
   View, Text, ScrollView, RefreshControl,
-  TouchableOpacity, ActivityIndicator
+  TouchableOpacity, ActivityIndicator, Alert
 } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
@@ -17,10 +17,24 @@ type Summary = {
 export default function DashboardScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [forecast, setForecast] = useState<any>(null);
   const [savings, setSavings] = useState<any>(null);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
+
+  const handleMarkAsPaid = async (id: string) => {
+    setPaying(id);
+    try {
+      await api.post(`/subscriptions/${id}/pay`);
+      fetchData();
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Failed to mark as paid';
+      Alert.alert('Error', msg);
+    } finally {
+      setPaying(null);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -216,19 +230,32 @@ export default function DashboardScreen() {
                   onPress={() => router.push(`/subscription/${sub.id}`)}
                   className={`p-4 flex-row items-center justify-between ${i !== overdue.length - 1 ? 'border-b border-gray-100' : ''}`}
                 >
-                  <View>
-                    <Text className="text-sm font-medium text-gray-900 mb-1">{sub.name}</Text>
+                  <View className="flex-1 mr-2">
+                    <Text className="text-sm font-medium text-gray-900 mb-1" numberOfLines={1}>{sub.name}</Text>
                     <Text className="text-xs text-red-500 font-medium">
                       Due: {new Date(sub.nextPayment).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </Text>
                   </View>
-                  <View className="items-end">
-                    <Text className="text-base font-bold text-gray-900 mb-1">
-                      ₹{Number(sub.cost).toFixed(0)}
-                    </Text>
-                    <View className="bg-red-100 px-2 py-0.5 rounded-md">
-                      <Text className="text-[10px] text-red-600 font-bold uppercase tracking-widest">Past Due</Text>
+                  <View className="flex-row items-center">
+                    <View className="items-end mr-3">
+                      <Text className="text-base font-bold text-gray-900 mb-1">
+                        ₹{Number(sub.cost).toFixed(0)}
+                      </Text>
+                      <View className="bg-red-100 px-2 py-0.5 rounded-md">
+                        <Text className="text-[10px] text-red-600 font-bold uppercase tracking-widest">Past Due</Text>
+                      </View>
                     </View>
+                    <TouchableOpacity 
+                      onPress={() => handleMarkAsPaid(sub.id)}
+                      disabled={paying === sub.id}
+                      className="bg-[#10B981] p-2.5 rounded-full items-center justify-center shadow-sm"
+                    >
+                      {paying === sub.id ? (
+                        <ActivityIndicator size="small" color="white" />
+                      ) : (
+                        <Feather name="check" size={16} color="white" />
+                      )}
+                    </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
               ))}

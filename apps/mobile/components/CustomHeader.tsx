@@ -15,10 +15,6 @@ export default function CustomHeader() {
           SubscriptionSavvy
         </Text>
       </View>
-      <Image 
-        source={{ uri: 'https://i.pravatar.cc/150?img=11' }} 
-        className="w-9 h-9 rounded-full bg-gray-200"
-      />
     </View>
   );
 }

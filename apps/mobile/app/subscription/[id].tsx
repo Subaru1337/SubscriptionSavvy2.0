@@ -142,10 +142,6 @@ export default function SubscriptionDetailScreen() {
           headerRight: () => (
             <View className="flex-row items-center space-x-3">
               <Feather name="search" size={20} color="#4B5563" />
-              <Image 
-                source={{ uri: 'https://i.pravatar.cc/150?img=11' }} 
-                className="w-8 h-8 rounded-full bg-gray-200"
-              />
             </View>
           ),
           headerLeft: () => (
