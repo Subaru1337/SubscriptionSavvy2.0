@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
@@ -11,7 +11,26 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = await SecureStore.getItemAsync('auth_token');
+        if (token) {
+          router.replace('/(tabs)');
+        } else {
+          setIsCheckingAuth(false);
+        }
+      } catch (error) {
+        console.error('Failed to check auth token', error);
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -42,6 +61,14 @@ export default function LoginScreen() {
       setLoading(false);
     }
   };
+
+  if (isCheckingAuth) {
+    return (
+      <View className="flex-1 bg-[#0D7377] justify-center items-center">
+        <ActivityIndicator size="large" color="white" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-[#0D7377] justify-center p-6">
