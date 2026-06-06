@@ -1,20 +1,34 @@
-import { View, Text, Image } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CustomHeader() {
   const insets = useSafeAreaInsets();
+  
+  const today = new Date();
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'short', day: 'numeric' };
+  const dateString = today.toLocaleDateString('en-US', options);
+
+  const hour = today.getHours();
+  let greeting = 'Good evening';
+  if (hour < 12) greeting = 'Good morning';
+  else if (hour < 18) greeting = 'Good afternoon';
+
   return (
     <View 
-      className="flex-row items-center justify-between px-4 pb-3 bg-white border-b border-gray-100"
+      className="flex-row items-center justify-between px-6 pb-4 bg-[#F4F6F9]"
       style={{ paddingTop: Math.max(insets.top, 16) }}
     >
-      <View className="flex-row items-center space-x-2">
-        <Feather name="layers" size={20} color="#0D7377" />
-        <Text className="text-xl font-bold text-[#0D7377]">
-          SubscriptionSavvy
+      <View>
+        <Text className="text-2xl font-bold text-[#111827] mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+          {greeting}, Varad 👋
+        </Text>
+        <Text className="text-xs font-medium text-[#6B7280]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+          {dateString}
         </Text>
       </View>
+      <TouchableOpacity className="w-12 h-12 rounded-full bg-[#0D9E75] items-center justify-center shadow-sm">
+        <Text className="text-white font-bold text-lg" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>V</Text>
+      </TouchableOpacity>
     </View>
   );
 }

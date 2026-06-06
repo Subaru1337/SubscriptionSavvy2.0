@@ -6,6 +6,25 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Rect, Path } from 'react-native-svg';
+import AnimatedNumber from '../../components/AnimatedNumber';
+import AnimatedRing from '../../components/AnimatedRing';
+import SubscriptionLogo from '../../components/SubscriptionLogo';
+
+// Empty State SVG
+const CalendarEmptyState = () => (
+  <View className="items-center py-8">
+    <Svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0D9E75" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <Rect x="3" y="4" width="18" height="18" rx="2" ry="2"></Rect>
+      <Path d="M16 2v4"></Path>
+      <Path d="M8 2v4"></Path>
+      <Path d="M3 10h18"></Path>
+      <Path d="M9 16l2 2 4-4"></Path>
+    </Svg>
+    <Text className="text-[#6B7280] text-sm mt-4" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>No payments due this week 🎉</Text>
+  </View>
+);
 
 type Summary = {
   monthly_total: number;
@@ -65,8 +84,8 @@ export default function DashboardScreen() {
 
   if (loading && !summary) {
     return (
-      <View className="flex-1 justify-center items-center bg-[#F9FAFB]">
-        <ActivityIndicator size="large" color="#0D7377" />
+      <View className="flex-1 justify-center items-center bg-[#F4F6F9]">
+        <ActivityIndicator size="large" color="#0D9E75" />
       </View>
     );
   }
@@ -76,8 +95,15 @@ export default function DashboardScreen() {
     .sort((a, b) => new Date(a.nextPayment).getTime() - new Date(b.nextPayment).getTime())
     .slice(0, 3);
 
-  // Reminders / Due This Week
+  // Horizontal Timeline: Next 30 days
   const today = new Date();
+  const in30 = new Date(today);
+  in30.setDate(in30.getDate() + 30);
+  const next30DaysSubs = subscriptions
+    .filter(s => s.status === 'active' && new Date(s.nextPayment) <= in30 && new Date(s.nextPayment) >= new Date(new Date().setHours(0,0,0,0)))
+    .sort((a, b) => new Date(a.nextPayment).getTime() - new Date(b.nextPayment).getTime());
+
+  // Reminders / Due This Week
   const in7 = new Date(today);
   in7.setDate(in7.getDate() + 7);
   const dueSoon = subscriptions.filter(s => s.status === 'active' && new Date(s.nextPayment) <= in7 && new Date(s.nextPayment) >= new Date(new Date().setHours(0,0,0,0)));
@@ -86,190 +112,165 @@ export default function DashboardScreen() {
   const overdue = subscriptions.filter(s => s.status === 'active' && new Date(s.nextPayment) < new Date(new Date().setHours(0,0,0,0)))
     .sort((a, b) => new Date(a.nextPayment).getTime() - new Date(b.nextPayment).getTime());
 
+  const budgetUsed = summary?.budget_used_percent || 0;
+
   return (
-    <View className="flex-1 bg-[#F9FAFB]">
+    <View className="flex-1 bg-[#F4F6F9]">
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
+        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D9E75" />}
       >
-        {/* Header Section */}
-        <View className="mb-4 mt-2">
-          <Text className="text-2xl font-bold text-gray-900">
-            Dashboard
+        {/* Animated Hero Card */}
+        <LinearGradient
+          colors={['#0E1B2E', '#0D3B2F']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ borderRadius: 24, padding: 24, marginBottom: 32, shadowColor: '#0E1B2E', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 10 }}
+        >
+          <View className="flex-row justify-between items-center mb-6">
+            <View>
+              <Text className="text-gray-300 text-[10px] uppercase tracking-widest mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                Monthly Spend
+              </Text>
+              <AnimatedNumber 
+                value={summary?.monthly_total || 0} 
+                prefix="₹" 
+                className="text-[40px] text-white" 
+                style={{ fontFamily: 'PlusJakartaSans_700Bold', lineHeight: 48 }} 
+              />
+              <Text className="text-[#1DCCA0] text-xs mt-1" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+                this month · {summary?.active_subscriptions || 0} active subs
+              </Text>
+            </View>
+            <View className="items-center justify-center relative">
+              <AnimatedRing percentage={budgetUsed} size={72} strokeWidth={6} color="#1DCCA0" trackColor="rgba(255,255,255,0.15)" />
+              <View className="absolute items-center justify-center">
+                <Feather name="bar-chart-2" size={24} color="#1DCCA0" />
+              </View>
+            </View>
+          </View>
+          <View className="flex-row justify-between pt-4 border-t border-white/10">
+            <Text className="text-gray-300 text-xs" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+              Annual: ₹{(summary?.annual_total || 0).toLocaleString()}
+            </Text>
+            <Text className="text-[#1DCCA0] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+              vs last month: ↑ 0%
+            </Text>
+          </View>
+        </LinearGradient>
+
+        {/* Horizontal Renewal Timeline */}
+        <View className="mb-8 -mx-5 px-5">
+          <Text className="text-[15px] text-[#111827] mb-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+            Next 30 Days
           </Text>
-        </View>
-
-        {/* Overview Cards (Stack instead of grid for mobile) */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6 -mx-4 px-4 pb-2">
-          <View className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mr-4 w-40">
-            <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-              Monthly Spend
-            </Text>
-            <Text className="text-2xl font-bold text-[#0D7377]">
-              ₹{summary?.monthly_total?.toFixed(0) || '0'}
-            </Text>
-            <Text className="text-[10px] text-gray-400 mt-1">per month</Text>
-          </View>
-
-          <View className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mr-4 w-40">
-            <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-              Annual Projection
-            </Text>
-            <Text className="text-2xl font-bold text-gray-900">
-              ₹{summary?.annual_total?.toFixed(0) || '0'}
-            </Text>
-            <Text className="text-[10px] text-gray-400 mt-1">per year</Text>
-          </View>
-
-          <View className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mr-4 w-40">
-            <Text className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-              Active Subs
-            </Text>
-            <Text className="text-2xl font-bold text-gray-900">
-              {summary?.active_subscriptions || 0}
-            </Text>
-            <Text className="text-[10px] text-gray-400 mt-1">services tracked</Text>
-          </View>
-        </ScrollView>
-
-        {/* Short term outlook */}
-        <View className="flex-row space-x-4 mb-6">
-          {forecast && (
-            <View className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-              <View className="flex-row items-center mb-2">
-                <Feather name="trending-up" size={14} color="#0D7377" />
-                <Text className="text-[10px] font-bold text-gray-900 ml-1">Next 30 Days</Text>
-              </View>
-              <Text className="text-2xl font-bold text-gray-900">₹{forecast.next_month_total?.toFixed(0) || 0}</Text>
-              <Text className="text-[9px] text-gray-500 mt-1 leading-3">
-                across {forecast.billing_count} upcoming payments
-              </Text>
-              {forecast.largest_upcoming && (
-                <View className="mt-3 pt-2 border-t border-gray-100">
-                  <Text className="text-[9px] text-gray-500">
-                    Largest: {forecast.largest_upcoming.name} — ₹{forecast.largest_upcoming.amount}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
+            {next30DaysSubs.length > 0 ? next30DaysSubs.map((sub, i) => {
+              const isDueSoon = new Date(sub.nextPayment) <= in7;
+              const dateObj = new Date(sub.nextPayment);
+              return (
+                <TouchableOpacity 
+                  key={`${sub.id}-${i}`}
+                  onPress={() => router.push(`/subscription/${sub.id}`)}
+                  className={`bg-white rounded-[20px] p-4 mr-3 shadow-sm border ${isDueSoon ? 'border-[#0D9E75]' : 'border-transparent'} items-center w-[84px]`}
+                >
+                  <Text className="text-[10px] text-[#6B7280] mb-3 uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    {dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </Text>
-                </View>
-              )}
-            </View>
-          )}
-
-          {savings && (
-            <View className="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-              <View className="flex-row items-center mb-2">
-                <Feather name="heart" size={14} color="#10B981" />
-                <Text className="text-[10px] font-bold text-gray-900 ml-1">Saved by Cancelling</Text>
+                  <SubscriptionLogo name={sub.name} size={42} />
+                  <Text className="text-xs text-[#111827] mt-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    ₹{Number(sub.cost).toFixed(0)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            }) : (
+              <View className="bg-white rounded-[20px] p-6 shadow-sm border border-transparent">
+                <Text className="text-sm text-[#6B7280]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>No renewals coming up soon!</Text>
               </View>
-              <Text className="text-2xl font-bold text-[#10B981]">₹{savings.total_saved?.toFixed(0) || 0}</Text>
-              <Text className="text-[9px] text-gray-500 mt-1 leading-3">
-                from {savings.cancelled_count} cancelled
-              </Text>
-              <View className="mt-3 pt-2 border-t border-gray-100">
-                <Text className="text-[9px] text-gray-500">
-                  Cancel unused subs to track savings
-                </Text>
-              </View>
-            </View>
-          )}
+            )}
+          </ScrollView>
         </View>
 
         {/* Reminders / Due This Week */}
-        <View className="mb-6">
-          <Text className="text-lg font-bold text-gray-900 mb-3">
+        <View className="mb-8">
+          <Text className="text-[15px] text-[#111827] mb-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
             Reminders
           </Text>
-          <View className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <View className="bg-teal-50 px-4 py-2 flex-row items-center border-b border-gray-100">
-              <Feather name="calendar" size={14} color="#0D7377" />
-              <Text className="text-xs font-bold text-[#0D7377] ml-2">Due This Week</Text>
-              <View className="bg-white px-2 py-0.5 rounded-full ml-2">
-                <Text className="text-[10px] font-bold text-[#0D7377]">{dueSoon.length}</Text>
-              </View>
-            </View>
+          <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
             {dueSoon.length > 0 ? dueSoon.map((sub, i) => (
               <TouchableOpacity
                 key={sub.id}
                 onPress={() => router.push(`/subscription/${sub.id}`)}
-                className={`p-4 flex-row items-center justify-between ${i !== dueSoon.length - 1 ? 'border-b border-gray-100' : ''}`}
+                className={`p-4 flex-row items-center border-l-4 border-l-[#F59E0B] justify-between ${i !== dueSoon.length - 1 ? 'border-b border-[#F4F6F9]' : ''}`}
               >
-                <View>
-                  <Text className="text-sm font-medium text-gray-900 mb-1">{sub.name}</Text>
-                  <Text className="text-xs text-gray-500">
-                    Due: {new Date(sub.nextPayment).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  </Text>
+                <View className="flex-row items-center">
+                  <SubscriptionLogo name={sub.name} size={40} />
+                  <View className="ml-4">
+                    <Text className="text-sm text-[#111827] mb-0.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{sub.name}</Text>
+                    <Text className="text-xs text-[#F59E0B]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+                      Due: {new Date(sub.nextPayment).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                    </Text>
+                  </View>
                 </View>
                 <View className="items-end">
-                  <Text className="text-base font-bold text-gray-900 mb-1">
+                  <Text className="text-sm text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                     ₹{Number(sub.cost).toFixed(0)}
                   </Text>
-                  <Text className="text-[10px] text-gray-400">Due This Week</Text>
                 </View>
               </TouchableOpacity>
             )) : (
-              <View className="p-6 items-center justify-center">
-                <Text className="text-gray-500 text-sm">No payments due this week 🎉</Text>
-              </View>
+              <CalendarEmptyState />
             )}
           </View>
         </View>
 
-        {/* Overdue (Only show if there are any) */}
+        {/* Overdue */}
         {overdue.length > 0 && (
-          <View className="mb-6">
-            <View className="bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden">
-              <View className="bg-red-50 px-4 py-2 flex-row items-center border-b border-red-100">
-                <Feather name="alert-circle" size={14} color="#DC2626" />
-                <Text className="text-xs font-bold text-[#DC2626] ml-2 uppercase">Overdue</Text>
-                <View className="bg-white px-2 py-0.5 rounded-full ml-2">
-                  <Text className="text-[10px] font-bold text-[#DC2626]">{overdue.length}</Text>
-                </View>
+          <View className="mb-8">
+            <View className="bg-white rounded-2xl shadow-sm border border-[#FEE2E2] overflow-hidden">
+              <View className="bg-[#FEF2F2] px-4 py-3 flex-row items-center border-b border-[#FEE2E2]">
+                <Feather name="alert-circle" size={14} color="#EF4444" />
+                <Text className="text-[11px] text-[#EF4444] ml-2 uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Action Required</Text>
               </View>
               {overdue.map((sub, i) => (
                 <TouchableOpacity
                   key={sub.id}
                   onPress={() => router.push(`/subscription/${sub.id}`)}
-                  className={`p-4 flex-row items-center justify-between ${i !== overdue.length - 1 ? 'border-b border-gray-100' : ''}`}
+                  className={`p-4 flex-row items-center border-l-4 border-l-[#EF4444] justify-between ${i !== overdue.length - 1 ? 'border-b border-[#F4F6F9]' : ''}`}
                 >
-                  <View className="flex-1 mr-2">
-                    <Text className="text-sm font-medium text-gray-900 mb-1" numberOfLines={1}>{sub.name}</Text>
-                    <Text className="text-xs text-red-500 font-medium">
-                      Due: {new Date(sub.nextPayment).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </Text>
-                  </View>
-                  <View className="flex-row items-center">
-                    <View className="items-end mr-3">
-                      <Text className="text-base font-bold text-gray-900 mb-1">
-                        ₹{Number(sub.cost).toFixed(0)}
+                  <View className="flex-row items-center flex-1">
+                    <SubscriptionLogo name={sub.name} size={40} />
+                    <View className="ml-4 flex-1">
+                      <Text className="text-sm text-[#111827] mb-0.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }} numberOfLines={1}>{sub.name}</Text>
+                      <Text className="text-[11px] text-[#EF4444]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+                        Overdue: {new Date(sub.nextPayment).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                       </Text>
-                      <View className="bg-red-100 px-2 py-0.5 rounded-md">
-                        <Text className="text-[10px] text-red-600 font-bold uppercase tracking-widest">Past Due</Text>
-                      </View>
                     </View>
-                    <TouchableOpacity 
-                      onPress={() => handleMarkAsPaid(sub.id)}
-                      disabled={paying === sub.id}
-                      className="bg-[#10B981] p-2.5 rounded-full items-center justify-center shadow-sm"
-                    >
-                      {paying === sub.id ? (
-                        <ActivityIndicator size="small" color="white" />
-                      ) : (
-                        <Feather name="check" size={16} color="white" />
-                      )}
-                    </TouchableOpacity>
                   </View>
+                  <TouchableOpacity 
+                    onPress={() => handleMarkAsPaid(sub.id)}
+                    disabled={paying === sub.id}
+                    className="bg-[#10B981] w-10 h-10 rounded-full items-center justify-center shadow-sm ml-3"
+                  >
+                    {paying === sub.id ? (
+                      <ActivityIndicator size="small" color="white" />
+                    ) : (
+                      <Feather name="check" size={18} color="white" />
+                    )}
+                  </TouchableOpacity>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         )}
 
-        {/* Upcoming Renewals */}
+        {/* Upcoming Renewals List */}
         <View className="flex-row items-center justify-between mb-4">
-          <Text className="text-lg font-bold text-gray-900">
-            Upcoming Renewals
+          <Text className="text-[15px] text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+            Upcoming
           </Text>
           <TouchableOpacity onPress={() => router.push('/subscriptions')}>
-            <Text className="text-xs font-bold text-[#0D7377] uppercase tracking-wider">
+            <Text className="text-xs text-[#0D9E75] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
               View All
             </Text>
           </TouchableOpacity>
@@ -277,47 +278,38 @@ export default function DashboardScreen() {
 
         {upcoming.length > 0 ? upcoming.map(sub => {
           const daysAway = Math.ceil((new Date(sub.nextPayment).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+          let badgeColor = 'bg-[#D1FAE5] text-[#047857]'; // Teal/Emerald
+          if (daysAway <= 3) badgeColor = 'bg-[#FEE2E2] text-[#B91C1C]'; // Red
+          else if (daysAway <= 7) badgeColor = 'bg-[#FEF3C7] text-[#B45309]'; // Amber
+
           return (
             <TouchableOpacity
               key={sub.id}
               onPress={() => router.push(`/subscription/${sub.id}`)}
-              className="bg-white p-4 rounded-2xl flex-row items-center shadow-sm border border-gray-100 mb-3"
+              className="bg-white p-4 rounded-2xl flex-row items-center shadow-sm mb-3"
             >
-              <View className="w-12 h-12 rounded-xl bg-[#0D7377] items-center justify-center mr-4">
-                <Text className="text-white font-bold text-xl uppercase">
-                  {sub.name.charAt(0)}
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="text-base font-medium text-gray-900 mb-0.5">{sub.name}</Text>
-                <Text className="text-xs text-gray-500">Due in {daysAway} days</Text>
-              </View>
-              <View className="items-end">
-                <Text className="text-base font-bold text-[#0D7377] mb-1">
-                  ₹{Number(sub.cost).toFixed(2)}
-                </Text>
-                <View className="bg-gray-100 px-2 py-0.5 rounded-md">
-                  <Text className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">
-                    {sub.category}
+              <SubscriptionLogo name={sub.name} size={48} />
+              <View className="flex-1 ml-4">
+                <Text className="text-[15px] text-[#111827] mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{sub.name}</Text>
+                <View className={`self-start px-2 py-1 rounded-[6px] ${badgeColor.split(' ')[0]}`}>
+                  <Text className={`text-[9px] uppercase tracking-widest ${badgeColor.split(' ')[1]}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    Due in {daysAway} days
                   </Text>
                 </View>
               </View>
+              <View className="items-end">
+                <Text className="text-[15px] text-[#111827] mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                  ₹{Number(sub.cost).toFixed(0)}
+                </Text>
+                <Text className="text-[10px] text-[#9CA3AF] uppercase tracking-wider" style={{ fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                  {new Date(sub.nextPayment).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </Text>
+              </View>
             </TouchableOpacity>
           );
-        }) : (
-          <View className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 items-center justify-center">
-             <Text className="text-gray-500 text-sm">No upcoming renewals this month</Text>
-          </View>
-        )}
-      </ScrollView>
+        }) : null}
 
-      {/* FAB */}
-      <TouchableOpacity
-        onPress={() => router.push('/add-subscription')}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-[#0D7377] rounded-full items-center justify-center shadow-lg elevation-5"
-      >
-        <Feather name="plus" size={24} color="white" />
-      </TouchableOpacity>
+      </ScrollView>
     </View>
   );
 }
