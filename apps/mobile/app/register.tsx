@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { api } from '../lib/api';
 import { Feather } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -53,56 +53,79 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#0D7377]">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      className="flex-1 bg-[#0E0F14]"
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false} showsVerticalScrollIndicator={false}>
         
-        {/* Logo and Name outside the card */}
-        <View className="flex-row items-center mb-6 pl-2">
-          <Feather name="shield" size={24} color="white" />
-          <Text className="text-white text-xl font-bold ml-2">SubscriptionSavvy</Text>
+        {/* Header Area */}
+        <View className="bg-[#15171E] rounded-b-[40px] pt-16 pb-8 px-8 mb-6">
+          <View className="flex-row items-center justify-center space-x-2 mb-4">
+            <View className="w-8 h-8 rounded-lg bg-[#0D9E75] items-center justify-center">
+              <Feather name="shield" size={16} color="#FFF" />
+            </View>
+            <Text className="text-white font-bold text-lg tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>SAVVY</Text>
+          </View>
+          <Text className="text-white text-2xl font-bold text-center mb-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Create Account</Text>
+          <Text className="text-[#9CA3AF] text-[13px] text-center px-4" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+            Join SubscriptionSavvy to streamline your financial life and never miss a renewal.
+          </Text>
         </View>
 
-        <View className="bg-white rounded-xl p-8 shadow-lg">
-          <Text className="text-2xl font-bold text-center text-[#111827] mb-2">Create Account</Text>
-          <Text className="text-center text-[#4B5563] text-sm mb-8 px-2">
-            Join SubscriptionSavvy to streamline your financial life.
-          </Text>
-
+        {/* Form Area */}
+        <View className="flex-1 px-8 pb-8 justify-center">
+          
           <View className="mb-5">
-            <Text className="text-[10px] font-bold tracking-widest text-[#4B5563] mb-2 uppercase">Full Name</Text>
-            <TextInput
-              className="border border-gray-200 rounded-lg p-3 text-base text-gray-900 bg-white"
-              value={name}
-              onChangeText={setName}
-              placeholder="John Doe"
-              placeholderTextColor="#9CA3AF"
-            />
+            <Text className="text-[10px] font-bold tracking-widest text-[#9CA3AF] mb-2 uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Full Name</Text>
+            <View className="flex-row items-center bg-[#15171E] border border-white/5 rounded-[16px] px-4 h-[56px]">
+              <Feather name="user" size={18} color="#6B7280" className="mr-3" />
+              <TextInput
+                className="flex-1 text-white text-[15px]"
+                style={{ fontFamily: 'PlusJakartaSans_500Medium' }}
+                value={name}
+                onChangeText={setName}
+                placeholder="John Doe"
+                placeholderTextColor="#6B7280"
+              />
+            </View>
           </View>
 
           <View className="mb-5">
-            <Text className="text-[10px] font-bold tracking-widest text-[#4B5563] mb-2 uppercase">Email Address</Text>
-            <TextInput
-              className="border border-gray-200 rounded-lg p-3 text-base text-gray-900 bg-white"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              placeholder="name@company.com"
-              placeholderTextColor="#9CA3AF"
-            />
+            <Text className="text-[10px] font-bold tracking-widest text-[#9CA3AF] mb-2 uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Email Address</Text>
+            <View className="flex-row items-center bg-[#15171E] border border-white/5 rounded-[16px] px-4 h-[56px]">
+              <Feather name="mail" size={18} color="#6B7280" className="mr-3" />
+              <TextInput
+                className="flex-1 text-white text-[15px]"
+                style={{ fontFamily: 'PlusJakartaSans_500Medium' }}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                placeholder="name@company.com"
+                placeholderTextColor="#6B7280"
+              />
+            </View>
           </View>
 
-          <View className="mb-5">
-            <Text className="text-[10px] font-bold tracking-widest text-[#4B5563] mb-2 uppercase">Password</Text>
-            <TextInput
-              className="border border-gray-200 rounded-lg p-3 text-base text-gray-900 bg-white"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              placeholder="••••••••"
-              placeholderTextColor="#9CA3AF"
-            />
-            <Text className="text-xs text-[#6B7280] mt-2">
+          <View className="mb-6">
+            <Text className="text-[10px] font-bold tracking-widest text-[#9CA3AF] mb-2 uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Password</Text>
+            <View className="flex-row items-center bg-[#15171E] border border-white/5 rounded-[16px] px-4 h-[56px]">
+              <Feather name="lock" size={18} color="#6B7280" className="mr-3" />
+              <TextInput
+                className="flex-1 text-white text-[15px]"
+                style={{ fontFamily: 'PlusJakartaSans_500Medium' }}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                placeholder="••••••••"
+                placeholderTextColor="#6B7280"
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="pl-3 py-2">
+                <Feather name={showPassword ? "eye-off" : "eye"} size={18} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+            <Text className="text-[11px] text-[#6B7280] mt-2" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
               Must be at least 8 characters long.
             </Text>
           </View>
@@ -110,35 +133,36 @@ export default function RegisterScreen() {
           <TouchableOpacity 
             className="flex-row items-center mb-8 pr-4"
             onPress={() => setAgreed(!agreed)}
+            activeOpacity={0.7}
           >
-            <View className={`w-5 h-5 border rounded flex items-center justify-center mr-3 ${agreed ? 'bg-[#0D7377] border-[#0D7377]' : 'border-gray-300'}`}>
-              {agreed && <Feather name="check" size={14} color="white" />}
+            <View className={`w-5 h-5 rounded-[6px] items-center justify-center mr-3 ${agreed ? 'bg-[#1DCCA0]' : 'border border-[#4B5563]'}`}>
+              {agreed && <Feather name="check" size={12} color="#0E0F14" />}
             </View>
-            <Text className="text-xs text-[#4B5563] leading-5">
-              I agree to the <Text className="text-[#0D7377]">Terms of Service</Text> and <Text className="text-[#0D7377]">Privacy Policy</Text>.
+            <Text className="text-[13px] text-[#9CA3AF] leading-5" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+              I agree to the <Text className="text-[#1DCCA0] font-bold" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Terms of Service</Text> and <Text className="text-[#1DCCA0] font-bold" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Privacy Policy</Text>.
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            className="bg-[#0D7377] p-4 rounded-lg items-center mb-6"
+            className="bg-[#0D9E75] h-[56px] rounded-[16px] items-center justify-center mb-6 shadow-sm"
             onPress={handleRegister}
             disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color="white" />
             ) : (
-              <Text className="text-white text-base font-bold">Create Account</Text>
+              <Text className="text-white text-[14px] font-bold uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Create Account</Text>
             )}
           </TouchableOpacity>
 
           <View className="flex-row justify-center items-center">
-            <Text className="text-sm text-[#4B5563]">Already have an account? </Text>
+            <Text className="text-[13px] text-[#6B7280]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.replace('/')}>
-              <Text className="text-sm font-bold text-[#0D7377]">Log in</Text>
+              <Text className="text-[13px] font-bold text-[#1DCCA0]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Log in</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
