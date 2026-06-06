@@ -1,12 +1,12 @@
 import {
   View, Text, ActivityIndicator, ScrollView, RefreshControl,
-  TouchableOpacity, Alert, TextInput
+  TouchableOpacity, TextInput, StyleSheet
 } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import * as Notifications from 'expo-notifications';
+import SubscriptionLogo from '../../components/SubscriptionLogo';
 
 type Subscription = {
   id: string;
@@ -20,17 +20,6 @@ type Subscription = {
   notes?: string | null;
   worthItRating?: number | null;
   trialEndsOn?: string | null;
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Entertainment: '#E50914', // Netflix red style
-  Productivity: '#0061FF',
-  Health: '#10B981',
-  Education: '#F59E0B',
-  Finance: '#0D7377',
-  Shopping: '#EC4899',
-  'Developer Tools': '#8B5CF6',
-  Other: '#9CA3AF',
 };
 
 const FILTER_TABS = ['ALL', 'ENTERTAINMENT', 'PRODUCTIVITY', 'HEALTH', 'EDUCATION', 'FINANCE', 'SHOPPING'];
@@ -69,20 +58,21 @@ export default function SubscriptionsScreen() {
 
   if (loading && subscriptions.length === 0) {
     return (
-      <View className="flex-1 justify-center items-center bg-[#F9FAFB]">
-        <ActivityIndicator size="large" color="#0D7377" />
+      <View className="flex-1 justify-center items-center bg-[#F4F6F9]">
+        <ActivityIndicator size="large" color="#0D9E75" />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-[#F9FAFB]">
+    <View className="flex-1 bg-[#F4F6F9]">
       {/* Search Bar */}
-      <View className="px-4 pt-4 pb-2">
-        <View className="flex-row items-center bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm">
-          <Feather name="search" size={20} color="#6B7280" />
+      <View className="px-6 pt-4 pb-2">
+        <View className="flex-row items-center bg-white rounded-[16px] px-4 py-3 shadow-sm border border-gray-100">
+          <Feather name="search" size={20} color="#9CA3AF" />
           <TextInput
-            className="flex-1 ml-3 text-base text-gray-900"
+            className="flex-1 ml-3 text-[15px] text-[#111827]"
+            style={{ fontFamily: 'PlusJakartaSans_500Medium' }}
             placeholder="Search subscriptions..."
             placeholderTextColor="#9CA3AF"
             value={searchQuery}
@@ -92,17 +82,18 @@ export default function SubscriptionsScreen() {
       </View>
 
       {/* Filter Pills */}
-      <View className="pl-4 pb-4">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View className="pb-4">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 24 }}>
           {FILTER_TABS.map((tab) => {
             const isActive = activeFilter === tab;
             return (
               <TouchableOpacity
                 key={tab}
                 onPress={() => setActiveFilter(tab)}
-                className={`px-4 py-2 rounded-lg mr-2 ${isActive ? 'bg-[#0D7377]' : 'bg-[#E5E7EB]'}`}
+                className={`px-5 py-2.5 rounded-full mr-2 shadow-sm ${isActive ? 'bg-[#0D9E75]' : 'bg-white'}`}
+                style={isActive ? { shadowColor: '#0D9E75', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 } : {}}
               >
-                <Text className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-700'}`}>
+                <Text className={`text-xs uppercase tracking-widest ${isActive ? 'text-white' : 'text-[#6B7280]'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                   {tab}
                 </Text>
               </TouchableOpacity>
@@ -112,81 +103,63 @@ export default function SubscriptionsScreen() {
       </View>
 
       <ScrollView
-        className="flex-1 px-4"
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D9E75" />}
       >
         {filteredSubscriptions.map((sub) => {
           const nextPaymentDate = new Date(sub.nextPayment);
           const isOverdue = nextPaymentDate < new Date(new Date().setHours(0,0,0,0));
           
-          let statusBadge = { label: 'ACTIVE', color: 'bg-[#059669]', text: 'text-white' };
-          if (isOverdue) statusBadge = { label: 'OVERDUE', color: 'bg-[#EF4444]', text: 'text-white' };
-          if (sub.trialEndsOn && new Date(sub.trialEndsOn) >= new Date()) statusBadge = { label: 'TRIAL', color: 'bg-[#E0F2FE]', text: 'text-[#0284C7]' };
-          if (sub.status === 'paused') statusBadge = { label: 'PAUSED', color: 'bg-[#F59E0B]', text: 'text-white' };
-          if (sub.status === 'cancelled') statusBadge = { label: 'CANCELLED', color: 'bg-gray-200', text: 'text-gray-500' };
-
-          const logoColor = CATEGORY_COLORS[sub.category] || '#0D7377';
+          let statusBadge = { label: 'ACTIVE', color: 'bg-[#D1FAE5]', text: 'text-[#047857]' };
+          if (isOverdue) statusBadge = { label: 'OVERDUE', color: 'bg-[#FEE2E2]', text: 'text-[#B91C1C]' };
+          if (sub.trialEndsOn && new Date(sub.trialEndsOn) >= new Date()) statusBadge = { label: 'TRIAL', color: 'bg-[#E0F2FE]', text: 'text-[#0369A1]' };
+          if (sub.status === 'paused') statusBadge = { label: 'PAUSED', color: 'bg-[#FEF3C7]', text: 'text-[#B45309]' };
+          if (sub.status === 'cancelled') statusBadge = { label: 'CANCELLED', color: 'bg-[#F3F4F6]', text: 'text-[#6B7280]' };
 
           return (
             <TouchableOpacity
               key={sub.id}
               onPress={() => router.push(`/subscription/${sub.id}`)}
-              className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex-row items-center mb-3"
+              className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 mb-4"
+              style={{ width: '48%' }}
             >
-              {/* Logo Placeholder */}
-              <View className="w-14 h-14 rounded-xl items-center justify-center mr-4" style={{ backgroundColor: logoColor }}>
-                <Text className="text-white font-bold text-2xl uppercase">
-                  {sub.name.charAt(0)}
-                </Text>
-              </View>
-
-              {/* Info */}
-              <View className="flex-1 justify-center">
-                <Text className="text-base font-medium text-gray-900 mb-1" numberOfLines={1}>
-                  {sub.name}
-                </Text>
-                <Text className="text-sm text-gray-500 capitalize">
-                  {sub.category} • {sub.billingCycle}
-                </Text>
-              </View>
-
-              {/* Status and Price */}
-              <View className="items-end justify-between h-14">
-                <View className={`${statusBadge.color} px-2 py-0.5 rounded-full`}>
-                  <Text className={`${statusBadge.text} text-[9px] font-bold tracking-wider`}>
+              <View className="flex-row justify-between items-start mb-5">
+                <SubscriptionLogo name={sub.name} size={44} />
+                <View className={`${statusBadge.color} px-2 py-1 rounded-[6px]`}>
+                  <Text className={`${statusBadge.text} text-[8px] tracking-widest uppercase`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                     {statusBadge.label}
                   </Text>
                 </View>
-                <View className="items-end">
-                  <Text className="text-base font-bold text-gray-900">
-                    ₹{Number(sub.cost).toFixed(2)}
-                  </Text>
-                  <Text className={`text-[10px] font-bold uppercase mt-0.5 ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
-                    {isOverdue ? 'PAST DUE' : nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </Text>
-                </View>
+              </View>
+
+              <Text className="text-[15px] text-[#111827] mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }} numberOfLines={1}>
+                {sub.name}
+              </Text>
+              <Text className="text-[9px] text-[#9CA3AF] uppercase tracking-widest mb-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                {sub.category}
+              </Text>
+
+              <View className="pt-3 border-t border-gray-100">
+                <Text className="text-base text-[#0D9E75]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                  ₹{Number(sub.cost).toFixed(0)}
+                </Text>
+                <Text className={`text-[10px] mt-1 ${isOverdue ? 'text-[#EF4444]' : 'text-[#6B7280]'}`} style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+                  {isOverdue ? 'Past Due' : `Due ${nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                </Text>
               </View>
             </TouchableOpacity>
           );
         })}
 
         {filteredSubscriptions.length === 0 && !loading && (
-          <View className="flex-1 items-center justify-center mt-20">
-            <Feather name="search" size={48} color="#9CA3AF" />
-            <Text className="text-center text-gray-500 mt-4 text-base">
+          <View className="flex-1 items-center justify-center mt-20 w-full">
+            <Feather name="search" size={48} color="#D1D5DB" />
+            <Text className="text-center text-[#6B7280] mt-4 text-[15px]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
               No subscriptions found.
             </Text>
           </View>
         )}
       </ScrollView>
-
-      {/* FAB */}
-      <TouchableOpacity
-        onPress={() => router.push('/add-subscription')}
-        className="absolute bottom-6 right-6 w-14 h-14 bg-[#0D7377] rounded-full items-center justify-center shadow-lg elevation-5"
-      >
-        <Feather name="plus" size={24} color="white" />
-      </TouchableOpacity>
     </View>
   );
 }
