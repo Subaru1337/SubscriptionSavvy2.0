@@ -36,6 +36,7 @@
     "victory-native": "^41.25.0"
   },
   "devDependencies": {
+    "@expo/cli": "^54.0.25",
     "@types/react": "~19.1.10",
     "typescript": "~5.9.2"
   },
