@@ -11,14 +11,38 @@
 const fs = require('fs');
 const path = require('path');
 
+// In a clean npm workspace install, all packages are hoisted to the monorepo root
 const mobileRoot = path.join(__dirname, '..');
+const workspaceRoot = path.join(mobileRoot, '../..');
+
+// metro-config and metro may be in root node_modules (hoisted) or mobile node_modules
+function findNodeModules(packageName) {
+  const candidates = [
+    path.join(mobileRoot, 'node_modules', packageName),
+    path.join(workspaceRoot, 'node_modules', packageName),
+  ];
+  return candidates.find(p => fs.existsSync(p)) || null;
+}
+
+function findNodeModulesRoot(packageName) {
+  const mobileCandidate = path.join(mobileRoot, 'node_modules', packageName);
+  if (fs.existsSync(mobileCandidate)) return path.join(mobileRoot, 'node_modules');
+  const rootCandidate = path.join(workspaceRoot, 'node_modules', packageName);
+  if (fs.existsSync(rootCandidate)) return path.join(workspaceRoot, 'node_modules');
+  return null;
+}
 
 // ─── Fix 1: metro-config ESM Windows path patch ─────────────────────────────
 function applyMetroPatch() {
-  const filePath = path.join(mobileRoot, 'node_modules/metro-config/src/loadConfig.js');
+  const metroConfigDir = findNodeModules('metro-config');
+  if (!metroConfigDir) {
+    console.log('[metro-patch] metro-config not found anywhere, skipping patch.');
+    return;
+  }
 
+  const filePath = path.join(metroConfigDir, 'src/loadConfig.js');
   if (!fs.existsSync(filePath)) {
-    console.log('[metro-patch] metro-config not found, skipping patch.');
+    console.log('[metro-patch] loadConfig.js not found, skipping patch.');
     return;
   }
 
@@ -44,14 +68,21 @@ function applyMetroPatch() {
 
 // ─── Fix 2: Copy @babel/traverse into metro's nested node_modules ────────────
 function copyBabelTraverse() {
-  const src = path.join(mobileRoot, 'node_modules/@babel/traverse');
-  const dest = path.join(mobileRoot, 'node_modules/metro/node_modules/@babel/traverse');
-
-  if (!fs.existsSync(src)) {
-    console.log('[metro-patch] @babel/traverse not found in mobile node_modules, skipping copy.');
+  const nodeModulesWithTraverse = findNodeModulesRoot('@babel/traverse');
+  if (!nodeModulesWithTraverse) {
+    console.log('[metro-patch] @babel/traverse not found anywhere, skipping copy.');
     return;
   }
 
+  const src = path.join(nodeModulesWithTraverse, '@babel/traverse');
+
+  const metroDir = findNodeModules('metro');
+  if (!metroDir) {
+    console.log('[metro-patch] metro not found, skipping @babel/traverse copy.');
+    return;
+  }
+
+  const dest = path.join(metroDir, 'node_modules/@babel/traverse');
   if (fs.existsSync(dest)) {
     console.log('[metro-patch] @babel/traverse already in metro/node_modules, skipping copy.');
     return;
