@@ -1,10 +1,24 @@
 const { getDefaultConfig } = require("expo/metro-config");
-const { withNativeWind } = require("nativewind/metro");
 const path = require("path");
 
 // Root of the monorepo
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, "../..");
+
+// Ensure worker processes can find packages in apps/mobile/node_modules
+// This is critical for babel-preset-expo and its @babel/* dependencies
+const mobileNodeModules = path.resolve(projectRoot, "node_modules");
+const rootNodeModules = path.resolve(workspaceRoot, "node_modules");
+
+// Add mobile node_modules to NODE_PATH so worker subprocess can find packages
+if (!process.env.NODE_PATH) {
+  process.env.NODE_PATH = mobileNodeModules;
+} else if (!process.env.NODE_PATH.includes(mobileNodeModules)) {
+  process.env.NODE_PATH = mobileNodeModules + path.delimiter + process.env.NODE_PATH;
+}
+
+// Lazy-load nativewind/metro to avoid it running before NODE_PATH is set
+const { withNativeWind } = require("nativewind/metro");
 
 const config = getDefaultConfig(projectRoot);
 
@@ -13,16 +27,16 @@ config.watchFolders = [workspaceRoot];
 
 // 2. Resolve order: local first, then root
 config.resolver.nodeModulesPaths = [
-  path.resolve(projectRoot, "node_modules"),
-  path.resolve(workspaceRoot, "node_modules"),
+  mobileNodeModules,
+  rootNodeModules,
 ];
 
-// 3. Explicitly map all @react-native/* sub-packages that live nested
-//    inside the root react-native copy (they are not hoisted)
+// 3. Explicitly map packages that may not resolve correctly across workspaces
 config.resolver.extraNodeModules = {
+  // Some @react-native/* packages live nested inside the root react-native copy
   "@react-native/virtualized-lists": path.resolve(
-    workspaceRoot,
-    "node_modules/react-native/node_modules/@react-native/virtualized-lists"
+    rootNodeModules,
+    "react-native/node_modules/@react-native/virtualized-lists"
   ),
 };
 
