@@ -161,23 +161,20 @@ export default function DashboardScreen() {
               vs last month: ↑ 0%
             </Text>
           </View>
+          <View className="flex-row justify-between pt-4 mt-4 border-t border-white/10">
+            <View className="flex-row items-center">
+              <Feather name="shield" size={14} color="#1DCCA0" />
+              <Text className="text-gray-300 text-xs ml-1.5" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+                Saved by Cancelling
+              </Text>
+            </View>
+            <Text className="text-[#1DCCA0] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+              ₹{Math.round(savings?.total_saved || 0).toLocaleString()}
+            </Text>
+          </View>
         </LinearGradient>
 
-        {/* Savings Row */}
-        <View className="mb-8 px-1">
-          <View className="bg-[#E6F4F1] rounded-[20px] p-5 shadow-sm border border-[#CDEAE3] flex-row items-center justify-between">
-            <View>
-              <View className="flex-row items-center mb-2">
-                <Feather name="shield" size={16} color="#0D9E75" />
-                <Text className="text-[#0D9E75] text-[11px] uppercase tracking-widest ml-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Saved by Cancelling</Text>
-              </View>
-              <Text className="text-[#0D9E75] text-3xl" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>₹{Math.round(savings?.total_saved || 0).toLocaleString()}</Text>
-            </View>
-            <View className="bg-[#1DCCA0]/20 p-3 rounded-full">
-               <Feather name="trending-down" size={24} color="#0D9E75" />
-            </View>
-          </View>
-        </View>
+
 
         {/* Horizontal Renewal Timeline */}
         <View className="mb-8 -mx-5 px-5">
