@@ -200,6 +200,40 @@ export default function AnalyticsScreen() {
             )}
           </View>
 
+          <View className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 mb-6">
+            <Text className="text-sm font-bold text-[#111827] mb-6" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Category Breakdown</Text>
+            {categories.length === 0 ? (
+              <Text className="text-gray-400 text-xs text-center py-4">No data yet</Text>
+            ) : (
+              <View className="space-y-5">
+                {categories.map((cat: any) => {
+                  const hasLimit = cat.budget_limit != null && cat.budget_limit > 0;
+                  const limitText = hasLimit ? ` / ₹${Math.round(cat.budget_limit).toLocaleString()}` : '';
+                  const overBudget = cat.over_budget;
+                  
+                  return (
+                    <View key={cat.category} className="flex-row items-center justify-between">
+                      <View className="flex-row items-center">
+                        <View className="w-3 h-3 rounded-full mr-3" style={{ backgroundColor: CATEGORY_COLORS[cat.category] || '#9CA3AF' }} />
+                        <Text className="text-[13px] font-bold text-[#4B5563]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{cat.category}</Text>
+                      </View>
+                      <View className="items-end">
+                        <Text className="text-[13px] font-bold text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                          ₹{Math.round(cat.monthly_total).toLocaleString()}{limitText}
+                        </Text>
+                        {hasLimit && (
+                          <Text className={`text-[10px] mt-0.5 ${overBudget ? 'text-[#EF4444]' : 'text-[#6B7280]'}`} style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+                            {Math.round(cat.budget_used_percent || 0)}% of budget {overBudget ? '(Over)' : ''}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+
           <View className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
             <Text className="text-sm font-bold text-[#111827] mb-6" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>6-Month Spending Trend</Text>
             {trends.length === 0 || trends.every(t => t.total === 0) ? (
