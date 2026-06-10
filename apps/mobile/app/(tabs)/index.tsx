@@ -40,6 +40,7 @@ export default function DashboardScreen() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [forecast, setForecast] = useState<any>(null);
   const [savings, setSavings] = useState<any>(null);
+  const [categories, setCategories] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
 
   const handleMarkAsPaid = async (id: string) => {
@@ -69,6 +70,7 @@ export default function DashboardScreen() {
           ? subsRes.data
           : subsRes.data?.subscriptions ?? []
       );
+      setCategories(allRes.data?.breakdown ?? []);
       setForecast(extRes.data?.forecast ?? null);
       setSavings(extRes.data?.savings ?? null);
     } catch (error) {
@@ -145,7 +147,9 @@ export default function DashboardScreen() {
             <View className="items-center justify-center relative">
               <AnimatedRing percentage={budgetUsed} size={72} strokeWidth={6} color="#1DCCA0" trackColor="rgba(255,255,255,0.15)" />
               <View className="absolute items-center justify-center">
-                <Feather name="bar-chart-2" size={24} color="#1DCCA0" />
+                <Text className="text-[#1DCCA0] text-sm" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                  {Math.round(budgetUsed)}%
+                </Text>
               </View>
             </View>
           </View>
@@ -158,6 +162,34 @@ export default function DashboardScreen() {
             </Text>
           </View>
         </LinearGradient>
+
+        {/* Savings & Categories Row */}
+        <View className="flex-row mb-8 px-1">
+          <View className="bg-[#E6F4F1] rounded-[20px] p-4 flex-1 mr-2 shadow-sm border border-[#CDEAE3]">
+            <View className="flex-row items-center mb-2">
+              <Feather name="shield" size={14} color="#0D9E75" />
+              <Text className="text-[#0D9E75] text-[10px] uppercase tracking-widest ml-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Saved</Text>
+            </View>
+            <Text className="text-[#0D9E75] text-2xl" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>₹{Math.round(savings?.total_saved || 0).toLocaleString()}</Text>
+            <Text className="text-[#0D9E75] text-[10px] mt-1" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>by cancelling subs</Text>
+          </View>
+
+          <View className="bg-white rounded-[20px] p-4 flex-1 ml-2 shadow-sm border border-gray-100 justify-center">
+            <View className="flex-row items-center mb-2">
+              <Feather name="pie-chart" size={14} color="#6B7280" />
+              <Text className="text-[#6B7280] text-[10px] uppercase tracking-widest ml-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Top Categories</Text>
+            </View>
+            {categories.slice(0, 3).map((cat: any, i: number) => (
+              <View key={i} className="flex-row justify-between items-center mt-1">
+                <Text className="text-[11px] text-[#4B5563]" style={{ fontFamily: 'PlusJakartaSans_600SemiBold' }} numberOfLines={1}>{cat.category}</Text>
+                <Text className="text-[11px] text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>₹{Math.round(cat.monthly_total)}</Text>
+              </View>
+            ))}
+            {categories.length === 0 && (
+              <Text className="text-[11px] text-[#9CA3AF]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>No spending yet</Text>
+            )}
+          </View>
+        </View>
 
         {/* Horizontal Renewal Timeline */}
         <View className="mb-8 -mx-5 px-5">
