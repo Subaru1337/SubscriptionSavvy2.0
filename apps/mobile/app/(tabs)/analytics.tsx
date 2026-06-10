@@ -205,28 +205,39 @@ export default function AnalyticsScreen() {
             {categories.length === 0 ? (
               <Text className="text-gray-400 text-xs text-center py-4">No data yet</Text>
             ) : (
-              <View className="space-y-5">
+              <View>
                 {categories.map((cat: any) => {
                   const hasLimit = cat.budget_limit != null && cat.budget_limit > 0;
                   const limitText = hasLimit ? ` / ₹${Math.round(cat.budget_limit).toLocaleString()}` : '';
                   const overBudget = cat.over_budget;
+                  const percent = Math.min(100, Math.round(cat.budget_used_percent || 0));
                   
                   return (
-                    <View key={cat.category} className="flex-row items-center justify-between">
-                      <View className="flex-row items-center">
-                        <View className="w-3 h-3 rounded-full mr-3" style={{ backgroundColor: CATEGORY_COLORS[cat.category] || '#9CA3AF' }} />
-                        <Text className="text-[13px] font-bold text-[#4B5563]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{cat.category}</Text>
-                      </View>
-                      <View className="items-end">
-                        <Text className="text-[13px] font-bold text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                          ₹{Math.round(cat.monthly_total).toLocaleString()}{limitText}
-                        </Text>
-                        {hasLimit && (
-                          <Text className={`text-[10px] mt-0.5 ${overBudget ? 'text-[#EF4444]' : 'text-[#6B7280]'}`} style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
-                            {Math.round(cat.budget_used_percent || 0)}% of budget {overBudget ? '(Over)' : ''}
+                    <View key={cat.category} className="w-full mb-6 last:mb-0">
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-row items-center">
+                          <View className="w-3 h-3 rounded-full mr-3" style={{ backgroundColor: CATEGORY_COLORS[cat.category] || '#9CA3AF' }} />
+                          <Text className="text-[13px] font-bold text-[#4B5563]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{cat.category}</Text>
+                        </View>
+                        <View className="items-end">
+                          <Text className="text-[13px] font-bold text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                            ₹{Math.round(cat.monthly_total).toLocaleString()}{limitText}
                           </Text>
-                        )}
+                          {hasLimit && (
+                            <Text className={`text-[10px] mt-0.5 ${overBudget ? 'text-[#EF4444]' : 'text-[#6B7280]'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                              {Math.round(cat.budget_used_percent || 0)}% {overBudget ? '(Over)' : ''}
+                            </Text>
+                          )}
+                        </View>
                       </View>
+                      {hasLimit && (
+                        <View className="w-full h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden">
+                          <View 
+                            className={`h-full rounded-full ${overBudget ? 'bg-[#EF4444]' : 'bg-[#1DCCA0]'}`} 
+                            style={{ width: `${percent}%` }} 
+                          />
+                        </View>
+                      )}
                     </View>
                   );
                 })}
