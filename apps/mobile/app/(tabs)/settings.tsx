@@ -6,8 +6,12 @@ import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { Feather } from '@expo/vector-icons';
 import { useEffect, useState, useCallback } from 'react';
-import * as Notifications from 'expo-notifications';
 import { api, API_URL } from '../../lib/api';
+import {
+  arePushNotificationsAvailable,
+  getPushPermissionGranted,
+  requestPushPermissions,
+} from '../../lib/push-notifications';
 
 const CURRENCIES = ['USD', 'INR', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD'];
 const CATEGORIES = ['Entertainment', 'Productivity', 'Health', 'Education', 'Finance', 'Shopping', 'Developer Tools', 'Other'];
@@ -43,8 +47,9 @@ export default function SettingsScreen() {
       const userData = await SecureStore.getItemAsync('user_data');
       if (userData) setEmail(JSON.parse(userData).email || '');
 
-      const pushPerms = await Notifications.getPermissionsAsync();
-      setPushReminders(pushPerms.granted || pushPerms.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL);
+      if (arePushNotificationsAvailable()) {
+        setPushReminders(await getPushPermissionGranted());
+      }
 
       const [settingsRes, budgetsRes] = await Promise.allSettled([
         api.get('/settings'),
@@ -88,9 +93,17 @@ export default function SettingsScreen() {
   };
 
   const handleTogglePush = async (value: boolean) => {
+    if (!arePushNotificationsAvailable()) {
+      Alert.alert(
+        'Not available in Expo Go',
+        'Push notifications require a development build. Use email reminders for now, or run: npx expo run:android',
+      );
+      return;
+    }
+
     if (value) {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status === 'granted') {
+      const granted = await requestPushPermissions();
+      if (granted) {
         setPushReminders(true);
         Alert.alert('Enabled', 'You will be notified 1 day before payments are due.');
       } else {
@@ -249,12 +262,17 @@ export default function SettingsScreen() {
           </View>
           <View className="flex-1 pr-4">
             <Text className="text-[#111827] font-bold text-[15px] mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Push Notifications</Text>
-            <Text className="text-[#6B7280] text-[13px]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>Notify 1 day before due</Text>
+            <Text className="text-[#6B7280] text-[13px]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+              {arePushNotificationsAvailable()
+                ? 'Notify 1 day before due'
+                : 'Requires a dev build (not Expo Go)'}
+            </Text>
           </View>
         </View>
         <Switch
           value={pushReminders}
           onValueChange={handleTogglePush}
+          disabled={!arePushNotificationsAvailable()}
           trackColor={{ false: '#E5E7EB', true: '#FDE68A' }}
           thumbColor={pushReminders ? '#D97706' : '#fff'}
         />

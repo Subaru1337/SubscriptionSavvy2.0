@@ -5,7 +5,10 @@ import {
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { api } from '../lib/api';
-import * as Notifications from 'expo-notifications';
+import {
+  getPushPermissionGranted,
+  schedulePaymentReminder,
+} from '../lib/push-notifications';
 import BottomSheet, { BottomSheetScrollView, BottomSheetBackdrop } from '@gorhom/bottom-sheet';
 import { Feather } from '@expo/vector-icons';
 
@@ -104,21 +107,6 @@ export default function AddSubscriptionScreen() {
     }
   }, [id]);
 
-  const scheduleReminder = async (name: string, dateStr: string, cost: string) => {
-    const triggerDate = new Date(dateStr);
-    triggerDate.setDate(triggerDate.getDate() - 1);
-    triggerDate.setHours(9, 0, 0, 0);
-    if (triggerDate > new Date()) {
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Payment Reminder 📅",
-          body: `Your subscription to ${name} (${cost}) is due tomorrow!`,
-        },
-        trigger: triggerDate,
-      });
-    }
-  };
-
   const handleSubmit = async () => {
     if (!form.name || !form.cost) {
       Alert.alert('Error', 'Please fill in Name and Cost');
@@ -151,9 +139,12 @@ export default function AddSubscriptionScreen() {
         await api.post('/subscriptions', payload);
       }
 
-      const settings = await Notifications.getPermissionsAsync();
-      if (settings.granted && form.status === 'active') {
-        await scheduleReminder(form.name, form.nextPayment, `${form.currency} ${form.cost}`);
+      if (form.status === 'active' && (await getPushPermissionGranted())) {
+        await schedulePaymentReminder(
+          form.name,
+          form.nextPayment,
+          `${form.currency} ${form.cost}`,
+        );
       }
 
       bottomSheetRef.current?.close();
