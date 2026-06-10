@@ -22,8 +22,8 @@ const { withNativeWind } = require("nativewind/metro");
 
 const config = getDefaultConfig(projectRoot);
 
-// 1. Watch all files in the monorepo
-config.watchFolders = [workspaceRoot];
+// 1. Watch all files in the monorepo (preserve Expo defaults)
+config.watchFolders = [...new Set([...(config.watchFolders ?? []), workspaceRoot])];
 
 // 2. Resolve order: local first, then root
 config.resolver.nodeModulesPaths = [
