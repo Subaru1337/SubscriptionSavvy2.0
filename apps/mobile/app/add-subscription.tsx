@@ -1,5 +1,5 @@
 import {
-  View, Text, TextInput, TouchableOpacity,
+  View, Text, TextInput, TouchableOpacity, ScrollView,
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet
 } from 'react-native';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
