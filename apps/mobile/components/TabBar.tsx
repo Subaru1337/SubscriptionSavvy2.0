@@ -43,8 +43,8 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  // Filter out tabs that have href: null
-  const visibleRoutes = state.routes.filter(r => descriptors[r.key].options.href !== null);
+  // Filter out the settings tab explicitly
+  const visibleRoutes = state.routes.filter(r => r.name !== 'settings');
 
   // We will insert the FAB in the middle (index 2)
   const tabsWithFab = [
