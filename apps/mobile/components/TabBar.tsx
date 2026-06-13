@@ -43,11 +43,14 @@ export default function TabBar({ state, descriptors, navigation }: BottomTabBarP
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
+  // Filter out tabs that have href: null
+  const visibleRoutes = state.routes.filter(r => descriptors[r.key].options.href !== null);
+
   // We will insert the FAB in the middle (index 2)
   const tabsWithFab = [
-    ...state.routes.slice(0, 2),
+    ...visibleRoutes.slice(0, 2),
     { key: 'FAB', name: 'FAB' },
-    ...state.routes.slice(2)
+    ...visibleRoutes.slice(2)
   ];
 
   return (
@@ -137,7 +140,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -24, // Break out of the top of the bar slightly
   },
   fabInner: {
     width: 48,

@@ -1,8 +1,10 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 export default function CustomHeader() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   
   const today = new Date();
   const options: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'short', day: 'numeric' };
@@ -26,7 +28,10 @@ export default function CustomHeader() {
           {dateString}
         </Text>
       </View>
-      <TouchableOpacity className="w-12 h-12 rounded-full bg-[#0D9E75] items-center justify-center shadow-sm">
+      <TouchableOpacity 
+        onPress={() => router.push('/settings')}
+        className="w-12 h-12 rounded-full bg-[#0D9E75] items-center justify-center shadow-sm"
+      >
         <Text className="text-white font-bold text-lg" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>V</Text>
       </TouchableOpacity>
     </View>
