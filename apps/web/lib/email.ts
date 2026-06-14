@@ -7,7 +7,7 @@ function getResend() {
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://subscriptionsavvy.app";
-const FROM_EMAIL = "SubscriptionSavvy <noreply@subscriptionsavvy.app>";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "SubscriptionSavvy <onboarding@resend.dev>";
 
 export async function sendPaymentReminderEmail(
   to: string,
