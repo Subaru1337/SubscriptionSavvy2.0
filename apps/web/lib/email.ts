@@ -1,13 +1,23 @@
-import { Resend } from "resend";
+import nodemailer from 'nodemailer';
 import { CURRENCY_SYMBOLS } from "@/lib/currency";
 import { format } from "date-fns";
 
-function getResend() {
-  return new Resend(process.env.RESEND_API_KEY || "");
-}
-
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://subscriptionsavvy.app";
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "SubscriptionSavvy <onboarding@resend.dev>";
+
+// Nodemailer transporter using Gmail
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+const getFromEmail = () => {
+  return process.env.EMAIL_USER 
+    ? `SubscriptionSavvy <${process.env.EMAIL_USER}>` 
+    : "SubscriptionSavvy <noreply@subscriptionsavvy.app>";
+};
 
 export async function sendPaymentReminderEmail(
   to: string,
@@ -20,8 +30,8 @@ export async function sendPaymentReminderEmail(
   const formattedAmount = `${symbol}${amount.toLocaleString()}`;
   const formattedDate = format(renewalDate, "dd MMMM yyyy");
 
-  await getResend().emails.send({
-    from: FROM_EMAIL,
+  await transporter.sendMail({
+    from: getFromEmail(),
     to,
     subject: `Reminder: ${subscriptionName} renews in 3 days`,
     html: `
@@ -62,8 +72,8 @@ export async function sendTrialExpiryEmail(
 ) {
   const formattedDate = format(trialEndDate, "dd MMMM yyyy");
 
-  await getResend().emails.send({
-    from: FROM_EMAIL,
+  await transporter.sendMail({
+    from: getFromEmail(),
     to,
     subject: `Your ${subscriptionName} trial ends in 3 days`,
     html: `
@@ -101,8 +111,8 @@ export async function sendBudgetAlertEmail(
   const symbol = CURRENCY_SYMBOLS[currency] || currency;
   const percent = Math.round((monthlyTotal / budget) * 100);
 
-  await getResend().emails.send({
-    from: FROM_EMAIL,
+  await transporter.sendMail({
+    from: getFromEmail(),
     to,
     subject: `You're close to your subscription budget for this month`,
     html: `
