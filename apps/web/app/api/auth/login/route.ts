@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
   }
 
   const userAgent = request.headers.get('user-agent') ?? 'unknown';
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || "unknown";
   const newSession = await prisma.sessionLog.create({
     data: {
       userId: user.id,
