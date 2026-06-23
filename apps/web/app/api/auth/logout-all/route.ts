@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { getAuthUser, clearAuthCookie } from "@/lib/auth";
+import { getAuthUser, COOKIE_NAME } from "@/lib/auth";
 
 export async function POST() {
   const user = await getAuthUser();
@@ -16,7 +17,8 @@ export async function POST() {
     }),
   ]);
 
-  const response = NextResponse.json({ success: true });
-  response.cookies.set(clearAuthCookie());
-  return response;
+  const cookieStore = await cookies();
+  cookieStore.delete(COOKIE_NAME);
+
+  return NextResponse.json({ success: true });
 }
