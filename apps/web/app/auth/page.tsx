@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Eye, EyeOff, CreditCard, Loader2 } from "lucide-react";
@@ -82,12 +83,13 @@ export default function AuthPage() {
       <div className="w-full max-w-md animate-fade-in">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center mb-3"
-            style={{ backgroundColor: "var(--primary)" }}
-          >
-            <CreditCard size={24} color="#fff" />
-          </div>
+          <Image
+            src="/logo.png"
+            alt="SubscriptionSavvy Logo"
+            width={48}
+            height={48}
+            className="rounded-2xl mb-3"
+          />
           <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
             SubscriptionSavvy
           </h1>

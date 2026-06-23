@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
@@ -44,12 +45,13 @@ export function Sidebar({ hasAlerts = false }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: "var(--border)" }}>
-        <div
-          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: "var(--primary)" }}
-        >
-          <CreditCard size={16} color="#fff" />
-        </div>
+        <Image
+          src="/logo.png"
+          alt="SubscriptionSavvy Logo"
+          width={32}
+          height={32}
+          className="rounded-lg flex-shrink-0"
+        />
         {!collapsed && (
           <span className="font-bold text-base truncate" style={{ color: "var(--text-primary)" }}>
             SubSavvy

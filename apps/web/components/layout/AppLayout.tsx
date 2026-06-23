@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Sidebar } from "./Sidebar";
 import { BottomNav } from "./BottomNav";
 import { DarkModeToggle } from "./DarkModeToggle";
@@ -55,12 +56,13 @@ export function AppLayout({ children }: AppLayoutProps) {
         >
           {/* Mobile logo */}
           <div className="flex items-center gap-2 md:hidden">
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: "var(--primary)" }}
-            >
-              <CreditCard size={14} color="#fff" />
-            </div>
+            <Image
+              src="/logo.png"
+              alt="SubscriptionSavvy Logo"
+              width={28}
+              height={28}
+              className="rounded-lg"
+            />
             <span className="font-bold text-sm" style={{ color: "var(--text-primary)" }}>
               SubSavvy
             </span>
