@@ -102,10 +102,15 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-[#0E0F14]"
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: Platform.OS === 'ios' ? 40 : 20 }} 
+        bounces={false} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         
         {/* Onboarding Carousel Area */}
         <View style={{ height: SCREEN_HEIGHT * 0.45 }} className="bg-[#15171E] rounded-b-[40px] pt-16 overflow-hidden">

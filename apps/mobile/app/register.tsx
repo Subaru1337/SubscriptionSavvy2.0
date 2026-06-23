@@ -54,10 +54,15 @@ export default function RegisterScreen() {
 
   return (
     <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-[#0E0F14]"
     >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: Platform.OS === 'ios' ? 40 : 20 }} 
+        bounces={false} 
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         
         {/* Header Area */}
         <View className="bg-[#15171E] rounded-b-[40px] pt-16 pb-8 px-8 mb-6">
