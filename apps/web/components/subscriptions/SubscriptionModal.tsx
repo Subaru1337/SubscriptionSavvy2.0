@@ -82,7 +82,7 @@ export function SubscriptionModal({
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
   const [priceHistory, setPriceHistory] = useState<any[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const typingTimer = useRef<NodeJS.Timeout>();
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (editSubscription) {

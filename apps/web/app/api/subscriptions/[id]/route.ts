@@ -29,13 +29,14 @@ const updateSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authUser = await getAuthUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const subscription = await prisma.subscription.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!subscription) {
@@ -51,13 +52,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authUser = await getAuthUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const subscription = await prisma.subscription.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!subscription) {
@@ -107,7 +109,7 @@ export async function PUT(
     // Wrap in transaction to record price history
     updated = await prisma.$transaction(async (tx) => {
       const sub = await tx.subscription.update({
-        where: { id: params.id },
+        where: { id },
         data: updateData,
       });
 
@@ -126,7 +128,7 @@ export async function PUT(
   } else {
     // Normal update
     updated = await prisma.subscription.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
   }
@@ -136,13 +138,14 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authUser = await getAuthUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const subscription = await prisma.subscription.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!subscription) {
@@ -154,7 +157,7 @@ export async function DELETE(
   }
 
   // Hard delete — cascades PaymentHistory via Prisma schema
-  await prisma.subscription.delete({ where: { id: params.id } });
+  await prisma.subscription.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
 }

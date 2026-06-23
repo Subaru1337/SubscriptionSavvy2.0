@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
   let text: string;
   try {
-    const formData = await request.formData();
+    const formData = (await request.formData()) as any;
     const file = formData.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
     // Enforce file size limit to prevent memory exhaustion

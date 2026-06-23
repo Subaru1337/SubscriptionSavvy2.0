@@ -39,7 +39,7 @@ function ensureCleanup() {
   }, CLEANUP_INTERVAL);
   // Don't let the timer prevent Node from exiting
   if (cleanupTimer && typeof cleanupTimer === "object" && "unref" in cleanupTimer) {
-    cleanupTimer.unref();
+    (cleanupTimer as any).unref();
   }
 }
 

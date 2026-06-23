@@ -5,13 +5,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authUser = await getAuthUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const subscription = await prisma.subscription.findUnique({
-    where: { id: params.id },
+    where: { id },
   });
 
   if (!subscription) {
@@ -51,7 +52,7 @@ export async function POST(
 
   // Update subscription's next payment date
   const updated = await prisma.subscription.update({
-    where: { id: params.id },
+    where: { id },
     data: { nextPayment: newNextPayment },
   });
 
