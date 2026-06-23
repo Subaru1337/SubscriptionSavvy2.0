@@ -164,6 +164,9 @@ export default function SettingsScreen() {
         onPress: async () => {
           await SecureStore.deleteItemAsync('auth_token');
           await SecureStore.deleteItemAsync('user_data');
+          if (router.canGoBack()) {
+            router.dismissAll();
+          }
           router.replace('/');
         },
       },
