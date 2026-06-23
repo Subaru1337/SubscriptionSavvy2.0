@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { api } from '../lib/api';
@@ -42,7 +42,17 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -113,8 +123,9 @@ export default function LoginScreen() {
       >
         
         {/* Onboarding Carousel Area */}
-        <View style={{ height: SCREEN_HEIGHT * 0.45 }} className="bg-[#15171E] rounded-b-[40px] pt-16 overflow-hidden">
-          {/* Logo */}
+        {!isKeyboardVisible && (
+          <View style={{ height: SCREEN_HEIGHT * 0.45 }} className="bg-[#15171E] rounded-b-[40px] pt-16 overflow-hidden">
+            {/* Logo */}
           <View className="flex-row items-center justify-center space-x-2 mb-6">
             <View className="w-8 h-8 rounded-lg bg-[#0D9E75] items-center justify-center">
               <Feather name="shield" size={16} color="#FFF" />
@@ -157,6 +168,7 @@ export default function LoginScreen() {
             ))}
           </View>
         </View>
+        )}
 
         {/* Login Form Area */}
         <View className="flex-1 px-8 pt-10 pb-8 justify-center">

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { api } from '../lib/api';
 import { Feather } from '@expo/vector-icons';
+import { useEffect } from 'react';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -12,7 +13,17 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const handleRegister = async () => {
     if (!name || !email || !password) {
@@ -65,18 +76,20 @@ export default function RegisterScreen() {
       >
         
         {/* Header Area */}
-        <View className="bg-[#15171E] rounded-b-[40px] pt-16 pb-8 px-8 mb-6">
-          <View className="flex-row items-center justify-center space-x-2 mb-4">
-            <View className="w-8 h-8 rounded-lg bg-[#0D9E75] items-center justify-center">
-              <Feather name="shield" size={16} color="#FFF" />
+        {!isKeyboardVisible && (
+          <View className="bg-[#15171E] rounded-b-[40px] pt-16 pb-8 px-8 mb-6">
+            <View className="flex-row items-center justify-center space-x-2 mb-4">
+              <View className="w-8 h-8 rounded-lg bg-[#0D9E75] items-center justify-center">
+                <Feather name="shield" size={16} color="#FFF" />
+              </View>
+              <Text className="text-white font-bold text-lg tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>SAVVY</Text>
             </View>
-            <Text className="text-white font-bold text-lg tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>SAVVY</Text>
+            <Text className="text-white text-2xl font-bold text-center mb-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Create Account</Text>
+            <Text className="text-[#9CA3AF] text-[13px] text-center px-4" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+              Join SubscriptionSavvy to streamline your financial life and never miss a renewal.
+            </Text>
           </View>
-          <Text className="text-white text-2xl font-bold text-center mb-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Create Account</Text>
-          <Text className="text-[#9CA3AF] text-[13px] text-center px-4" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
-            Join SubscriptionSavvy to streamline your financial life and never miss a renewal.
-          </Text>
-        </View>
+        )}
 
         {/* Form Area */}
         <View className="flex-1 px-8 pb-8 justify-center">
