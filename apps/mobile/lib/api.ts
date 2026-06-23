@@ -21,9 +21,6 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       await SecureStore.deleteItemAsync('auth_token');
       // Redirect to login screen
-      if (router.canGoBack()) {
-        router.dismissAll();
-      }
       router.replace('/');
     }
     return Promise.reject(error);
