@@ -25,6 +25,7 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    console.error("Axios Error:", error.message, error.code, error.config?.baseURL, error.config?.url);
     if (error.response && error.response.status === 401) {
       await SecureStore.deleteItemAsync('auth_token');
       // Redirect to login screen
