@@ -84,7 +84,7 @@ export default function AuthPage() {
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <Image
-            src="/logo.png"
+            src="/icon.png"
             alt="SubscriptionSavvy Logo"
             width={48}
             height={48}

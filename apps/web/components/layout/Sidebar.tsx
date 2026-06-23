@@ -46,7 +46,7 @@ export function Sidebar({ hasAlerts = false }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: "var(--border)" }}>
         <Image
-          src="/logo.png"
+          src="/icon.png"
           alt="SubscriptionSavvy Logo"
           width={32}
           height={32}

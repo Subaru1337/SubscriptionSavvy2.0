@@ -57,7 +57,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           {/* Mobile logo */}
           <div className="flex items-center gap-2 md:hidden">
             <Image
-              src="/logo.png"
+              src="/icon.png"
               alt="SubscriptionSavvy Logo"
               width={28}
               height={28}

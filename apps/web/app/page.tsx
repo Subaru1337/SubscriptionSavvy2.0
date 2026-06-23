@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/lib/auth";
 import Link from "next/link";
+import Image from "next/image";
 import { CreditCard, TrendingUp, Bell, BarChart3, ArrowRight, Check } from "lucide-react";
 
 export default async function LandingPage() {
@@ -13,9 +14,13 @@ export default async function LandingPage() {
       <header className="sticky top-0 z-40 border-b" style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}>
         <div className="max-w-content mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--primary)" }}>
-              <CreditCard size={16} color="#fff" />
-            </div>
+            <Image
+              src="/icon.png"
+              alt="SubscriptionSavvy Logo"
+              width={32}
+              height={32}
+              className="rounded-lg"
+            />
             <span className="font-bold text-base" style={{ color: "var(--text-primary)" }}>SubscriptionSavvy</span>
           </div>
           <Link
