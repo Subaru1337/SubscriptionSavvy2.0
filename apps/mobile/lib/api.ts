@@ -1,8 +1,17 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-export const API_URL = "https://subscription-savvy2-0-web.vercel.app/api";
+import Constants from 'expo-constants';
+import { router } from 'expo-router';
+
+// Read API URL from app config (app.json > extra.apiUrl) with hardcoded fallback
+const configApiUrl = Constants.expoConfig?.extra?.apiUrl;
+export const API_URL = configApiUrl || "https://subscription-savvy2-0-web.vercel.app/api";
+
 export const api = axios.create({
   baseURL: API_URL,
+  headers: {
+    'X-Client-Type': 'mobile',
+  },
 });
 
 api.interceptors.request.use(async (config) => {
@@ -12,8 +21,6 @@ api.interceptors.request.use(async (config) => {
   }
   return config;
 });
-
-import { router } from 'expo-router';
 
 api.interceptors.response.use(
   (response) => response,

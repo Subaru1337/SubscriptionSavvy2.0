@@ -5,14 +5,27 @@ import { parse } from "csv-parse/sync";
 import { z } from "zod";
 
 const rowSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).max(100),
   cost: z.string().transform((v) => parseFloat(v)),
   billingCycle: z.string(),
   nextPayment: z.string(),
   category: z.string().optional().default("Other"),
   currency: z.string().optional().default("INR"),
-  notes: z.string().optional().default(""),
+  notes: z.string().max(500).optional().default(""),
 });
+
+// Strict schema for confirmed import rows (PUT handler)
+const importRowSchema = z.object({
+  name: z.string().min(1).max(100),
+  cost: z.number().positive().finite(),
+  currency: z.enum(["INR", "USD", "EUR", "GBP", "AED", "SGD", "AUD", "CAD"]).default("INR"),
+  category: z.string().min(1).max(50).default("Other"),
+  billingCycle: z.enum(["monthly", "yearly"]).default("monthly"),
+  nextPayment: z.string().refine((d) => !isNaN(Date.parse(d)), "Invalid date"),
+  notes: z.string().max(500).optional().nullable(),
+});
+
+const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
 
 export async function POST(request: NextRequest) {
   const authUser = await getAuthUser();
@@ -23,6 +36,10 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    // Enforce file size limit to prevent memory exhaustion
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "File too large. Maximum 1MB allowed." }, { status: 400 });
+    }
     text = await file.text();
   } catch {
     return NextResponse.json({ error: "Failed to read file" }, { status: 400 });
@@ -111,17 +128,26 @@ export async function PUT(request: NextRequest) {
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i] as Record<string, unknown>;
+
+    // Validate each row with strict schema before inserting
+    const parsed = importRowSchema.safeParse(row);
+    if (!parsed.success) {
+      errors.push({ row: i + 1, error: parsed.error.errors[0]?.message || "Invalid data" });
+      continue;
+    }
+
+    const validRow = parsed.data;
     try {
       await prisma.subscription.create({
         data: {
           userId: authUser.userId,
-          name: String(row.name),
-          cost: Number(row.cost),
-          currency: String(row.currency || "INR"),
-          category: String(row.category || "Other"),
-          billingCycle: String(row.billingCycle || "monthly"),
-          nextPayment: new Date(String(row.nextPayment)),
-          notes: row.notes ? String(row.notes) : null,
+          name: validRow.name,
+          cost: validRow.cost,
+          currency: validRow.currency,
+          category: validRow.category,
+          billingCycle: validRow.billingCycle,
+          nextPayment: new Date(validRow.nextPayment),
+          notes: validRow.notes ?? null,
           status: "active",
         },
       });

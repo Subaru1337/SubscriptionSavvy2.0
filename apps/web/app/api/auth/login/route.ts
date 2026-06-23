@@ -9,29 +9,9 @@ const schema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
-    return true;
-  }
-  if (entry.count >= 10) return false;
-  entry.count++;
-  return true;
-}
+// Rate limiting is handled by middleware (lib/rate-limit.ts)
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for") || "unknown";
-
-  if (!checkRateLimit(ip)) {
-    return NextResponse.json(
-      { error: "Too many requests. Please try again in a minute." },
-      { status: 429 }
-    );
-  }
 
   let body: unknown;
   try {
@@ -88,10 +68,16 @@ export async function POST(request: NextRequest) {
   });
   const cookieConfig = createAuthCookie(token);
 
-  const response = NextResponse.json({
+  // Only include raw token for mobile clients; web uses httpOnly cookie only
+  const isMobile = request.headers.get("x-client-type") === "mobile";
+  const responseBody: Record<string, unknown> = {
     user: { id: user.id, email: user.email },
-    token: token,
-  });
+  };
+  if (isMobile) {
+    responseBody.token = token;
+  }
+
+  const response = NextResponse.json(responseBody);
   response.cookies.set(cookieConfig);
   return response;
 }

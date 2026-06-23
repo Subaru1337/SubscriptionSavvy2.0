@@ -9,32 +9,9 @@ const schema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-// Simple in-memory rate limiter (per IP, max 10 per minute)
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60000 });
-    return true;
-  }
-
-  if (entry.count >= 10) return false;
-  entry.count++;
-  return true;
-}
+// Rate limiting is handled by middleware (lib/rate-limit.ts)
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
-
-  if (!checkRateLimit(ip)) {
-    return NextResponse.json(
-      { error: "Too many requests. Please try again in a minute." },
-      { status: 429 }
-    );
-  }
 
   let body: unknown;
   try {
@@ -53,11 +30,11 @@ export async function POST(request: NextRequest) {
 
   const { email, password } = parsed.data;
 
-  // Check if email already exists
+  // Check if email already exists — use generic error to prevent user enumeration
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return NextResponse.json(
-      { error: "An account with this email already exists" },
+      { error: "Unable to create account. Please try a different email or log in." },
       { status: 409 }
     );
   }
@@ -71,7 +48,14 @@ export async function POST(request: NextRequest) {
   const token = await signJWT({ userId: user.id, email: user.email });
   const cookieConfig = createAuthCookie(token);
 
-  const response = NextResponse.json({ user, token }, { status: 201 });
+  // Only include raw token for mobile clients; web uses httpOnly cookie only
+  const isMobile = request.headers.get("x-client-type") === "mobile";
+  const responseBody: Record<string, unknown> = { user };
+  if (isMobile) {
+    responseBody.token = token;
+  }
+
+  const response = NextResponse.json(responseBody, { status: 201 });
   response.cookies.set(cookieConfig);
   return response;
 }

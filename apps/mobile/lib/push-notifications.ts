@@ -56,7 +56,7 @@ export async function schedulePaymentReminder(
         title: 'Payment Reminder',
         body: `Your subscription to ${name} (${cost}) is due tomorrow!`,
       },
-      trigger: triggerDate,
+      trigger: triggerDate as any,
     });
   }
 }

@@ -29,6 +29,7 @@
     ],
     "extra": {
       "router": {},
+      "apiUrl": "https://subscription-savvy2-0-web.vercel.app/api",
       "eas": {
         "projectId": "31734d54-c717-4206-9030-cea9af5245f8"
       }

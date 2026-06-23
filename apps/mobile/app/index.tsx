@@ -59,7 +59,16 @@ export default function LoginScreen() {
       try {
         const token = await SecureStore.getItemAsync('auth_token');
         if (token) {
-          router.replace('/(tabs)');
+          // Validate token against the server before navigating
+          try {
+            await api.get('/auth/me');
+            router.replace('/(tabs)');
+          } catch {
+            // Token is invalid/expired — clear it and show login
+            await SecureStore.deleteItemAsync('auth_token');
+            await SecureStore.deleteItemAsync('user_data');
+            setIsCheckingAuth(false);
+          }
         } else {
           setIsCheckingAuth(false);
         }

@@ -1,10 +1,7 @@
-const CACHE_NAME = "subscriptionsavvy-v2";
+const CACHE_NAME = "subscriptionsavvy-v3";
+
+// Only cache public/static assets — never cache protected pages
 const APP_SHELL = [
-  "/dashboard",
-  "/subscriptions",
-  "/reminders",
-  "/calendar",
-  "/settings",
   "/auth",
   "/manifest.json",
 ];
@@ -30,7 +27,7 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  // Network first for API calls
+  // Network first for API calls — never cache API responses
   if (event.request.url.includes("/api/")) {
     event.respondWith(
       fetch(event.request).catch(() =>
@@ -43,7 +40,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Network first for navigation requests (HTML pages) so redirects are respected instantly
+  // Network first for navigation requests (HTML pages)
+  // Protected pages should always go through the server for auth checks
   if (event.request.mode === "navigate") {
     event.respondWith(
       fetch(event.request).catch(() => caches.match(event.request))
@@ -51,7 +49,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache first for app shell
+  // Cache first for static assets only (JS, CSS, images, fonts)
   event.respondWith(
     caches.match(event.request).then(
       (cached) => cached || fetch(event.request)

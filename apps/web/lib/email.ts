@@ -4,6 +4,16 @@ import { format } from "date-fns";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://subscriptionsavvy.app";
 
+/** Escape user-provided values before interpolating into HTML email templates */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // Nodemailer transporter using Gmail
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -27,13 +37,14 @@ export async function sendPaymentReminderEmail(
   renewalDate: Date
 ) {
   const symbol = CURRENCY_SYMBOLS[currency] || currency;
-  const formattedAmount = `${symbol}${amount.toLocaleString()}`;
-  const formattedDate = format(renewalDate, "dd MMMM yyyy");
+  const formattedAmount = escapeHtml(`${symbol}${amount.toLocaleString()}`);
+  const formattedDate = escapeHtml(format(renewalDate, "dd MMMM yyyy"));
+  const safeName = escapeHtml(subscriptionName);
 
   await transporter.sendMail({
     from: getFromEmail(),
     to,
-    subject: `Reminder: ${subscriptionName} renews in 3 days`,
+    subject: `Reminder: ${safeName} renews in 3 days`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -45,7 +56,7 @@ export async function sendPaymentReminderEmail(
           </div>
           <h2 style="color: #1A1A1A; margin: 0 0 16px;">Payment Reminder</h2>
           <p style="color: #6B6560; margin: 0 0 24px;">
-            Your <strong style="color: #1A1A1A;">${subscriptionName}</strong> subscription is renewing soon.
+            Your <strong style="color: #1A1A1A;">${safeName}</strong> subscription is renewing soon.
           </p>
           <div style="background: #EEF7F7; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
             <div style="color: #6B6560; font-size: 13px; margin-bottom: 4px;">Amount</div>
@@ -70,12 +81,13 @@ export async function sendTrialExpiryEmail(
   subscriptionName: string,
   trialEndDate: Date
 ) {
-  const formattedDate = format(trialEndDate, "dd MMMM yyyy");
+  const formattedDate = escapeHtml(format(trialEndDate, "dd MMMM yyyy"));
+  const safeName = escapeHtml(subscriptionName);
 
   await transporter.sendMail({
     from: getFromEmail(),
     to,
-    subject: `Your ${subscriptionName} trial ends in 3 days`,
+    subject: `Your ${safeName} trial ends in 3 days`,
     html: `
       <!DOCTYPE html>
       <html>
@@ -87,7 +99,7 @@ export async function sendTrialExpiryEmail(
           </div>
           <h2 style="color: #1A1A1A; margin: 0 0 16px;">Trial Ending Soon</h2>
           <p style="color: #6B6560; margin: 0 0 24px;">
-            Your free trial of <strong style="color: #1A1A1A;">${subscriptionName}</strong> is ending soon.
+            Your free trial of <strong style="color: #1A1A1A;">${safeName}</strong> is ending soon.
           </p>
           <div style="background: rgba(224, 92, 92, 0.08); border-radius: 8px; padding: 16px; margin-bottom: 24px; border: 1px solid rgba(224, 92, 92, 0.2);">
             <div style="color: #E05C5C; font-weight: 600;">Trial ends: ${formattedDate}</div>
