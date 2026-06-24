@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { User, Bell, Shield, LogOut, Loader2, Save, Trash2, Smartphone, Target } from "lucide-react";
+import { User, Bell, Shield, LogOut, Loader2, Save, Trash2, Smartphone, Target, Download } from "lucide-react";
 import { CATEGORIES } from "@/lib/utils";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency";
 import { formatDateShort } from "@/lib/utils";
@@ -301,6 +301,30 @@ export default function SettingsPage() {
 
         {/* Sidebar Actions */}
         <div className="space-y-4">
+          <div className="card">
+            <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Export Data</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => window.open('/api/export/csv', '_blank')}
+                className="w-full flex items-center justify-between p-3 rounded-xl transition-colors hover:bg-[var(--primary)]/10 text-[var(--primary)] border border-transparent hover:border-[var(--primary)]/20 group"
+              >
+                <div className="flex items-center gap-2">
+                  <Download size={16} className="text-[var(--primary)]" />
+                  <span className="text-sm font-medium">Export to CSV</span>
+                </div>
+              </button>
+              <button
+                onClick={() => window.open('/api/export/pdf', '_blank')}
+                className="w-full flex items-center justify-between p-3 rounded-xl transition-colors hover:bg-[var(--primary)]/10 text-[var(--primary)] border border-transparent hover:border-[var(--primary)]/20 group"
+              >
+                <div className="flex items-center gap-2">
+                  <Download size={16} className="text-[var(--primary)]" />
+                  <span className="text-sm font-medium">Export to PDF</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
           <div className="card">
             <h3 className="text-sm font-bold mb-3" style={{ color: "var(--text-primary)" }}>Account Actions</h3>
             <button
