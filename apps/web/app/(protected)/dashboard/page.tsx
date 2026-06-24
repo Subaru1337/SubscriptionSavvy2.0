@@ -22,6 +22,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatDateShort } from "@/lib/utils";
 import { CURRENCY_SYMBOLS, SUPPORTED_CURRENCIES } from "@/lib/currency";
 import { SubscriptionModal } from "@/components/subscriptions/SubscriptionModal";
+import { Logo } from "@/components/Logo";
 
 // --- Types ---
 interface AnalyticsSummary {
@@ -590,9 +591,12 @@ export default function DashboardPage() {
             <div className="space-y-2">
               {dueSoon.map((sub) => (
                 <div key={sub.id} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{sub.name}</p>
-                    <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{formatDateShort(sub.nextPayment)}</p>
+                  <div className="flex items-center gap-2.5">
+                    <Logo name={sub.name} className="w-6 h-6 rounded-md object-contain bg-white shrink-0 shadow-sm" />
+                    <div>
+                      <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px]" style={{ color: "var(--text-primary)" }}>{sub.name}</p>
+                      <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{formatDateShort(sub.nextPayment)}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{CURRENCY_SYMBOLS[sub.currency] || sub.currency}{Number(sub.cost).toLocaleString()}</span>

@@ -6,20 +6,21 @@ import { X, Loader2, ChevronLeft, ChevronRight, Star, AlertTriangle, ArrowUpRigh
 import { CATEGORIES, BILLING_CYCLES, formatDateShort } from "@/lib/utils";
 import { SUPPORTED_CURRENCIES } from "@/lib/currency";
 import confetti from "canvas-confetti";
+import { Logo } from "@/components/Logo";
 
 const QUICK_ADD_TEMPLATES = [
-  { name: "Netflix", cost: 649, currency: "INR", billingCycle: "monthly", category: "Entertainment", emoji: "🎬" },
-  { name: "Spotify", cost: 119, currency: "INR", billingCycle: "monthly", category: "Entertainment", emoji: "🎵" },
-  { name: "YouTube Premium", cost: 189, currency: "INR", billingCycle: "monthly", category: "Entertainment", emoji: "▶️" },
-  { name: "Amazon Prime", cost: 1499, currency: "INR", billingCycle: "yearly", category: "Entertainment", emoji: "📦" },
-  { name: "ChatGPT Plus", cost: 1650, currency: "INR", billingCycle: "monthly", category: "Productivity", emoji: "🤖" },
-  { name: "Notion", cost: 0, currency: "INR", billingCycle: "monthly", category: "Productivity", emoji: "📝" },
-  { name: "Adobe Creative Cloud", cost: 1675, currency: "INR", billingCycle: "monthly", category: "Productivity", emoji: "🎨" },
-  { name: "AWS", cost: 0, currency: "USD", billingCycle: "monthly", category: "Developer Tools", emoji: "☁️" },
-  { name: "GitHub Copilot", cost: 827, currency: "INR", billingCycle: "monthly", category: "Developer Tools", emoji: "🐙" },
-  { name: "Coursera Plus", cost: 2652, currency: "INR", billingCycle: "yearly", category: "Education", emoji: "📚" },
-  { name: "Headspace", cost: 4999, currency: "INR", billingCycle: "yearly", category: "Health", emoji: "🧘" },
-  { name: "Zerodha", cost: 300, currency: "INR", billingCycle: "monthly", category: "Finance", emoji: "📈" },
+  { name: "Netflix", cost: 649, currency: "INR", billingCycle: "monthly", category: "Entertainment" },
+  { name: "Spotify", cost: 119, currency: "INR", billingCycle: "monthly", category: "Entertainment" },
+  { name: "YouTube Premium", cost: 189, currency: "INR", billingCycle: "monthly", category: "Entertainment" },
+  { name: "Amazon Prime", cost: 1499, currency: "INR", billingCycle: "yearly", category: "Entertainment" },
+  { name: "ChatGPT Plus", cost: 1650, currency: "INR", billingCycle: "monthly", category: "Productivity" },
+  { name: "Notion", cost: 0, currency: "INR", billingCycle: "monthly", category: "Productivity" },
+  { name: "Adobe Creative Cloud", cost: 1675, currency: "INR", billingCycle: "monthly", category: "Productivity" },
+  { name: "AWS", cost: 0, currency: "USD", billingCycle: "monthly", category: "Developer Tools" },
+  { name: "GitHub Copilot", cost: 827, currency: "INR", billingCycle: "monthly", category: "Developer Tools" },
+  { name: "Coursera Plus", cost: 2652, currency: "INR", billingCycle: "yearly", category: "Education" },
+  { name: "Headspace", cost: 4999, currency: "INR", billingCycle: "yearly", category: "Health" },
+  { name: "Zerodha", cost: 300, currency: "INR", billingCycle: "monthly", category: "Finance" },
 ];
 
 interface SubscriptionFormData {
@@ -329,8 +330,8 @@ export function SubscriptionModal({
                         minWidth: 72,
                       }}
                     >
-                      <span className="text-lg leading-none">{t.emoji}</span>
-                      <span className="text-xs font-medium text-center leading-tight" style={{ color: "var(--text-primary)" }}>
+                      <Logo name={t.name} className="w-6 h-6 object-contain rounded-md" />
+                      <span className="text-xs font-medium text-center leading-tight mt-1" style={{ color: "var(--text-primary)" }}>
                         {t.name.split(" ")[0]}
                       </span>
                     </button>

@@ -8,6 +8,7 @@ import { StatusBadge, SubscriptionStatusBadge } from "@/components/ui/StatusBadg
 import { formatDateShort } from "@/lib/utils";
 import { CURRENCY_SYMBOLS } from "@/lib/currency";
 import { SubscriptionModal } from "@/components/subscriptions/SubscriptionModal";
+import { Logo } from "@/components/Logo";
 
 interface Subscription {
   id: string;
@@ -200,8 +201,9 @@ export default function SubscriptionsPage() {
                         {selectedIds.has(sub.id) ? <CheckSquare size={18} style={{ color: "var(--primary)" }} /> : <Square size={18} style={{ color: "var(--text-secondary)" }} />}
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-bold text-sm md:text-base" style={{ color: "var(--text-primary)" }}>{sub.name}</p>
+                        <div className="flex items-center gap-2.5">
+                          <Logo name={sub.name} className="w-6 h-6 rounded-md object-contain bg-white shrink-0 shadow-sm" />
+                          <p className="font-bold text-sm md:text-base truncate max-w-[150px] md:max-w-xs" style={{ color: "var(--text-primary)" }}>{sub.name}</p>
                           {/* We don't have true priceHistory length in this list call, so we skip the arrow here or simulate it if needed */}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">

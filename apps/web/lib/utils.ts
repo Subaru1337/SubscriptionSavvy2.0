@@ -45,3 +45,46 @@ export function getMonthlyAmount(cost: number, billingCycle: string): number {
   if (billingCycle === "yearly") return cost / 12;
   return cost;
 }
+
+export function getLogoUrl(name: string): string {
+  const map: Record<string, string> = {
+    "netflix": "netflix.com",
+    "spotify": "spotify.com",
+    "youtube": "youtube.com",
+    "youtube premium": "youtube.com",
+    "amazon": "amazon.com",
+    "amazon prime": "amazon.com",
+    "chatgpt": "openai.com",
+    "chatgpt plus": "openai.com",
+    "notion": "notion.so",
+    "adobe": "adobe.com",
+    "adobe creative cloud": "adobe.com",
+    "aws": "aws.amazon.com",
+    "github": "github.com",
+    "github copilot": "github.com",
+    "coursera": "coursera.org",
+    "coursera plus": "coursera.org",
+    "headspace": "headspace.com",
+    "zerodha": "zerodha.com",
+    "figma": "figma.com",
+    "vercel": "vercel.com",
+    "google": "google.com",
+    "google one": "google.com",
+    "apple": "apple.com",
+    "apple music": "apple.com",
+    "apple tv+": "apple.com",
+    "hulu": "hulu.com",
+    "disney": "disneyplus.com",
+    "disney+": "disneyplus.com",
+    "hbomax": "max.com",
+    "hbo max": "max.com",
+    "canva": "canva.com",
+    "zoom": "zoom.us",
+    "slack": "slack.com",
+    "microsoft": "microsoft.com",
+    "microsoft 365": "microsoft.com",
+  };
+  const key = name.toLowerCase().trim();
+  const domain = map[key] || `${key.replace(/\s+/g, '')}.com`;
+  return `https://logo.clearbit.com/${domain}`;
+}
