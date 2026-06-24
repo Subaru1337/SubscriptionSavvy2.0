@@ -86,5 +86,6 @@ export function getLogoUrl(name: string): string {
   };
   const key = name.toLowerCase().trim();
   const domain = map[key] || `${key.replace(/\s+/g, '')}.com`;
-  return `https://logo.clearbit.com/${domain}`;
+  // Using Google Favicons API as it reliably supports hotlinking and high-res logos (128px)
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 }
