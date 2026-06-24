@@ -86,6 +86,7 @@ export function getLogoUrl(name: string): string {
   };
   const key = name.toLowerCase().trim();
   const domain = map[key] || `${key.replace(/\s+/g, '')}.com`;
-  // Using Google Favicons API as it reliably supports hotlinking and high-res logos (128px)
-  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  // Using logo.uplead.com because it correctly returns a 404 for missing logos, 
+  // allowing our <img onError> fallback to generate the beautiful letter avatars!
+  return `https://logo.uplead.com/${domain}`;
 }
