@@ -189,7 +189,7 @@ export default function DashboardScreen() {
                 <TouchableOpacity 
                   key={`${sub.id}-${i}`}
                   onPress={() => router.push(`/subscription/${sub.id}`)}
-                  className={`bg-white rounded-[20px] p-4 mr-3 shadow-sm border ${isDueSoon ? 'border-[#0D9E75]' : 'border-transparent'} items-center w-[84px]`}
+                  className={`bg-white rounded-[20px] p-4 mr-3 shadow-sm border border-[#0D9E75] items-center w-[84px]`}
                 >
                   <Text className="text-[10px] text-[#6B7280] mb-3 uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                     {dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -214,14 +214,27 @@ export default function DashboardScreen() {
             Reminders
           </Text>
           <View className="bg-white rounded-2xl shadow-sm overflow-hidden">
-            {dueSoon.length > 0 ? dueSoon.map((sub, i) => (
+            {dueSoon.length > 0 ? dueSoon.map((sub, i) => {
+              const todayMidnight = new Date(new Date().setHours(0,0,0,0));
+              const payDate = new Date(sub.nextPayment);
+              payDate.setHours(0,0,0,0);
+              const daysAway = Math.round((payDate.getTime() - todayMidnight.getTime()) / (1000 * 3600 * 24));
+              
+              let dotColor = '#10B981'; // Green
+              if (daysAway <= 1) dotColor = '#EF4444'; // Red for today/tomorrow
+              else if (daysAway <= 7) dotColor = '#F59E0B'; // Orange for this week
+
+              return (
               <TouchableOpacity
                 key={sub.id}
                 onPress={() => router.push(`/subscription/${sub.id}`)}
-                className={`p-4 flex-row items-center border-l-4 border-l-[#F59E0B] justify-between ${i !== dueSoon.length - 1 ? 'border-b border-[#F4F6F9]' : ''}`}
+                className={`p-4 flex-row items-center justify-between ${i !== dueSoon.length - 1 ? 'border-b border-[#F4F6F9]' : ''}`}
               >
                 <View className="flex-row items-center">
-                  <SubscriptionLogo name={sub.name} size={40} />
+                  <View className="relative">
+                    <SubscriptionLogo name={sub.name} size={40} />
+                    <View className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-white" style={{ backgroundColor: dotColor }} />
+                  </View>
                   <View className="ml-4">
                     <Text className="text-sm text-[#111827] mb-0.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{sub.name}</Text>
                     <Text className="text-xs text-[#F59E0B]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
@@ -235,7 +248,7 @@ export default function DashboardScreen() {
                   </Text>
                 </View>
               </TouchableOpacity>
-            )) : (
+            )}) : (
               <CalendarEmptyState />
             )}
           </View>
@@ -294,7 +307,11 @@ export default function DashboardScreen() {
         </View>
 
         {upcoming.length > 0 ? upcoming.map(sub => {
-          const daysAway = Math.ceil((new Date(sub.nextPayment).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+          const todayMidnight = new Date(new Date().setHours(0,0,0,0));
+          const payDate = new Date(sub.nextPayment);
+          payDate.setHours(0,0,0,0);
+          const daysAway = Math.round((payDate.getTime() - todayMidnight.getTime()) / (1000 * 3600 * 24));
+          
           let badgeColor = 'bg-[#D1FAE5] text-[#047857]'; // Teal/Emerald
           if (daysAway <= 3) badgeColor = 'bg-[#FEE2E2] text-[#B91C1C]'; // Red
           else if (daysAway <= 7) badgeColor = 'bg-[#FEF3C7] text-[#B45309]'; // Amber
@@ -310,7 +327,7 @@ export default function DashboardScreen() {
                 <Text className="text-[15px] text-[#111827] mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{sub.name}</Text>
                 <View className={`self-start px-2 py-1 rounded-[6px] ${badgeColor.split(' ')[0]}`}>
                   <Text className={`text-[9px] uppercase tracking-widest ${badgeColor.split(' ')[1]}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                    Due in {daysAway} days
+                    {daysAway === 0 ? 'Due Today' : `Due in ${daysAway} days`}
                   </Text>
                 </View>
               </View>
