@@ -1,8 +1,20 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans, DM_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "sonner";
 import { ServiceWorkerRegistration } from "@/components/ServiceWorkerRegistration";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
+
+const dmMono = DM_Mono({
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -13,8 +25,8 @@ export const metadata: Metadata = {
     "Track, manage, and optimize all your subscriptions in one place. Never miss a payment or waste money on unused services.",
   manifest: "/manifest.json",
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
+    icon: "/icon.png",
+    apple: "/icon.png",
   },
 };
 
@@ -30,12 +42,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${plusJakartaSans.variable} ${dmMono.variable}`}>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0D7377" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
         <ThemeProvider>

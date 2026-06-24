@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Clock, CheckCircle, Loader2, Calendar } from "lucide-react";
 import { StatusBadge, TrialBadge } from "@/components/ui/StatusBadge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { CURRENCY_SYMBOLS } from "@/lib/currency";
 import { getPaymentStatus } from "@/lib/payment-status";
 import { addDays, startOfDay } from "date-fns";
@@ -40,12 +40,12 @@ function categorize(subs: Subscription[]): Record<Section, Subscription[]> & { t
 }
 
 const SECTION_CONFIG = [
-  { key: "trials", label: "Trials Expiring Soon", color: "var(--warning)", bg: "rgba(224,92,92,0.08)", icon: AlertTriangle, showPay: false },
-  { key: "overdue", label: "Overdue", color: "#E05C5C", bg: "rgba(224,92,92,0.06)", icon: AlertTriangle, showPay: true },
-  { key: "today", label: "Due Today", color: "#E05C5C", bg: "rgba(224,92,92,0.04)", icon: Clock, showPay: true },
-  { key: "tomorrow", label: "Due Tomorrow", color: "var(--primary)", bg: "rgba(13,115,119,0.04)", icon: Calendar, showPay: false },
-  { key: "week", label: "Due This Week", color: "var(--primary-hover)", bg: "rgba(20,160,133,0.04)", icon: Calendar, showPay: false },
-  { key: "upcoming", label: "Upcoming", color: "var(--success)", bg: "rgba(46,204,122,0.04)", icon: CheckCircle, showPay: false },
+  { key: "trials", label: "Trials Expiring Soon", color: "var(--warning)", bg: "rgba(224,92,92,0.08)", icon: AlertTriangle, payStyle: "none" },
+  { key: "overdue", label: "Overdue", color: "#E05C5C", bg: "rgba(224,92,92,0.06)", icon: AlertTriangle, payStyle: "solid" },
+  { key: "today", label: "Due Today", color: "#E05C5C", bg: "rgba(224,92,92,0.04)", icon: Clock, payStyle: "solid" },
+  { key: "tomorrow", label: "Due Tomorrow", color: "var(--primary)", bg: "rgba(13,115,119,0.04)", icon: Calendar, payStyle: "ghost" },
+  { key: "week", label: "Due This Week", color: "var(--primary-hover)", bg: "rgba(20,160,133,0.04)", icon: Calendar, payStyle: "ghost" },
+  { key: "upcoming", label: "Upcoming", color: "var(--success)", bg: "rgba(46,204,122,0.04)", icon: CheckCircle, payStyle: "none" },
 ] as const;
 
 export default function RemindersPage() {
@@ -71,6 +71,16 @@ export default function RemindersPage() {
       const res = await fetch(`/api/subscriptions/${id}/pay`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
+      
+      // Trigger confetti!
+      import("canvas-confetti").then((confetti) => {
+        confetti.default({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      });
+      
       toast.success("Marked as paid! Next payment date updated.");
       load();
     } catch (err) {
@@ -101,7 +111,7 @@ export default function RemindersPage() {
         </div>
       )}
 
-      {SECTION_CONFIG.map(({ key, label, color, bg, icon: Icon, showPay }) => {
+      {SECTION_CONFIG.map(({ key, label, color, bg, icon: Icon, payStyle }) => {
         const items = groups[key as keyof typeof groups];
         if (items.length === 0) return null;
         return (
@@ -113,7 +123,7 @@ export default function RemindersPage() {
             </div>
             <div className="space-y-2">
               {items.map((sub) => (
-                <div key={sub.id} className="card !py-3 !px-4 flex items-center justify-between gap-3" style={{ borderColor: color + "30" }}>
+                <div key={sub.id} className="card hover-lift !py-3 !px-4 flex items-center justify-between gap-3" style={{ borderLeft: `4px solid ${color}` }}>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <h3 className="font-semibold text-sm" style={{ color: "var(--text-primary)" }}>{sub.name}</h3>
@@ -124,14 +134,17 @@ export default function RemindersPage() {
                       <span className="font-mono text-sm font-bold" style={{ color: "var(--text-primary)" }}>
                         {CURRENCY_SYMBOLS[sub.currency] || sub.currency}{Number(sub.cost).toLocaleString()}
                       </span>
-                      <span className="text-xs" style={{ color: "var(--text-secondary)" }}>Due: {formatDate(sub.nextPayment)}</span>
+                      <span className="text-xs font-semibold" style={{ color }}>{label === "Due Today" ? "Due today" : `Due: ${formatDate(sub.nextPayment)}`}</span>
                     </div>
                   </div>
-                  {showPay && (
+                  {payStyle !== "none" && (
                     <button
                       onClick={() => markPaid(sub.id)}
                       disabled={payingId === sub.id}
-                      className="btn-primary text-xs flex-shrink-0 !py-1.5 !px-3"
+                      className={cn(
+                        "text-xs flex-shrink-0 !py-1.5 !px-3 font-semibold",
+                        payStyle === "solid" ? "btn-primary" : "btn-secondary"
+                      )}
                     >
                       {payingId === sub.id ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
                       Mark Paid

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Plus, Search, Filter, Inbox, Star, TrendingUp, CheckSquare, Square, Trash2, PauseCircle } from "lucide-react";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { StatusBadge, SubscriptionStatusBadge } from "@/components/ui/StatusBadge";
-import { formatDateShort } from "@/lib/utils";
+import { formatDateShort, getRelativeDateString, getUrgencyLevel } from "@/lib/utils";
 import { CURRENCY_SYMBOLS } from "@/lib/currency";
 import { SubscriptionModal } from "@/components/subscriptions/SubscriptionModal";
 import { Logo } from "@/components/Logo";
@@ -181,10 +181,34 @@ export default function SubscriptionsPage() {
           </div>
 
           <div className="divide-y" style={{ borderColor: "var(--border)" }}>
-            {filtered.map((sub) => (
+            {[...filtered].sort((a, b) => {
+              const aInactive = a.status === 'paused' || a.status === 'cancelled';
+              const bInactive = b.status === 'paused' || b.status === 'cancelled';
+              if (aInactive && !bInactive) return 1;
+              if (!aInactive && bInactive) return -1;
+              return 0;
+            }).map((sub) => {
+              const urgency = getUrgencyLevel(sub.nextPayment);
+              
+              let urgencyBorder = "border-l-4 border-l-green-500";
+              if (urgency === "urgent") urgencyBorder = "border-l-4 border-l-red-500";
+              else if (urgency === "soon") urgencyBorder = "border-l-4 border-l-amber-500";
+              
+              if (sub.status === "paused" || sub.status === "cancelled") {
+                urgencyBorder = "border-l-4 border-l-transparent"; 
+              }
+
+              const rowClasses = [
+                "p-4 md:px-6 hover:bg-black/5 dark:hover:bg-white/5 transition-colors group relative cursor-pointer",
+                urgencyBorder,
+                sub.status === "cancelled" ? "bg-red-50/50 dark:bg-red-900/10" : "",
+                sub.status === "paused" ? "opacity-50 grayscale" : ""
+              ].filter(Boolean).join(" ");
+
+              return (
               <div
                 key={sub.id}
-                className="p-4 md:px-6 hover:bg-black/5 transition-colors group relative cursor-pointer"
+                className={rowClasses}
                 onClick={(e) => {
                   // Prevent opening modal if clicking on checkbox
                   if ((e.target as HTMLElement).closest('.checkbox-area')) return;
@@ -236,11 +260,20 @@ export default function SubscriptionsPage() {
 
                   {/* Desktop Next Payment */}
                   <div className="hidden md:block md:col-span-3">
-                    <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>
-                      {formatDateShort(sub.nextPayment)}
-                    </p>
+                    {sub.status === 'active' ? (
+                      <>
+                        <p className={`text-sm font-semibold ${urgency === 'urgent' ? 'text-red-500' : urgency === 'soon' ? 'text-amber-500' : ''}`} style={{ color: urgency === 'normal' ? "var(--text-primary)" : undefined }}>
+                          {getRelativeDateString(sub.nextPayment)}
+                        </p>
+                        {urgency !== 'urgent' && urgency !== 'soon' && (
+                          <p className="text-[10px]" style={{ color: "var(--text-secondary)" }}>{formatDateShort(sub.nextPayment)}</p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>—</p>
+                    )}
                     {sub.cancelledAt && (
-                      <p className="text-[10px]" style={{ color: "var(--success)" }}>Saved money since {formatDateShort(sub.cancelledAt)}</p>
+                      <p className="text-[10px] mt-0.5" style={{ color: "var(--success)" }}>Saved money since {formatDateShort(sub.cancelledAt)}</p>
                     )}
                   </div>
 
@@ -256,8 +289,14 @@ export default function SubscriptionsPage() {
                   {/* Mobile Bottom Row */}
                   <div className="flex md:hidden items-center justify-between pt-3 border-t mt-1" style={{ borderColor: "var(--border)" }}>
                     <div>
-                      <p className="text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Next Payment</p>
-                      <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{formatDateShort(sub.nextPayment)}</p>
+                      <p className="text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>{sub.status === 'active' ? 'Next Payment' : 'Status'}</p>
+                      {sub.status === 'active' ? (
+                        <p className={`text-sm font-semibold ${urgency === 'urgent' ? 'text-red-500' : urgency === 'soon' ? 'text-amber-500' : ''}`} style={{ color: urgency === 'normal' ? "var(--text-primary)" : undefined }}>
+                          {getRelativeDateString(sub.nextPayment)}
+                        </p>
+                      ) : (
+                        <p className="text-sm font-medium capitalize" style={{ color: "var(--text-secondary)" }}>{sub.status}</p>
+                      )}
                     </div>
                     {sub.status === 'active' ? (
                       <StatusBadge nextPayment={sub.nextPayment} />
@@ -268,7 +307,7 @@ export default function SubscriptionsPage() {
 
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </div>
       )}

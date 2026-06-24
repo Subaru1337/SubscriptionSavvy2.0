@@ -239,6 +239,45 @@ export default function DashboardPage() {
     loadAll();
   }
 
+  const [payingId, setPayingId] = useState<string | null>(null);
+
+  async function markPaid(id: string) {
+    setPayingId(id);
+    try {
+      const res = await fetch(`/api/subscriptions/${id}/pay`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      
+      // Trigger confetti!
+      import("canvas-confetti").then((confetti) => {
+        confetti.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      });
+      
+      toast.success("Marked as paid!");
+      loadAll();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to mark as paid");
+    } finally { setPayingId(null); }
+  }
+
+  // Trend calculations
+  const currentMonthTrend = trends.length >= 2 ? trends[trends.length - 1].total : 0;
+  const lastMonthTrend = trends.length >= 2 ? trends[trends.length - 2].total : 0;
+  let trendPercent = 0;
+  if (lastMonthTrend > 0) trendPercent = ((currentMonthTrend - lastMonthTrend) / lastMonthTrend) * 100;
+  else if (currentMonthTrend > 0) trendPercent = 100;
+  
+  const trendSymbol = trendPercent > 0 ? "↑" : trendPercent < 0 ? "↓" : "";
+  const trendColor = trendPercent > 0 ? "var(--warning)" : trendPercent < 0 ? "var(--success)" : "var(--text-secondary)";
+  
+  // Year progress
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const diff = now.getTime() - start.getTime();
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay);
+  const yearPercent = Math.round((dayOfYear / 365) * 100);
+
   if (loading) {
     return (
       <div className="page-container">
@@ -279,10 +318,6 @@ export default function DashboardPage() {
               </div>
               <div className="border rounded-xl" style={{ borderColor: "var(--border)" }}>
                 <SubscriptionModal open={true} onClose={() => {}} onSuccess={() => setOnboardingStep(3)} />
-                {/* We use a hack here: we just render the content inline by rendering our own form, OR we can just tell them to click */}
-                {/* Since the prompt says "Render the full subscription form (reuse the existing SubscriptionModal form fields inline)",
-                    and SubscriptionModal is a popup, we will just mount it as a popup but hide its overlay visually via CSS if possible.
-                    Actually, rendering the SubscriptionModal component normally works, it will just cover this onboarding overlay. */}
                 <div className="py-20 text-center">
                   <button onClick={() => setModalOpen(true)} className="btn-primary mx-auto">Open Add Form</button>
                   <SubscriptionModal open={modalOpen} onClose={() => setModalOpen(false)} onSuccess={() => { setModalOpen(false); setOnboardingStep(3); }} />
@@ -339,26 +374,32 @@ export default function DashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="card">
-          <p className="text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Monthly Spend</p>
+        <div className="card hover-lift">
+          <p className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Monthly Spend</p>
           <p className="text-3xl font-bold font-mono" style={{ color: "var(--primary)" }}>{formatAmount(summary?.monthly_total || 0)}</p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>per month</p>
+          {trendPercent !== 0 && (
+            <p className="text-xs mt-1 font-semibold" style={{ color: trendColor }}>
+              {trendSymbol} {Math.abs(Math.round(trendPercent))}% vs last month
+            </p>
+          )}
         </div>
-        <div className="card">
-          <p className="text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Annual Projection</p>
+        <div className="card hover-lift">
+          <p className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Annual Projection</p>
           <p className="text-3xl font-bold font-mono" style={{ color: "var(--text-primary)" }}>{formatAmount(summary?.annual_total || 0)}</p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>per year</p>
+          <p className="text-xs mt-1 font-medium" style={{ color: "var(--text-secondary)" }}>{yearPercent}% of year elapsed</p>
         </div>
-        <div className="card">
-          <p className="text-xs font-medium mb-1" style={{ color: "var(--text-secondary)" }}>Active Subscriptions</p>
+        <div className="card hover-lift">
+          <p className="text-xs font-semibold mb-1 uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>Active Subscriptions</p>
           <p className="text-3xl font-bold font-mono" style={{ color: "var(--text-primary)" }}>{summary?.active_subscriptions || 0}</p>
-          <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>services tracked</p>
+          <p className="text-xs mt-1 font-medium" style={{ color: "var(--text-secondary)" }}>
+            {summary?.active_subscriptions === 1 ? '1 active' : `${summary?.active_subscriptions} active`}
+          </p>
         </div>
       </div>
 
       {/* Health Score Card */}
       {healthScore && (
-        <div className="card mb-6 flex flex-col md:flex-row items-center gap-6">
+        <div className="card hover-lift mb-6 flex flex-col md:flex-row items-center gap-6">
           <div className="flex flex-col items-center flex-shrink-0">
             <div className="flex items-center gap-2 mb-3">
               <HeartPulse size={16} style={{ color: "var(--primary)" }} />
@@ -376,14 +417,18 @@ export default function DashboardPage() {
             {healthScore.score === 100 ? (
               <p className="text-sm font-medium" style={{ color: "var(--success)" }}>Perfect score! Your subscriptions are in great shape 🎉</p>
             ) : (
-              <ul className="space-y-2">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-sm font-bold w-12 text-right" style={{ color: "var(--success)" }}>+100</span>
+                  <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>Base score</span>
+                </div>
                 {healthScore.deductions.map((d: any, i: number) => (
-                  <li key={i} className="flex items-center gap-2 text-sm" style={{ color: "var(--warning)" }}>
-                    <span className="font-bold flex-shrink-0 w-6">{d.points}</span> 
-                    <span>{d.reason}</span>
-                  </li>
+                  <div key={i} className="flex items-center gap-3">
+                    <span className="font-mono text-sm font-bold w-12 text-right" style={{ color: "var(--warning)" }}>{d.points > 0 ? `-${d.points}` : d.points}</span> 
+                    <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{d.reason}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         </div>
@@ -392,7 +437,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Forecast Card */}
         {forecast && (
-          <div className="card">
+          <div className="card hover-lift">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp size={16} style={{ color: "var(--primary)" }} />
               <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Next 30 Days</p>
@@ -409,7 +454,7 @@ export default function DashboardPage() {
 
         {/* Savings Card */}
         {savings && (
-          <div className="card">
+          <div className="card hover-lift">
             <div className="flex items-center gap-2 mb-2">
               <PiggyBank size={16} style={{ color: "var(--success)" }} />
               <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Saved by Cancelling</p>
@@ -434,7 +479,7 @@ export default function DashboardPage() {
 
       {/* Annual Recap Card */}
       {annualRecap && (
-        <div className="card mb-6">
+        <div className="card hover-lift mb-6">
           <div className="flex items-center gap-2 mb-6">
             <Trophy size={18} style={{ color: "var(--primary)" }} />
             <h2 className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>{annualRecap.year} Spending Recap</h2>
@@ -473,7 +518,7 @@ export default function DashboardPage() {
 
       {/* Budget Bar */}
       {user?.monthlyBudget && (
-        <div className="card mb-6">
+        <div className="card hover-lift mb-6">
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{formatAmount(summary?.monthly_total || 0)} of {formatAmount(Number(user.monthlyBudget))} monthly budget used</p>
             <span className="text-sm font-bold font-mono" style={{ color: BUDGET_COLOR(budgetPercent || 0) }}>{budgetPercent?.toFixed(1)}%</span>
@@ -488,14 +533,14 @@ export default function DashboardPage() {
 
       {/* Reconsider These (Nudges) */}
       {nudges.length > 0 && (
-        <div className="card mb-6" style={{ backgroundColor: "var(--tag-bg)" }}>
+        <div className="card hover-lift mb-6" style={{ backgroundColor: "var(--tag-bg)" }}>
           <div className="flex items-center gap-2 mb-4">
             <Lightbulb size={18} style={{ color: "var(--primary)" }} />
             <h2 className="section-title !mb-0">You've been paying for these but rated them low</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {nudges.map((nudge: any) => (
-              <div key={nudge.id} className="card !p-4 relative">
+              <div key={nudge.id} className="card hover-lift !p-4 relative">
                 <button onClick={() => handleDismissNudge(nudge.id)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><X size={14} /></button>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-bold text-sm">{nudge.name}</span>
@@ -514,7 +559,7 @@ export default function DashboardPage() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="card">
+        <div className="card hover-lift">
           <p className="section-title">Spending by Category</p>
           {categories.length === 0 ? (
             <div className="h-48 flex items-center justify-center" style={{ color: "var(--text-secondary)" }}>No data yet</div>
@@ -531,7 +576,7 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="card">
+        <div className="card hover-lift">
           <p className="section-title">6-Month Spending Trend</p>
           {trends.every((t) => t.total === 0) ? (
             <div className="h-48 flex items-center justify-center" style={{ color: "var(--text-secondary)" }}>No payment history yet</div>
@@ -551,7 +596,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Category Breakdown with Budget Progress */}
-        <div className="card">
+        <div className="card hover-lift">
           <p className="section-title">Category Breakdown</p>
           <div className="space-y-4 mt-4">
             {categories.map((cat, i) => (
@@ -562,7 +607,14 @@ export default function DashboardPage() {
                     <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{cat.category}</span>
                     {cat.over_budget && <AlertTriangle size={12} style={{ color: "var(--warning)" }} />}
                   </div>
-                  <span className="font-mono text-sm font-semibold">{formatAmount(cat.monthly_total)}/mo</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm font-semibold">{formatAmount(cat.monthly_total)}/mo</span>
+                    {summary?.monthly_total && summary.monthly_total > 0 && (
+                      <span className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>
+                        · {Math.round((cat.monthly_total / summary.monthly_total) * 100)}%
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {cat.budget_limit && (
                   <div>
@@ -580,7 +632,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card hover-lift">
           <div className="flex items-center gap-2 mb-4">
             <Clock size={16} style={{ color: "var(--primary)" }} />
             <p className="section-title !mb-0">Due This Week</p>
@@ -588,22 +640,32 @@ export default function DashboardPage() {
           {dueSoon.length === 0 ? (
             <p className="text-sm text-center py-8" style={{ color: "var(--text-secondary)" }}>No payments due this week 🎉</p>
           ) : (
-            <div className="space-y-2">
-              {dueSoon.map((sub) => (
-                <div key={sub.id} className="flex items-center justify-between py-2 border-b last:border-0" style={{ borderColor: "var(--border)" }}>
-                  <div className="flex items-center gap-2.5">
-                    <Logo name={sub.name} className="w-6 h-6 rounded-md object-contain bg-white shrink-0 shadow-sm" />
+            <div className="space-y-3">
+              {dueSoon.map((sub) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const isDueToday = new Date(sub.nextPayment).getTime() <= today.getTime();
+
+                return (
+                <div key={sub.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b last:border-0 gap-3" style={{ borderColor: "var(--border)" }}>
+                  <div className="flex items-center gap-3">
+                    <Logo name={sub.name} className="w-8 h-8 rounded-md object-contain bg-white shrink-0 shadow-sm border" />
                     <div>
-                      <p className="text-sm font-medium truncate max-w-[120px] sm:max-w-[200px]" style={{ color: "var(--text-primary)" }}>{sub.name}</p>
-                      <p className="text-xs" style={{ color: "var(--text-secondary)" }}>{formatDateShort(sub.nextPayment)}</p>
+                      <p className="text-sm font-bold truncate max-w-[120px] sm:max-w-[200px]" style={{ color: "var(--text-primary)" }}>{sub.name}</p>
+                      <p className="text-xs font-medium" style={{ color: "var(--text-secondary)" }}>{formatDateShort(sub.nextPayment)} · {CURRENCY_SYMBOLS[sub.currency] || sub.currency}{Number(sub.cost).toLocaleString()}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-semibold" style={{ color: "var(--text-primary)" }}>{CURRENCY_SYMBOLS[sub.currency] || sub.currency}{Number(sub.cost).toLocaleString()}</span>
-                    <StatusBadge nextPayment={sub.nextPayment} />
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={() => markPaid(sub.id)}
+                      disabled={payingId === sub.id}
+                      className={`text-xs flex-1 sm:flex-none justify-center !py-1.5 !px-3 font-semibold ${isDueToday ? 'btn-primary' : 'btn-secondary'}`}
+                    >
+                      {payingId === sub.id ? "..." : "Mark Paid"}
+                    </button>
                   </div>
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </div>

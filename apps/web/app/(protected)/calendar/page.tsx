@@ -7,6 +7,8 @@ import { getPaymentStatus } from "@/lib/payment-status";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CURRENCY_SYMBOLS } from "@/lib/currency";
 
+import { Logo } from "@/components/Logo";
+
 interface Subscription {
   id: string; name: string; cost: string; currency: string;
   nextPayment: string; status: string;
@@ -79,7 +81,7 @@ export default function CalendarPage() {
         <div className="grid grid-cols-7 gap-0.5">
           {/* Empty offset cells */}
           {Array.from({ length: startOffset }).map((_, i) => (
-            <div key={`offset-${i}`} className="h-16 md:h-20" />
+            <div key={`offset-${i}`} className="min-h-[100px] md:min-h-[120px]" />
           ))}
 
           {days.map((day) => {
@@ -92,7 +94,7 @@ export default function CalendarPage() {
               <div
                 key={day.toISOString()}
                 onClick={() => subs.length > 0 && setSelectedDate(isSameDay(day, selectedDate ?? new Date(0)) ? null : day)}
-                className="h-16 md:h-20 p-1 rounded-lg transition-colors relative"
+                className="min-h-[100px] md:min-h-[120px] p-1.5 rounded-lg transition-colors relative flex flex-col"
                 style={{
                   cursor: subs.length > 0 ? "pointer" : "default",
                   backgroundColor: isSelected ? "var(--tag-bg)" : isCurrentDay ? "rgba(13,115,119,0.06)" : "transparent",
@@ -100,29 +102,28 @@ export default function CalendarPage() {
                   opacity: inMonth ? 1 : 0.3,
                 }}
               >
-                <span className="text-xs font-medium" style={{ color: isCurrentDay ? "var(--primary)" : "var(--text-primary)" }}>
+                <span className="text-xs font-semibold mb-1" style={{ color: isCurrentDay ? "var(--primary)" : "var(--text-primary)" }}>
                   {format(day, "d")}
                 </span>
-                {/* Payment dots */}
-                <div className="flex flex-wrap gap-0.5 mt-1">
-                  {subs.slice(0, 3).map((sub) => (
-                    <div
-                      key={sub.id}
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: getDotColor(sub) }}
-                      title={sub.name}
-                    />
+                
+                {/* Compact Chips */}
+                <div className="flex flex-col gap-1 overflow-y-auto max-h-[80px] md:max-h-[100px] scrollbar-hide">
+                  {subs.map((sub) => (
+                    <div 
+                      key={sub.id} 
+                      className="flex items-center gap-1.5 px-1.5 py-1 rounded shadow-sm border"
+                      style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
+                    >
+                      <Logo name={sub.name} className="w-3.5 h-3.5 rounded-[3px] object-contain flex-shrink-0" />
+                      <div className="min-w-0 flex-1 flex flex-col">
+                        <span className="text-[10px] font-bold truncate leading-tight" style={{ color: "var(--text-primary)" }}>{sub.name}</span>
+                        <span className="text-[9px] font-mono leading-tight truncate" style={{ color: "var(--text-secondary)" }}>
+                          {CURRENCY_SYMBOLS[sub.currency] || sub.currency}{Number(sub.cost).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
                   ))}
-                  {subs.length > 3 && (
-                    <span className="text-xs leading-none" style={{ color: "var(--text-secondary)" }}>+{subs.length - 3}</span>
-                  )}
                 </div>
-                {/* Sub names on larger cells */}
-                {subs.slice(0, 1).map((sub) => (
-                  <div key={sub.id} className="hidden md:block mt-0.5">
-                    <p className="text-xs truncate leading-none" style={{ color: getDotColor(sub), maxWidth: "100%" }}>{sub.name}</p>
-                  </div>
-                ))}
               </div>
             );
           })}
