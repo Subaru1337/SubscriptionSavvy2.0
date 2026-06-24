@@ -12,7 +12,7 @@ const gradients = [
 export default function SubscriptionLogo({ name, size = 48, style }: { name: string, size?: number, style?: any }) {
   const [error, setError] = useState(false);
   const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const uri = `https://logo.clearbit.com/${cleanName}.com`;
+  const uri = `https://logo.uplead.com/${cleanName}.com`;
   
   // Simple hash to pick a consistent gradient
   let hash = 0;
