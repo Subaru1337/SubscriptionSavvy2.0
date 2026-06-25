@@ -7,6 +7,8 @@ import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import SubscriptionLogo from '../../components/SubscriptionLogo';
+import { getCurrencySymbol } from '../../lib/currency';
+import { useBaseCurrency } from '../../lib/useBaseCurrency';
 
 type Subscription = {
   id: string;
@@ -43,6 +45,7 @@ export default function CalendarScreen() {
   const [loading, setLoading] = useState(true);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const router = useRouter();
+  const baseCurrency = useBaseCurrency();
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -211,7 +214,7 @@ export default function CalendarScreen() {
           {selectedTotal > 0 && (
             <View className="bg-[#1DCCA0]/20 px-3 py-1 rounded-full border border-[#1DCCA0]/30">
               <Text className="text-[10px] font-bold text-[#0D9E75] tracking-widest uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                ₹{selectedTotal.toFixed(0)} Due
+                {getCurrencySymbol(baseCurrency)}{selectedTotal.toFixed(0)} Due
               </Text>
             </View>
           )}
@@ -239,11 +242,18 @@ export default function CalendarScreen() {
               </View>
               <View className="items-end">
                 <Text className="text-lg font-bold text-[#0D9E75] mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                  ₹{Number(sub.cost).toFixed(0)}
+                  {getCurrencySymbol(sub.currency)}{Number(sub.cost).toFixed(0)}
                 </Text>
-                <Text className="text-[9px] font-bold text-[#9CA3AF] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                  {sub.billingCycle}
-                </Text>
+                <View className="flex-row items-center" style={{ gap: 4 }}>
+                  {sub.currency !== baseCurrency ? (
+                    <View style={{ backgroundColor: '#E0F2FE', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4 }}>
+                      <Text style={{ fontSize: 9, fontFamily: 'PlusJakartaSans_700Bold', color: '#0369A1' }}>{sub.currency}</Text>
+                    </View>
+                  ) : null}
+                  <Text className="text-[9px] font-bold text-[#9CA3AF] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    {sub.billingCycle}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
           ))

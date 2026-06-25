@@ -12,6 +12,7 @@ import {
   getPushPermissionGranted,
   requestPushPermissions,
 } from '../../lib/push-notifications';
+import { refreshBaseCurrency } from '../../lib/useBaseCurrency';
 
 const CURRENCIES = ['USD', 'INR', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD'];
 const CATEGORIES = ['Entertainment', 'Productivity', 'Health', 'Education', 'Finance', 'Shopping', 'Developer Tools', 'Other'];
@@ -84,6 +85,7 @@ export default function SettingsScreen() {
         monthlyBudget: monthlyBudget ? parseFloat(monthlyBudget) : null,
         emailReminders,
       });
+      await refreshBaseCurrency();
       Alert.alert('Saved', 'Your settings have been updated.');
     } catch (err: any) {
       Alert.alert('Error', err?.response?.data?.error ?? 'Failed to save settings');

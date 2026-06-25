@@ -9,6 +9,7 @@ import DonutChart from '../../components/DonutChart';
 import HealthArc from '../../components/HealthArc';
 import AnimatedBar from '../../components/AnimatedBar';
 import { getCurrencySymbol, formatAmount } from '../../lib/currency';
+import { useBaseCurrency } from '../../lib/useBaseCurrency';
 
 const CATEGORY_COLORS: Record<string, string> = {
   Entertainment: '#E50914',
@@ -30,7 +31,7 @@ export default function AnalyticsScreen() {
   const [annualRecap, setAnnualRecap] = useState<any>(null);
   const [budgetPercent, setBudgetPercent] = useState<number>(0);
   const [monthlyTotal, setMonthlyTotal] = useState<number>(0);
-  const [baseCurrency, setBaseCurrency] = useState('INR');
+  const baseCurrency = useBaseCurrency();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -50,7 +51,6 @@ export default function AnalyticsScreen() {
       
       setMonthlyTotal(allData.summary?.monthly_total || 0);
       setBudgetPercent(allData.summary?.budget_used_percent || 0);
-      setBaseCurrency(allData.baseCurrency || 'INR');
 
     } catch (error) {
       console.error(error);

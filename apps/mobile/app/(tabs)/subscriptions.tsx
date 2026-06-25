@@ -7,6 +7,8 @@ import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import SubscriptionLogo from '../../components/SubscriptionLogo';
+import { getCurrencySymbol } from '../../lib/currency';
+import { useBaseCurrency } from '../../lib/useBaseCurrency';
 
 type Subscription = {
   id: string;
@@ -30,6 +32,7 @@ export default function SubscriptionsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('ALL');
   const router = useRouter();
+  const baseCurrency = useBaseCurrency();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -139,10 +142,17 @@ export default function SubscriptionsScreen() {
                 {sub.category}
               </Text>
 
-              <View className="pt-3 border-t border-gray-100">
-                <Text className="text-base text-[#0D9E75]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                  ₹{Number(sub.cost).toFixed(0)}
-                </Text>
+              <View className="pt-3 border-t border-gray-100 flex-row justify-between items-end">
+                <View>
+                  <Text className="text-base text-[#0D9E75]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    {getCurrencySymbol(sub.currency)}{Number(sub.cost).toFixed(0)}
+                  </Text>
+                  {sub.currency !== baseCurrency ? (
+                    <View style={{ backgroundColor: '#E0F2FE', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, alignSelf: 'flex-start', marginTop: 2 }}>
+                      <Text style={{ fontSize: 9, fontFamily: 'PlusJakartaSans_700Bold', color: '#0369A1' }}>{sub.currency}</Text>
+                    </View>
+                  ) : null}
+                </View>
                 <Text className={`text-[10px] mt-1 ${isOverdue ? 'text-[#EF4444]' : 'text-[#6B7280]'}`} style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
                   {isOverdue ? 'Past Due' : `Due ${nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
                 </Text>

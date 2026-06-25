@@ -12,6 +12,7 @@ import AnimatedNumber from '../../components/AnimatedNumber';
 import AnimatedRing from '../../components/AnimatedRing';
 import SubscriptionLogo from '../../components/SubscriptionLogo';
 import { getCurrencySymbol, formatAmount } from '../../lib/currency';
+import { useBaseCurrency } from '../../lib/useBaseCurrency';
 
 // New User Onboarding Empty State
 const NewUserGuide = ({ onPress }: { onPress: () => void }) => (
@@ -84,7 +85,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
-  const [baseCurrency, setBaseCurrency] = useState('INR');
+  const baseCurrency = useBaseCurrency();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [forecast, setForecast] = useState<any>(null);
   const [savings, setSavings] = useState<any>(null);
@@ -113,7 +114,6 @@ export default function DashboardScreen() {
         api.get('/analytics/extended'),
       ]);
       setSummary(allRes.data?.summary ?? null);
-      setBaseCurrency(allRes.data?.baseCurrency ?? 'INR');
       setSubscriptions(
         Array.isArray(subsRes.data)
           ? subsRes.data
