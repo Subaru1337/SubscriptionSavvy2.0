@@ -159,11 +159,11 @@ export default function AnalyticsScreen() {
                 <View className="flex-row flex-wrap mb-2">
                   <View className="w-1/2 mb-6">
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Spent This Year</Text>
-            <Text className="text-2xl font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{getCurrencySymbol(baseCurrency)}{annualRecap.year_total?.toFixed(0)}</Text>
+            <Text className="text-2xl font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{getCurrencySymbol(baseCurrency)}{annualRecap.year_total?.toFixed(2)}</Text>
                   </View>
                   <View className="w-1/2 mb-6 pl-4">
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Monthly Avg</Text>
-            <Text className="text-2xl font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{getCurrencySymbol(baseCurrency)}{annualRecap.avg_monthly?.toFixed(0)}</Text>
+            <Text className="text-2xl font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{getCurrencySymbol(baseCurrency)}{annualRecap.avg_monthly?.toFixed(2)}</Text>
                   </View>
                   <View className="w-1/2">
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Payments Made</Text>
@@ -179,7 +179,7 @@ export default function AnalyticsScreen() {
                 {annualRecap.most_expensive_sub ? (
                   <View className="mt-4 pt-4 border-t border-white/10 flex-row items-center justify-between">
                     <Text className="text-xs text-gray-400" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>Most Expensive:</Text>
-                    <Text className="text-xs font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{annualRecap.most_expensive_sub.name} ({getCurrencySymbol(baseCurrency)}{annualRecap.most_expensive_sub.total_paid})</Text>
+                    <Text className="text-xs font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{annualRecap.most_expensive_sub.name} ({getCurrencySymbol(baseCurrency)}{Number(annualRecap.most_expensive_sub.total_paid).toFixed(2)})</Text>
                   </View>
                 ) : null}
               </View>
@@ -205,10 +205,10 @@ export default function AnalyticsScreen() {
                   {categories.slice(0, 4).map((cat: any) => {
                     const pct = monthlyTotal ? ((cat.monthly_total / monthlyTotal) * 100).toFixed(0) : 0;
                     return (
-                      <View key={cat.category} className="flex-row items-center justify-between">
-                        <View className="flex-row items-center">
-                          <View className="w-3 h-3 rounded-full mr-3" style={{ backgroundColor: CATEGORY_COLORS[cat.category] || '#9CA3AF' }} />
-                          <Text className="text-[11px] font-bold text-[#4B5563] truncate w-16 uppercase tracking-wider" style={{ fontFamily: 'PlusJakartaSans_700Bold' }} numberOfLines={1}>{cat.category}</Text>
+                      <View key={cat.category} className="flex-row items-center justify-between w-full">
+                        <View className="flex-row items-center flex-1 mr-2">
+                          <View className="w-3 h-3 rounded-full mr-3 shrink-0" style={{ backgroundColor: CATEGORY_COLORS[cat.category] || '#9CA3AF' }} />
+                          <Text className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider flex-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }} numberOfLines={1} ellipsizeMode="tail">{cat.category}</Text>
                         </View>
                         <Text className="text-[12px] font-bold text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{pct}%</Text>
                       </View>
@@ -227,7 +227,7 @@ export default function AnalyticsScreen() {
               <View>
                 {categories.map((cat: any) => {
                   const hasLimit = cat.budget_limit != null && cat.budget_limit > 0;
-                  const limitText = hasLimit ? ` / ₹${Math.round(cat.budget_limit).toLocaleString()}` : '';
+                  const limitText = hasLimit ? ` / ${getCurrencySymbol(baseCurrency)}${Math.round(cat.budget_limit).toLocaleString()}` : '';
                   const overBudget = cat.over_budget;
                   const percent = Math.min(100, Math.round(cat.budget_used_percent || 0));
                   
@@ -280,6 +280,7 @@ export default function AnalyticsScreen() {
                     label={t.label.split(' ')[0].substring(0,3)}
                     delay={i * 100}
                     isCurrentMonth={i === trends.length - 1}
+                    currencySymbol={getCurrencySymbol(baseCurrency)}
                   />
                 ))}
               </View>

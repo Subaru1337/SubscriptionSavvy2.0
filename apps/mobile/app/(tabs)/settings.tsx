@@ -13,6 +13,7 @@ import {
   requestPushPermissions,
 } from '../../lib/push-notifications';
 import { refreshBaseCurrency } from '../../lib/useBaseCurrency';
+import { getCurrencySymbol } from '../../lib/currency';
 
 const CURRENCIES = ['USD', 'INR', 'EUR', 'GBP', 'AED', 'SGD', 'AUD', 'CAD'];
 const CATEGORIES = ['Entertainment', 'Productivity', 'Health', 'Education', 'Finance', 'Shopping', 'Developer Tools', 'Other'];
@@ -326,7 +327,7 @@ export default function SettingsScreen() {
                     className="flex-row items-center space-x-2"
                   >
                     <Text className={existing ? 'text-[#0D9E75] text-[13px] font-bold' : 'text-[#6B7280] text-[13px] font-bold'} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                      {existing ? `${baseCurrency} ${Number(existing.limit).toFixed(0)}` : 'Set limit'}
+                      {existing ? `${getCurrencySymbol(baseCurrency)} ${Number(existing.limit).toFixed(0)}` : 'Set limit'}
                     </Text>
                     <Feather name="edit-2" size={14} color={existing ? '#0D9E75' : '#9CA3AF'} />
                   </TouchableOpacity>

@@ -22,7 +22,7 @@ export const CURRENCY_SYMBOLS: Record<string, string> = {
 };
 
 const rateCache = new Map<string, { rates: Record<string, number>, timestamp: number }>();
-const CACHE_DURATION = 1000 * 60 * 60 * 24; // 24 hours
+const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
 export async function getRates(baseCurrency: string): Promise<Record<string, number>> {
   const now = Date.now();
@@ -38,7 +38,7 @@ export async function getRates(baseCurrency: string): Promise<Record<string, num
     const timeoutId = setTimeout(() => controller.abort(), 2000); // Strict 2-second timeout
 
     const res = await fetch(`${FRANKFURTER_BASE}?base=${baseCurrency}`, {
-      next: { revalidate: 86400 },
+      cache: 'no-store',
       signal: controller.signal
     });
     clearTimeout(timeoutId);

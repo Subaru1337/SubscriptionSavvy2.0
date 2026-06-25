@@ -186,6 +186,7 @@ export default function DashboardScreen() {
               <AnimatedNumber 
                 value={summary?.monthly_total || 0} 
                 prefix={getCurrencySymbol(baseCurrency)} 
+                decimals={2}
                 className="text-[40px] text-white" 
                 style={{ fontFamily: 'PlusJakartaSans_700Bold', lineHeight: 48 }} 
               />
@@ -204,7 +205,7 @@ export default function DashboardScreen() {
           </View>
           <View className="flex-row justify-between pt-4 border-t border-white/10">
             <Text className="text-gray-300 text-xs" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
-              Annual: {formatAmount(summary?.annual_total || 0, baseCurrency)}
+              Annual: {formatAmount(summary?.annual_total || 0, baseCurrency, 2)}
             </Text>
             <Text className="text-[#1DCCA0] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
               vs last month: ↑ 0%
@@ -218,7 +219,7 @@ export default function DashboardScreen() {
               </Text>
             </View>
             <Text className="text-[#1DCCA0] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-              {formatAmount(Math.round(savings?.total_saved || 0), baseCurrency)}
+              {formatAmount(savings?.total_saved || 0, baseCurrency, 2)}
             </Text>
           </View>
         </LinearGradient>

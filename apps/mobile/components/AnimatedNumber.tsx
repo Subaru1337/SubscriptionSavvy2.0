@@ -14,9 +14,10 @@ interface AnimatedNumberProps extends Omit<TextInputProps, 'value'> {
   value: number;
   prefix?: string;
   duration?: number;
+  decimals?: number;
 }
 
-export default function AnimatedNumber({ value, prefix = '', duration = 1500, style, ...rest }: AnimatedNumberProps) {
+export default function AnimatedNumber({ value, prefix = '', duration = 1500, decimals = 0, style, ...rest }: AnimatedNumberProps) {
   const animatedValue = useSharedValue(0);
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function AnimatedNumber({ value, prefix = '', duration = 1500, st
 
   const animatedProps = useAnimatedProps(() => {
     return {
-      text: `${prefix}${Math.round(animatedValue.value).toString()}`,
+      text: `${prefix}${animatedValue.value.toFixed(decimals)}`,
     } as any;
   });
 
