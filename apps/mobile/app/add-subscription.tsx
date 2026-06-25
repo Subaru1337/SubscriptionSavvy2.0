@@ -26,20 +26,23 @@ function ChipSelector({ label, options, value, onChange }: {
   return (
     <View className="mb-5">
       <Text className="text-[#111827] font-bold mb-3 text-sm" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{label}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1">
-        <View className="flex-row space-x-2 px-1">
-          {options.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              onPress={() => onChange(opt)}
-              className={`px-4 py-2.5 rounded-full border ${value === opt ? 'bg-[#0D9E75] border-[#0D9E75]' : 'bg-white border-gray-200'}`}
-            >
-              <Text className={value === opt ? 'text-white font-bold text-xs uppercase tracking-wider' : 'text-[#6B7280] font-bold text-xs uppercase tracking-wider'} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 4 }}
+      >
+        {options.map((opt, i) => (
+          <TouchableOpacity
+            key={opt}
+            onPress={() => onChange(opt)}
+            style={{ marginRight: i < options.length - 1 ? 8 : 0 }}
+            className={`px-4 py-2.5 rounded-full border ${value === opt ? 'bg-[#0D9E75] border-[#0D9E75]' : 'bg-white border-gray-200'}`}
+          >
+            <Text className={value === opt ? 'text-white font-bold text-xs uppercase tracking-wider' : 'text-[#6B7280] font-bold text-xs uppercase tracking-wider'} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+              {opt}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     </View>
   );
