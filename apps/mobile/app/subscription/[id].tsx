@@ -273,6 +273,7 @@ export default function SubscriptionDetailScreen() {
           {/* Action Buttons */}
           <View className="flex-row mb-8">
             <TouchableOpacity 
+              key={sub.status === 'cancelled' ? 'edit-cancelled' : 'edit-active'}
               onPress={handleEdit}
               disabled={isNavigating}
               className="flex-1 border border-gray-200 bg-white py-4 rounded-2xl items-center shadow-sm"
@@ -282,6 +283,7 @@ export default function SubscriptionDetailScreen() {
             </TouchableOpacity>
             {sub.status !== 'cancelled' ? (
               <TouchableOpacity 
+                key="pause-subscription"
                 onPress={handlePause}
                 disabled={isPausing}
                 className="flex-1 py-4 rounded-2xl items-center shadow-sm"
@@ -365,14 +367,14 @@ export default function SubscriptionDetailScreen() {
               <Text className="text-5xl font-bold text-[#92400E] mb-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                 {sub.worthItRating.toFixed(1)}
               </Text>
-              <View className="flex-row space-x-2 mb-4">
+              <View className="flex-row mb-4">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Feather 
                     key={star} 
                     name="star" 
                     size={20} 
                     color={star <= sub.worthItRating ? '#F59E0B' : 'transparent'} 
-                    style={{ opacity: star <= sub.worthItRating ? 1 : 0.3 }}
+                    style={{ opacity: star <= sub.worthItRating ? 1 : 0.3, marginRight: star === 5 ? 0 : 8 }}
                   />
                 ))}
               </View>
@@ -421,7 +423,7 @@ export default function SubscriptionDetailScreen() {
               Danger Zone
             </Text>
             {sub.status !== 'cancelled' ? (
-              <View className="bg-white p-6 rounded-[24px] border border-[#FEE2E2] shadow-sm">
+              <View key="cancel-subscription-zone" className="bg-white p-6 rounded-[24px] border border-[#FEE2E2] shadow-sm">
                 <Text className="text-base font-bold text-[#DC2626] mb-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Cancel Subscription</Text>
                 <Text className="text-[13px] text-[#6B7280] mb-6 leading-5" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
                   Once cancelled, you will lose access to your benefits at the end of the current billing cycle.
@@ -435,7 +437,7 @@ export default function SubscriptionDetailScreen() {
                 </TouchableOpacity>
               </View>
             ) : (
-              <View className="bg-white p-6 rounded-[24px] border border-[#FEE2E2] shadow-sm">
+              <View key="delete-subscription-zone" className="bg-white p-6 rounded-[24px] border border-[#FEE2E2] shadow-sm">
                 <Text className="text-base font-bold text-[#DC2626] mb-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Delete Subscription</Text>
                 <Text className="text-[13px] text-[#6B7280] mb-6 leading-5" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
                   This subscription is currently cancelled. Deleting it will remove it permanently from your history and analytics.
