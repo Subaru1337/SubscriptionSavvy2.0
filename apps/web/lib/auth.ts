@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
 const COOKIE_NAME = "ss_token";
@@ -33,7 +33,16 @@ export async function verifyJWT(token: string): Promise<JWTUserPayload> {
 export async function getAuthUser(): Promise<JWTUserPayload | null> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get(COOKIE_NAME)?.value;
+    let token = cookieStore.get(COOKIE_NAME)?.value;
+
+    if (!token) {
+      const headerStore = await headers();
+      const authHeader = headerStore.get("authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        token = authHeader.slice(7);
+      }
+    }
+
     if (!token) return null;
     const payload = await verifyJWT(token);
     

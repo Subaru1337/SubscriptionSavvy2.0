@@ -45,13 +45,13 @@ export function getRelativeDateString(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const target = new Date(d);
   target.setHours(0, 0, 0, 0);
-  
+
   const diffTime = target.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
+
   if (diffDays < 0) return "Overdue";
   if (diffDays === 0) return "Due today";
   if (diffDays === 1) return "Due tomorrow";
@@ -63,13 +63,13 @@ export function getUrgencyLevel(date: Date | string): "urgent" | "soon" | "norma
   const d = typeof date === "string" ? new Date(date) : date;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   const target = new Date(d);
   target.setHours(0, 0, 0, 0);
-  
+
   const diffTime = target.getTime() - today.getTime();
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
+
   if (diffDays < 0) return "past";
   if (diffDays === 0) return "urgent";
   if (diffDays > 0 && diffDays <= 7) return "soon";
@@ -121,7 +121,6 @@ export function getLogoUrl(name: string): string {
   };
   const key = name.toLowerCase().trim();
   const domain = map[key] || `${key.replace(/\s+/g, '')}.com`;
-  // Using logo.uplead.com because it correctly returns a 404 for missing logos, 
-  // allowing our <img onError> fallback to generate the beautiful letter avatars!
-  return `https://logo.uplead.com/${domain}`;
+  // Using logo.dev for fetching logos
+  return `https://img.logo.dev/${domain}?token=pk_AdF4EF8GSh2d6xjUJdT4-A`;
 }

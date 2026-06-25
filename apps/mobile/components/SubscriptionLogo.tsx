@@ -12,8 +12,9 @@ const gradients = [
 export default function SubscriptionLogo({ name, size = 48, style }: { name: string, size?: number, style?: any }) {
   const [error, setError] = useState(false);
   const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const uri = `https://logo.uplead.com/${cleanName}.com`;
-  
+  // Using logo.dev as requested (ensure you add your public key if required)
+  const uri = `https://img.logo.dev/${cleanName}.com?token=pk_AdF4EF8GSh2d6xjUJdT4-A`;
+
   // Simple hash to pick a consistent gradient
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
@@ -33,8 +34,8 @@ export default function SubscriptionLogo({ name, size = 48, style }: { name: str
   }
 
   return (
-    <Image 
-      source={{ uri }} 
+    <Image
+      source={{ uri }}
       style={[{ width: size, height: size, borderRadius: size / 4, backgroundColor: '#F4F6F9' }, style]}
       onError={() => setError(true)}
     />

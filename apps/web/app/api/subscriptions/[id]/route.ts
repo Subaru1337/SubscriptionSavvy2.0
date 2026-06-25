@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 const updateSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  cost: z.number().positive().optional(),
+  cost: z.coerce.number().positive().optional(),
   currency: z.enum(["INR", "USD", "EUR", "GBP", "AED", "SGD", "AUD", "CAD"]).optional(),
   category: z
     .enum([
@@ -24,7 +24,7 @@ const updateSchema = z.object({
   trialEndsOn: z.string().nullable().optional(),
   status: z.enum(["active", "cancelled", "paused"]).optional(),
   notes: z.string().max(500).nullable().optional(),
-  worthItRating: z.number().int().min(1).max(5).optional().nullable(),
+  worthItRating: z.number().int().min(0).max(5).optional().nullable(),
 });
 
 export async function GET(
@@ -80,7 +80,7 @@ export async function PUT(
   const parsed = updateSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { error: parsed.error.errors[0].message },
+      { error: parsed.error.errors[0].message, details: parsed.error.errors },
       { status: 400 }
     );
   }

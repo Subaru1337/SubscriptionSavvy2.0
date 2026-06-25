@@ -1,6 +1,7 @@
 import {
   View, Text, TouchableOpacity,
-  ActivityIndicator, Alert, RefreshControl, Dimensions, StyleSheet
+  ActivityIndicator, Alert, RefreshControl, Dimensions, StyleSheet,
+  InteractionManager
 } from 'react-native';
 import { useState, useCallback, useEffect } from 'react';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -32,6 +33,10 @@ export default function SubscriptionDetailScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const [isPausing, setIsPausing] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [sub, setSub] = useState<any>(null);
   const [priceHistory, setPriceHistory] = useState<PriceRecord[]>([]);
 
@@ -77,15 +82,15 @@ export default function SubscriptionDetailScreen() {
     };
   });
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get('/subscriptions?status=all');
       const subs = Array.isArray(res.data) ? res.data : res.data?.subscriptions ?? [];
       const found = subs.find((s: any) => s.id === id);
       if (!found) {
         Alert.alert('Error', 'Subscription not found');
-        router.back();
+        setTimeout(() => router.back(), 0);
         return;
       }
       setSub(found);
@@ -95,19 +100,29 @@ export default function SubscriptionDetailScreen() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [id]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const handleEdit = () => {
+    setIsNavigating(true);
+    router.push(`/add-subscription?edit=${sub.id}`);
+    setTimeout(() => setIsNavigating(false), 500); // clear state shortly after navigating
+  };
+
   const handlePause = async () => {
+    setIsPausing(true);
     const newStatus = sub.status === 'paused' ? 'active' : 'paused';
     try {
       await api.put(`/subscriptions/${id}`, { status: newStatus });
-      fetchData();
+      // Update local state directly to avoid re-render racing with navigation context
+      setSub((prev: any) => ({ ...prev, status: newStatus }));
     } catch (err) {
       Alert.alert('Error', 'Failed to update status');
+    } finally {
+      setIsPausing(false);
     }
   };
 
@@ -120,13 +135,21 @@ export default function SubscriptionDetailScreen() {
         {
           text: 'Cancel Now',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.put(`/subscriptions/${id}`, { status: 'cancelled' });
-              fetchData();
-            } catch {
-              Alert.alert('Error', 'Failed to cancel subscription');
-            }
+          // Use InteractionManager to defer work until the Alert dismiss animation
+          // has fully completed, preventing navigation context loss during transitions
+          onPress: () => {
+            InteractionManager.runAfterInteractions(async () => {
+              setIsCancelling(true);
+              try {
+                await api.put(`/subscriptions/${id}`, { status: 'cancelled' });
+                // Update local state directly instead of a full fetchData re-fetch
+                setSub((prev: any) => ({ ...prev, status: 'cancelled' }));
+              } catch {
+                Alert.alert('Error', 'Failed to cancel subscription');
+              } finally {
+                setIsCancelling(false);
+              }
+            });
           },
         },
       ]
@@ -142,13 +165,17 @@ export default function SubscriptionDetailScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.delete(`/subscriptions/${id}`);
-              router.back();
-            } catch {
-              Alert.alert('Error', 'Failed to delete subscription');
-            }
+          onPress: () => {
+            InteractionManager.runAfterInteractions(async () => {
+              setIsDeleting(true);
+              try {
+                await api.delete(`/subscriptions/${id}`);
+                router.back();
+              } catch {
+                Alert.alert('Error', 'Failed to delete subscription');
+                setIsDeleting(false);
+              }
+            });
           },
         },
       ]
@@ -158,8 +185,13 @@ export default function SubscriptionDetailScreen() {
   const handleMarkAsPaid = async () => {
     setPaying(true);
     try {
-      await api.post(`/subscriptions/${id}/pay`);
-      fetchData();
+      const res = await api.post(`/subscriptions/${id}/pay`);
+      // Update nextPayment locally from API response, falling back to a full refresh
+      if (res.data?.nextPayment) {
+        setSub((prev: any) => ({ ...prev, nextPayment: res.data.nextPayment }));
+      } else {
+        await fetchData(true);
+      }
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Failed to mark as paid';
       Alert.alert('Error', msg);
@@ -168,7 +200,7 @@ export default function SubscriptionDetailScreen() {
     }
   };
 
-  if (loading || !sub) {
+  if (loading && !sub) {
     return (
       <View className="flex-1 justify-center items-center bg-[#F4F6F9]">
         <ActivityIndicator size="large" color="#0D9E75" />
@@ -199,10 +231,11 @@ export default function SubscriptionDetailScreen() {
         </Animated.View>
 
         <TouchableOpacity 
-          onPress={() => router.push(`/add-subscription?edit=${sub.id}`)}
+          onPress={handleEdit}
+          disabled={isNavigating}
           className="w-10 h-10 bg-white/80 rounded-full items-center justify-center backdrop-blur-md"
         >
-          <Feather name="edit-2" size={18} color="#111827" />
+          {isNavigating ? <ActivityIndicator size="small" color="#111827" /> : <Feather name="edit-2" size={18} color="#111827" />}
         </TouchableOpacity>
       </View>
 
@@ -218,11 +251,11 @@ export default function SubscriptionDetailScreen() {
           <Animated.View style={[headerAnimatedStyle, { alignItems: 'center', justifyContent: 'center' }]}>
             <View className="w-28 h-28 bg-white rounded-[32px] items-center justify-center mb-6 shadow-sm border border-gray-100 overflow-hidden relative">
               <SubscriptionLogo name={sub.name} size={112} />
-              {sub.status === 'paused' && (
+              {sub.status === 'paused' ? (
                 <View className="absolute inset-0 bg-white/60 items-center justify-center">
                   <Feather name="pause-circle" size={40} color="#F59E0B" />
                 </View>
-              )}
+              ) : null}
             </View>
             <View className="bg-[#1DCCA0]/20 px-4 py-1.5 rounded-full mb-4 border border-[#1DCCA0]/30">
               <Text className="text-[#0D9E75] text-[10px] font-bold tracking-widest uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
@@ -238,23 +271,32 @@ export default function SubscriptionDetailScreen() {
 
         <View className="px-6 -mt-6">
           {/* Action Buttons */}
-          <View className="flex-row space-x-4 mb-8">
+          <View className="flex-row mb-8">
             <TouchableOpacity 
-              onPress={() => router.push(`/add-subscription?edit=${sub.id}`)}
+              onPress={handleEdit}
+              disabled={isNavigating}
               className="flex-1 border border-gray-200 bg-white py-4 rounded-2xl items-center shadow-sm"
+              style={sub.status !== 'cancelled' ? { marginRight: 16 } : undefined}
             >
-              <Text className="text-[#111827] font-bold text-[13px]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Edit Details</Text>
+              {isNavigating ? <ActivityIndicator size="small" color="#111827" /> : <Text className="text-[#111827] font-bold text-[13px]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Edit Details</Text>}
             </TouchableOpacity>
-            {sub.status !== 'cancelled' && (
+            {sub.status !== 'cancelled' ? (
               <TouchableOpacity 
                 onPress={handlePause}
-                className={`flex-1 py-4 rounded-2xl items-center shadow-sm ${sub.status === 'paused' ? 'bg-[#0D9E75]' : 'bg-[#FEE2E2]'}`}
+                disabled={isPausing}
+                className="flex-1 py-4 rounded-2xl items-center shadow-sm"
+                style={{ backgroundColor: sub.status === 'paused' ? '#0D9E75' : '#FEE2E2' }}
               >
-                <Text className={`font-bold text-[13px] ${sub.status === 'paused' ? 'text-white' : 'text-[#DC2626]'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                  {sub.status === 'paused' ? 'Resume Sub' : 'Pause Sub'}
-                </Text>
+                {isPausing ? <ActivityIndicator size="small" color={sub.status === 'paused' ? 'white' : '#DC2626'} /> : (
+                  <Text
+                    className="font-bold text-[13px]"
+                    style={{ fontFamily: 'PlusJakartaSans_700Bold', color: sub.status === 'paused' ? 'white' : '#DC2626' }}
+                  >
+                    {sub.status === 'paused' ? 'Resume Sub' : 'Pause Sub'}
+                  </Text>
+                )}
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
 
           {/* Cost Card */}
@@ -286,14 +328,20 @@ export default function SubscriptionDetailScreen() {
                   <Text className="text-lg font-bold text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                     {nextPaymentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </Text>
-                  <Text className={`text-[11px] font-bold uppercase tracking-wider mt-1 ${daysRemaining <= 7 && daysRemaining > 0 ? 'text-[#F59E0B]' : daysRemaining <= 0 ? 'text-[#EF4444]' : 'text-[#10B981]'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                  <Text
+                    className="text-[11px] font-bold uppercase tracking-wider mt-1"
+                    style={{
+                      fontFamily: 'PlusJakartaSans_700Bold',
+                      color: daysRemaining <= 7 && daysRemaining > 0 ? '#F59E0B' : daysRemaining <= 0 ? '#EF4444' : '#10B981',
+                    }}
+                  >
                     {daysRemaining > 0 ? `In ${daysRemaining} Days` : daysRemaining === 0 ? 'Due Today' : `${Math.abs(daysRemaining)} Days Overdue`}
                   </Text>
                 </View>
               </View>
             </View>
             
-            {daysRemaining <= 0 && sub.status === 'active' && (
+            {daysRemaining <= 0 && sub.status === 'active' ? (
               <TouchableOpacity 
                 onPress={handleMarkAsPaid}
                 disabled={paying}
@@ -305,11 +353,11 @@ export default function SubscriptionDetailScreen() {
                   <Text className="text-white text-[13px] font-bold uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Mark As Paid</Text>
                 )}
               </TouchableOpacity>
-            )}
+            ) : null}
           </View>
 
           {/* Worth It Rating Card */}
-          {sub.worthItRating > 0 && (
+          {sub.worthItRating > 0 ? (
             <View className="bg-[#FEF3C7] p-6 rounded-[24px] shadow-sm mb-4 items-center border border-[#FDE68A]">
               <Text className="text-[10px] font-bold text-[#B45309] uppercase tracking-widest mb-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                 Worth It Rating
@@ -332,10 +380,10 @@ export default function SubscriptionDetailScreen() {
                 {sub.worthItRating >= 4 ? 'Great value! Definitely keep this.' : 'Consider reviewing this subscription.'}
               </Text>
             </View>
-          )}
+          ) : null}
 
           {/* Payment History (using Price History as proxy for now) */}
-          {priceHistory.length > 0 && (
+          {priceHistory.length > 0 ? (
             <View className="mb-8 mt-4">
               <Text className="text-sm font-bold text-[#111827] mb-4 ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Price History</Text>
               <View className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
@@ -345,7 +393,11 @@ export default function SubscriptionDetailScreen() {
                   <Text className="text-[10px] font-bold text-[#6B7280] flex-1 text-right tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>STATUS</Text>
                 </View>
                 {priceHistory.map((record, i) => (
-                  <View key={record.id} className={`flex-row items-center justify-between px-6 py-5 ${i !== priceHistory.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                  <View
+                    key={record.id}
+                    className="flex-row items-center justify-between px-6 py-5"
+                    style={i !== priceHistory.length - 1 ? { borderBottomWidth: 1, borderBottomColor: '#F3F4F6' } : undefined}
+                  >
                     <Text className="text-[13px] text-[#4B5563] flex-1" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
                       {new Date(record.changedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </Text>
@@ -361,7 +413,7 @@ export default function SubscriptionDetailScreen() {
                 ))}
               </View>
             </View>
-          )}
+          ) : null}
 
           {/* Danger Zone */}
           <View className="mb-4 mt-4">
@@ -376,9 +428,10 @@ export default function SubscriptionDetailScreen() {
                 </Text>
                 <TouchableOpacity 
                   onPress={handleCancel}
+                  disabled={isCancelling}
                   className="bg-[#FEF2F2] py-4 rounded-xl items-center border border-[#FECACA]"
                 >
-                  <Text className="text-[#DC2626] font-bold text-[13px] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Cancel Now</Text>
+                  {isCancelling ? <ActivityIndicator size="small" color="#DC2626" /> : <Text className="text-[#DC2626] font-bold text-[13px] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Cancel Now</Text>}
                 </TouchableOpacity>
               </View>
             ) : (
@@ -389,9 +442,10 @@ export default function SubscriptionDetailScreen() {
                 </Text>
                 <TouchableOpacity 
                   onPress={handleDelete}
+                  disabled={isDeleting}
                   className="bg-[#DC2626] py-4 rounded-xl items-center shadow-sm"
                 >
-                  <Text className="text-white font-bold text-[13px] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Permanently Delete</Text>
+                  {isDeleting ? <ActivityIndicator size="small" color="white" /> : <Text className="text-white font-bold text-[13px] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Permanently Delete</Text>}
                 </TouchableOpacity>
               </View>
             )}

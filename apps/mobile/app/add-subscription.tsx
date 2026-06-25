@@ -6,6 +6,10 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { api } from '../lib/api';
 import {
+  buildSubscriptionPayload,
+  subscriptionToFormState,
+} from '../lib/subscription-payload';
+import {
   getPushPermissionGranted,
   schedulePaymentReminder,
 } from '../lib/push-notifications';
@@ -56,7 +60,8 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 export default function AddSubscriptionScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const id = params.id || params.edit;
+  const rawId = params.id ?? params.edit;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(!!id);
   const bottomSheetRef = useRef<BottomSheet>(null);
@@ -77,34 +82,21 @@ export default function AddSubscriptionScreen() {
   });
 
   useEffect(() => {
-    if (id) {
-      setFetching(true);
-      api.get('/subscriptions?status=all')
-        .then(res => {
-          const subs = Array.isArray(res.data) ? res.data : res.data?.subscriptions ?? [];
-          const sub = subs.find((s: any) => s.id === id);
-          
-          if (sub) {
-            setForm({
-              name: sub.name,
-              cost: String(sub.cost),
-              currency: sub.currency,
-              billingCycle: sub.billingCycle,
-              category: sub.category,
-              nextPayment: sub.nextPayment ? sub.nextPayment.split('T')[0] : '',
-              status: sub.status,
-              notes: sub.notes || '',
-              trialEndsOn: sub.trialEndsOn ? sub.trialEndsOn.split('T')[0] : '',
-              worthItRating: sub.worthItRating || 0,
-            });
-          } else {
-            Alert.alert('Error', 'Subscription not found');
-            router.back();
-          }
-        })
-        .catch(() => Alert.alert('Error', 'Failed to load subscription details'))
-        .finally(() => setFetching(false));
-    }
+    if (!id) return;
+
+    setFetching(true);
+    api.get(`/subscriptions/${id}`)
+      .then((res) => {
+        const sub = res.data?.subscription;
+        if (sub) {
+          setForm(subscriptionToFormState(sub));
+        } else {
+          Alert.alert('Error', 'Subscription not found');
+          router.back();
+        }
+      })
+      .catch(() => Alert.alert('Error', 'Failed to load subscription details'))
+      .finally(() => setFetching(false));
   }, [id]);
 
   const handleSubmit = async () => {
@@ -112,38 +104,28 @@ export default function AddSubscriptionScreen() {
       Alert.alert('Error', 'Please fill in Name and Cost');
       return;
     }
-    const costNum = parseFloat(form.cost);
-    if (isNaN(costNum) || costNum <= 0) {
-      Alert.alert('Error', 'Cost must be a positive number');
+
+    let payload;
+    try {
+      payload = buildSubscriptionPayload(form);
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'Please check your input');
       return;
     }
 
     setLoading(true);
     try {
-      const payload = {
-        name: form.name,
-        cost: costNum,
-        currency: form.currency,
-        billingCycle: form.billingCycle,
-        category: form.category,
-        nextPayment: form.nextPayment,
-        status: form.status,
-        notes: form.notes || null,
-        trialEndsOn: form.trialEndsOn || null,
-        worthItRating: form.worthItRating,
-      };
-
       if (id) {
         await api.put(`/subscriptions/${id}`, payload);
       } else {
         await api.post('/subscriptions', payload);
       }
 
-      if (form.status === 'active' && (await getPushPermissionGranted())) {
+      if (payload.status === 'active' && (await getPushPermissionGranted())) {
         await schedulePaymentReminder(
-          form.name,
+          payload.name,
           form.nextPayment,
-          `${form.currency} ${form.cost}`,
+          `${payload.currency} ${payload.cost}`,
         );
       }
 
