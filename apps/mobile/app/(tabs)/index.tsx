@@ -11,6 +11,7 @@ import Svg, { Rect, Path, Circle } from 'react-native-svg';
 import AnimatedNumber from '../../components/AnimatedNumber';
 import AnimatedRing from '../../components/AnimatedRing';
 import SubscriptionLogo from '../../components/SubscriptionLogo';
+import { getCurrencySymbol, formatAmount } from '../../lib/currency';
 
 // New User Onboarding Empty State
 const NewUserGuide = ({ onPress }: { onPress: () => void }) => (
@@ -83,6 +84,7 @@ export default function DashboardScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState<string | null>(null);
+  const [baseCurrency, setBaseCurrency] = useState('INR');
   const [summary, setSummary] = useState<Summary | null>(null);
   const [forecast, setForecast] = useState<any>(null);
   const [savings, setSavings] = useState<any>(null);
@@ -111,6 +113,7 @@ export default function DashboardScreen() {
         api.get('/analytics/extended'),
       ]);
       setSummary(allRes.data?.summary ?? null);
+      setBaseCurrency(allRes.data?.baseCurrency ?? 'INR');
       setSubscriptions(
         Array.isArray(subsRes.data)
           ? subsRes.data
@@ -182,7 +185,7 @@ export default function DashboardScreen() {
               </Text>
               <AnimatedNumber 
                 value={summary?.monthly_total || 0} 
-                prefix="₹" 
+                prefix={getCurrencySymbol(baseCurrency)} 
                 className="text-[40px] text-white" 
                 style={{ fontFamily: 'PlusJakartaSans_700Bold', lineHeight: 48 }} 
               />
@@ -201,7 +204,7 @@ export default function DashboardScreen() {
           </View>
           <View className="flex-row justify-between pt-4 border-t border-white/10">
             <Text className="text-gray-300 text-xs" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
-              Annual: ₹{(summary?.annual_total || 0).toLocaleString()}
+              Annual: {formatAmount(summary?.annual_total || 0, baseCurrency)}
             </Text>
             <Text className="text-[#1DCCA0] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
               vs last month: ↑ 0%
@@ -215,7 +218,7 @@ export default function DashboardScreen() {
               </Text>
             </View>
             <Text className="text-[#1DCCA0] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-              ₹{Math.round(savings?.total_saved || 0).toLocaleString()}
+              {formatAmount(Math.round(savings?.total_saved || 0), baseCurrency)}
             </Text>
           </View>
         </LinearGradient>
@@ -247,7 +250,7 @@ export default function DashboardScreen() {
                   </Text>
                   <SubscriptionLogo name={sub.name} size={42} />
                   <Text className="text-xs text-[#111827] mt-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                    ₹{Number(sub.cost).toFixed(0)}
+                    {getCurrencySymbol(sub.currency)}{Number(sub.cost).toFixed(0)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -295,7 +298,7 @@ export default function DashboardScreen() {
                 </View>
                 <View className="items-end">
                   <Text className="text-sm text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                    ₹{Number(sub.cost).toFixed(0)}
+                    {getCurrencySymbol(sub.currency)}{Number(sub.cost).toFixed(0)}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -384,11 +387,18 @@ export default function DashboardScreen() {
               </View>
               <View className="items-end">
                 <Text className="text-[15px] text-[#111827] mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                  ₹{Number(sub.cost).toFixed(0)}
+                  {getCurrencySymbol(sub.currency)}{Number(sub.cost).toFixed(0)}
                 </Text>
-                <Text className="text-[10px] text-[#9CA3AF] uppercase tracking-wider" style={{ fontFamily: 'PlusJakartaSans_600SemiBold' }}>
-                  {new Date(sub.nextPayment).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </Text>
+                <View className="flex-row items-center" style={{ gap: 4 }}>
+                  {sub.currency !== baseCurrency ? (
+                    <View style={{ backgroundColor: '#E0F2FE', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4 }}>
+                      <Text style={{ fontSize: 9, fontFamily: 'PlusJakartaSans_700Bold', color: '#0369A1' }}>{sub.currency}</Text>
+                    </View>
+                  ) : null}
+                  <Text className="text-[10px] text-[#9CA3AF] uppercase tracking-wider" style={{ fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+                    {new Date(sub.nextPayment).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
           );

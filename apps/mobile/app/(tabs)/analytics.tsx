@@ -8,6 +8,7 @@ import { Feather } from '@expo/vector-icons';
 import DonutChart from '../../components/DonutChart';
 import HealthArc from '../../components/HealthArc';
 import AnimatedBar from '../../components/AnimatedBar';
+import { getCurrencySymbol, formatAmount } from '../../lib/currency';
 
 const CATEGORY_COLORS: Record<string, string> = {
   Entertainment: '#E50914',
@@ -29,6 +30,7 @@ export default function AnalyticsScreen() {
   const [annualRecap, setAnnualRecap] = useState<any>(null);
   const [budgetPercent, setBudgetPercent] = useState<number>(0);
   const [monthlyTotal, setMonthlyTotal] = useState<number>(0);
+  const [baseCurrency, setBaseCurrency] = useState('INR');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -48,6 +50,7 @@ export default function AnalyticsScreen() {
       
       setMonthlyTotal(allData.summary?.monthly_total || 0);
       setBudgetPercent(allData.summary?.budget_used_percent || 0);
+      setBaseCurrency(allData.baseCurrency || 'INR');
 
     } catch (error) {
       console.error(error);
@@ -156,11 +159,11 @@ export default function AnalyticsScreen() {
                 <View className="flex-row flex-wrap mb-2">
                   <View className="w-1/2 mb-6">
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Spent This Year</Text>
-                    <Text className="text-2xl font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>₹{annualRecap.year_total?.toFixed(0)}</Text>
+            <Text className="text-2xl font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{getCurrencySymbol(baseCurrency)}{annualRecap.year_total?.toFixed(0)}</Text>
                   </View>
                   <View className="w-1/2 mb-6 pl-4">
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Monthly Avg</Text>
-                    <Text className="text-2xl font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>₹{annualRecap.avg_monthly?.toFixed(0)}</Text>
+            <Text className="text-2xl font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{getCurrencySymbol(baseCurrency)}{annualRecap.avg_monthly?.toFixed(0)}</Text>
                   </View>
                   <View className="w-1/2">
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Payments Made</Text>
@@ -176,7 +179,7 @@ export default function AnalyticsScreen() {
                 {annualRecap.most_expensive_sub ? (
                   <View className="mt-4 pt-4 border-t border-white/10 flex-row items-center justify-between">
                     <Text className="text-xs text-gray-400" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>Most Expensive:</Text>
-                    <Text className="text-xs font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{annualRecap.most_expensive_sub.name} (₹{annualRecap.most_expensive_sub.total_paid})</Text>
+                    <Text className="text-xs font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{annualRecap.most_expensive_sub.name} ({getCurrencySymbol(baseCurrency)}{annualRecap.most_expensive_sub.total_paid})</Text>
                   </View>
                 ) : null}
               </View>
@@ -237,7 +240,7 @@ export default function AnalyticsScreen() {
                         </View>
                         <View className="items-end">
                           <Text className="text-[13px] font-bold text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
-                            ₹{Math.round(cat.monthly_total).toLocaleString()}{limitText}
+                            {getCurrencySymbol(baseCurrency)}{Math.round(cat.monthly_total).toLocaleString()}{limitText}
                           </Text>
                           {hasLimit && (
                             <Text className={`text-[10px] mt-0.5 ${overBudget ? 'text-[#EF4444]' : 'text-[#6B7280]'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>

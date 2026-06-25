@@ -1,6 +1,6 @@
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet
+  Alert, ActivityIndicator, StyleSheet
 } from 'react-native';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -26,22 +26,13 @@ function ChipSelector({ label, options, value, onChange }: {
   return (
     <View style={{ marginBottom: 20 }}>
       <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontWeight: 'bold', fontSize: 14, color: '#111827', marginBottom: 12 }}>{label}</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        nestedScrollEnabled
-        keyboardShouldPersistTaps="always"
-        directionalLockEnabled={false}
-        contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 2 }}
-        style={{ flexGrow: 0 }}
-      >
-        {options.map((opt, i) => (
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {options.map((opt) => (
           <TouchableOpacity
             key={opt}
             onPress={() => onChange(opt)}
             activeOpacity={0.7}
             style={{
-              marginRight: i < options.length - 1 ? 8 : 0,
               paddingHorizontal: 16,
               paddingVertical: 10,
               borderRadius: 999,
@@ -62,7 +53,7 @@ function ChipSelector({ label, options, value, onChange }: {
             </Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -90,13 +81,24 @@ export default function AddSubscriptionScreen() {
 
   const snapPoints = useMemo(() => ['90%'], []);
 
+  // Calculate next payment date from today based on billing cycle
+  const getNextPaymentDate = (cycle: 'monthly' | 'yearly') => {
+    const d = new Date();
+    if (cycle === 'monthly') {
+      d.setMonth(d.getMonth() + 1);
+    } else {
+      d.setFullYear(d.getFullYear() + 1);
+    }
+    return d.toISOString().split('T')[0];
+  };
+
   const [form, setForm] = useState({
     name: '',
     cost: '',
     currency: 'USD',
     billingCycle: 'monthly' as 'monthly' | 'yearly',
     category: 'Entertainment',
-    nextPayment: new Date().toISOString().split('T')[0],
+    nextPayment: getNextPaymentDate('monthly'),
     status: 'active',
     notes: '',
     trialEndsOn: '',
@@ -194,11 +196,10 @@ export default function AddSubscriptionScreen() {
             <ActivityIndicator size="large" color="#0D9E75" />
           </View>
         ) : (
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
+          <BottomSheetScrollView
+            contentContainerStyle={{ padding: 24 }}
+            keyboardShouldPersistTaps="handled"
           >
-            <BottomSheetScrollView contentContainerStyle={{ padding: 24 }}>
               <View className="flex-row justify-between items-center mb-6">
                 <Text className="text-2xl font-bold text-[#111827]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                   {id ? 'Edit Subscription' : 'Add Subscription'}
@@ -234,14 +235,31 @@ export default function AddSubscriptionScreen() {
                 <ChipSelector label="Category" options={CATEGORIES} value={form.category} onChange={(v) => setForm({ ...form, category: v })} />
 
                 <Text className="text-[#111827] font-bold mb-3 text-sm" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Billing Cycle</Text>
-                <View className="flex-row space-x-3 mb-5">
-                  {['monthly', 'yearly'].map((cycle) => (
+                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+                  {(['monthly', 'yearly'] as const).map((cycle) => (
                     <TouchableOpacity
                       key={cycle}
-                      className={`flex-1 p-4 rounded-xl items-center border ${form.billingCycle === cycle ? 'bg-[#0D9E75] border-[#0D9E75]' : 'bg-white border-gray-200'}`}
-                      onPress={() => setForm({ ...form, billingCycle: cycle as 'monthly' | 'yearly' })}
+                      style={{
+                        flex: 1, padding: 16, borderRadius: 12, alignItems: 'center',
+                        borderWidth: 1,
+                        borderColor: form.billingCycle === cycle ? '#0D9E75' : '#E5E7EB',
+                        backgroundColor: form.billingCycle === cycle ? '#0D9E75' : '#FFFFFF',
+                      }}
+                      onPress={() => {
+                        const newCycle = cycle;
+                        // Only auto-update date for new subscriptions, not edits
+                        setForm(prev => ({
+                          ...prev,
+                          billingCycle: newCycle,
+                          ...(!id ? { nextPayment: getNextPaymentDate(newCycle) } : {}),
+                        }));
+                      }}
                     >
-                      <Text className={form.billingCycle === cycle ? 'text-white font-bold uppercase tracking-widest text-xs' : 'text-[#6B7280] font-bold uppercase tracking-widest text-xs'} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                      <Text style={{
+                        fontFamily: 'PlusJakartaSans_700Bold', fontSize: 11, fontWeight: 'bold',
+                        textTransform: 'uppercase', letterSpacing: 1,
+                        color: form.billingCycle === cycle ? '#FFFFFF' : '#6B7280',
+                      }}>
                         {cycle}
                       </Text>
                     </TouchableOpacity>
@@ -303,7 +321,6 @@ export default function AddSubscriptionScreen() {
                 )}
               </TouchableOpacity>
             </BottomSheetScrollView>
-          </KeyboardAvoidingView>
         )}
       </BottomSheet>
     </View>

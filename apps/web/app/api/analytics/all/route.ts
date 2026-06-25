@@ -173,7 +173,7 @@ export async function GET() {
     const trends = getTrends(user, paymentHistory, rates);
 
     return NextResponse.json(
-      { summary, breakdown, trends },
+      { summary, breakdown, trends, baseCurrency: user.baseCurrency },
       {
         headers: {
           'Cache-Control': 'no-store, max-age=0',
