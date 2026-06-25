@@ -24,21 +24,40 @@ function ChipSelector({ label, options, value, onChange }: {
   label: string; options: string[]; value: string; onChange: (v: string) => void;
 }) {
   return (
-    <View className="mb-5">
-      <Text className="text-[#111827] font-bold mb-3 text-sm" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{label}</Text>
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 4 }}
+    <View style={{ marginBottom: 20 }}>
+      <Text style={{ fontFamily: 'PlusJakartaSans_700Bold', fontWeight: 'bold', fontSize: 14, color: '#111827', marginBottom: 12 }}>{label}</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="always"
+        directionalLockEnabled={false}
+        contentContainerStyle={{ flexDirection: 'row', paddingHorizontal: 2 }}
+        style={{ flexGrow: 0 }}
       >
         {options.map((opt, i) => (
           <TouchableOpacity
             key={opt}
             onPress={() => onChange(opt)}
-            style={{ marginRight: i < options.length - 1 ? 8 : 0 }}
-            className={`px-4 py-2.5 rounded-full border ${value === opt ? 'bg-[#0D9E75] border-[#0D9E75]' : 'bg-white border-gray-200'}`}
+            activeOpacity={0.7}
+            style={{
+              marginRight: i < options.length - 1 ? 8 : 0,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+              borderRadius: 999,
+              borderWidth: 1,
+              borderColor: value === opt ? '#0D9E75' : '#E5E7EB',
+              backgroundColor: value === opt ? '#0D9E75' : '#FFFFFF',
+            }}
           >
-            <Text className={value === opt ? 'text-white font-bold text-xs uppercase tracking-wider' : 'text-[#6B7280] font-bold text-xs uppercase tracking-wider'} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+            <Text style={{
+              fontFamily: 'PlusJakartaSans_700Bold',
+              fontSize: 11,
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              letterSpacing: 0.8,
+              color: value === opt ? '#FFFFFF' : '#6B7280',
+            }}>
               {opt}
             </Text>
           </TouchableOpacity>
