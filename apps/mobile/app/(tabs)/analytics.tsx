@@ -78,6 +78,8 @@ export default function AnalyticsScreen() {
 
   const getBudgetColor = (pct: number) => pct >= 90 ? '#EF4444' : pct >= 75 ? '#F59E0B' : '#10B981';
 
+  const isNewUser = categories.length === 0 && trends.every(t => t.total === 0);
+
   return (
     <View className="flex-1 bg-[#F4F6F9]">
       <ScrollView
@@ -90,7 +92,20 @@ export default function AnalyticsScreen() {
         </Text>
 
         {/* Subscription Health */}
-        {healthScore && (
+        {isNewUser ? (
+          // Greyed-out health card for new users
+          <View className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 mb-6 items-center" style={{ opacity: 0.5 }}>
+            <View className="flex-row items-center mb-6">
+              <Feather name="activity" size={16} color="#9CA3AF" />
+              <Text className="text-xs font-bold text-[#9CA3AF] uppercase tracking-widest ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Subscription Health</Text>
+            </View>
+            <View className="w-32 h-32 rounded-full border-8 border-gray-200 items-center justify-center mb-4">
+              <Text className="text-3xl font-bold text-gray-300" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>—</Text>
+            </View>
+            <Text className="text-sm font-bold text-[#9CA3AF] mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>No score yet</Text>
+            <Text className="text-[12px] text-[#9CA3AF] text-center" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>Add your first subscription to get a health score</Text>
+          </View>
+        ) : healthScore ? (
           <View className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 mb-6 items-center">
             <View className="flex-row items-center mb-6 space-x-2">
               <Feather name="activity" size={16} color="#0D9E75" />
@@ -125,10 +140,10 @@ export default function AnalyticsScreen() {
               )}
             </View>
           </View>
-        )}
+        ) : null}
 
-        {/* Annual Recap */}
-        {annualRecap && (
+        {/* Annual Recap — always shown */}
+        {annualRecap ? (
           <View className="bg-[#0E0F14] p-6 rounded-[24px] shadow-lg mb-6">
             <View className="flex-row items-center space-x-2 mb-6">
               <Feather name="award" size={18} color="#1DCCA0" />
@@ -158,19 +173,20 @@ export default function AnalyticsScreen() {
                     </View>
                   </View>
                 </View>
-                {annualRecap.most_expensive_sub && (
+                {annualRecap.most_expensive_sub ? (
                   <View className="mt-4 pt-4 border-t border-white/10 flex-row items-center justify-between">
                     <Text className="text-xs text-gray-400" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>Most Expensive:</Text>
                     <Text className="text-xs font-bold text-white" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{annualRecap.most_expensive_sub.name} (₹{annualRecap.most_expensive_sub.total_paid})</Text>
                   </View>
-                )}
+                ) : null}
               </View>
             )}
           </View>
-        )}
+        ) : null}
 
-        {/* Charts Row */}
-        <View className="mb-6">
+        {/* Charts — only show if user has data */}
+        {!isNewUser ? (
+          <View className="mb-6">
           <View className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 mb-6">
             <Text className="text-sm font-bold text-[#111827] mb-6" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Spending by Category</Text>
             {categories.length === 0 ? (
@@ -266,7 +282,8 @@ export default function AnalyticsScreen() {
               </View>
             )}
           </View>
-        </View>
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );

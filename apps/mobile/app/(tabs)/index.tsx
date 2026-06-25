@@ -7,10 +7,56 @@ import { useRouter } from 'expo-router';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Rect, Path } from 'react-native-svg';
+import Svg, { Rect, Path, Circle } from 'react-native-svg';
 import AnimatedNumber from '../../components/AnimatedNumber';
 import AnimatedRing from '../../components/AnimatedRing';
 import SubscriptionLogo from '../../components/SubscriptionLogo';
+
+// New User Onboarding Empty State
+const NewUserGuide = ({ onPress }: { onPress: () => void }) => (
+  <View className="mb-8">
+    {/* Step guide */}
+    <Text className="text-[15px] text-[#111827] mb-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Get Started</Text>
+    <View className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
+      {/* Hero CTA */}
+      <View className="bg-gradient-to-b p-6 items-center" style={{ backgroundColor: '#F0FDF9' }}>
+        <View className="w-16 h-16 rounded-full bg-[#0D9E75]/10 items-center justify-center mb-4">
+          <Feather name="plus-circle" size={32} color="#0D9E75" />
+        </View>
+        <Text className="text-lg font-bold text-[#111827] text-center mb-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Track your first subscription</Text>
+        <Text className="text-[13px] text-[#6B7280] text-center leading-5 mb-6" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+          Add Netflix, Spotify, or any subscription you pay for and we'll track it automatically.
+        </Text>
+        <TouchableOpacity
+          onPress={onPress}
+          className="bg-[#0D9E75] px-8 py-4 rounded-2xl shadow-sm flex-row items-center"
+        >
+          <Feather name="plus" size={16} color="white" />
+          <Text className="text-white font-bold text-[14px] ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Add Subscription</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Steps */}
+      <View className="px-6 py-4 border-t border-gray-100">
+        {[
+          { icon: 'search', label: 'Find your subscription', desc: 'Type the name — Netflix, Spotify, etc.' },
+          { icon: 'dollar-sign', label: 'Enter the amount', desc: 'Monthly or yearly billing, your call.' },
+          { icon: 'calendar', label: 'Set the renewal date', desc: "We'll remind you before it hits." },
+        ].map((step, i) => (
+          <View key={i} className={`flex-row items-center py-4 ${i < 2 ? 'border-b border-gray-100' : ''}`}>
+            <View className="w-9 h-9 rounded-full bg-[#0D9E75]/10 items-center justify-center mr-4">
+              <Feather name={step.icon as any} size={16} color="#0D9E75" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-[13px] font-bold text-[#111827] mb-0.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{step.label}</Text>
+              <Text className="text-[11px] text-[#9CA3AF]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>{step.desc}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  </View>
+);
 
 // Empty State SVG
 const CalendarEmptyState = () => (
@@ -176,6 +222,11 @@ export default function DashboardScreen() {
 
 
 
+        {/* Show onboarding guide if no subscriptions */}
+        {subscriptions.length === 0 ? (
+          <NewUserGuide onPress={() => router.push('/add-subscription')} />
+        ) : (
+          <>
         {/* Horizontal Renewal Timeline */}
         <View className="mb-8 -mx-5 px-5">
           <Text className="text-[15px] text-[#111827] mb-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
@@ -342,6 +393,8 @@ export default function DashboardScreen() {
             </TouchableOpacity>
           );
         }) : null}
+          </>
+        )}
 
       </ScrollView>
     </View>
