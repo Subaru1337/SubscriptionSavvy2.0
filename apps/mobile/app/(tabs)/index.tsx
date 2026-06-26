@@ -1,8 +1,8 @@
 import {
   View, Text, ScrollView, RefreshControl,
-  TouchableOpacity, ActivityIndicator, Alert
+  TouchableOpacity, ActivityIndicator, Alert, Animated
 } from 'react-native';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
@@ -13,6 +13,50 @@ import AnimatedRing from '../../components/AnimatedRing';
 import SubscriptionLogo from '../../components/SubscriptionLogo';
 import { getCurrencySymbol, formatAmount } from '../../lib/currency';
 import { useBaseCurrency } from '../../lib/useBaseCurrency';
+
+const DashboardSkeleton = () => {
+  const shimmer = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, {
+          toValue: 0.7,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmer, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        })
+      ])
+    ).start();
+  }, [shimmer]);
+
+  return (
+    <View className="flex-1 bg-[#F4F6F9] px-5 pt-8">
+      {/* Hero Card Skeleton */}
+      <Animated.View style={{ opacity: shimmer }} className="w-full h-48 bg-[#E5E7EB] rounded-[24px] mb-8" />
+      
+      {/* Title skeleton */}
+      <Animated.View style={{ opacity: shimmer }} className="w-32 h-5 bg-[#E5E7EB] rounded-lg mb-4" />
+      
+      {/* Horizontal List Skeleton */}
+      <View className="flex-row mb-8">
+        {[1, 2, 3].map((i) => (
+          <Animated.View key={i} style={{ opacity: shimmer }} className="w-[84px] h-[100px] bg-[#E5E7EB] rounded-[20px] mr-3" />
+        ))}
+      </View>
+
+      {/* List items skeleton */}
+      <Animated.View style={{ opacity: shimmer }} className="w-40 h-5 bg-[#E5E7EB] rounded-lg mb-4" />
+      {[1, 2, 3].map((i) => (
+        <Animated.View key={i} style={{ opacity: shimmer }} className="w-full h-16 bg-[#E5E7EB] rounded-2xl mb-3" />
+      ))}
+    </View>
+  );
+};
 
 // New User Onboarding Empty State
 const NewUserGuide = ({ onPress }: { onPress: () => void }) => (
@@ -134,11 +178,7 @@ export default function DashboardScreen() {
   }, [fetchData]);
 
   if (loading && !summary) {
-    return (
-      <View className="flex-1 justify-center items-center bg-[#F4F6F9]">
-        <ActivityIndicator size="large" color="#0D9E75" />
-      </View>
-    );
+    return <DashboardSkeleton />;
   }
 
   const upcoming = subscriptions
