@@ -3,6 +3,7 @@ import {
   ActivityIndicator, Animated
 } from 'react-native';
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import DonutChart from '../../components/DonutChart';
@@ -84,9 +85,11 @@ export default function AnalyticsScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   if (loading && !summary) {
     return <AnalyticsSkeleton />;

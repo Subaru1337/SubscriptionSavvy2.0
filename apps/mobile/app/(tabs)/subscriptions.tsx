@@ -5,7 +5,7 @@ import {
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import SubscriptionLogo from '../../components/SubscriptionLogo';
 import { getCurrencySymbol } from '../../lib/currency';
 import { useBaseCurrency } from '../../lib/useBaseCurrency';
@@ -76,9 +76,11 @@ export default function SubscriptionsScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   const filteredSubscriptions = subscriptions.filter(sub => {
     const matchesSearch = sub.name.toLowerCase().includes(searchQuery.toLowerCase());

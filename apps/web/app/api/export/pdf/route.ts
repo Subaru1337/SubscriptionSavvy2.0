@@ -7,7 +7,21 @@ import { CURRENCY_SYMBOLS } from "@/lib/currency";
 
 // Server-side PDF using jsPDF
 export async function GET(request: NextRequest) {
-  const authUser = await getAuthUser();
+  let authUser = await getAuthUser();
+  const { searchParams } = new URL(request.url);
+
+  if (!authUser) {
+    const token = searchParams.get("token");
+    if (token) {
+      try {
+        const { verifyJWT } = await import("@/lib/auth");
+        authUser = await verifyJWT(token);
+      } catch (e) {
+        // invalid token
+      }
+    }
+  }
+
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [user, subscriptions] = await Promise.all([

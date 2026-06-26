@@ -2,7 +2,7 @@ import {
   View, Text, TouchableOpacity, Alert, Switch, ScrollView,
   TextInput, ActivityIndicator, Linking, Animated
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { Feather } from '@expo/vector-icons';
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -97,7 +97,11 @@ export default function SettingsScreen() {
     }
   }, []);
 
-  useEffect(() => { fetchSettings(); }, [fetchSettings]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchSettings();
+    }, [fetchSettings])
+  );
 
   const saveServerSettings = async () => {
     setSavingSettings(true);
@@ -160,10 +164,9 @@ export default function SettingsScreen() {
     setExporting(true);
     try {
       const token = await SecureStore.getItemAsync('auth_token');
-      // Open export URL in browser — the server returns a CSV file download
+      // Open export URL in browser with token appended for authentication
       const url = `${API_URL}/export/csv?status=all&token=${token}`;
-      // Try the direct URL; some environments support file downloads via Linking
-      await Linking.openURL(`${API_URL}/export/csv?status=all`);
+      await Linking.openURL(url);
     } catch {
       Alert.alert('Export', 'Opening CSV export in your browser...');
     } finally {
@@ -173,7 +176,8 @@ export default function SettingsScreen() {
 
   const handleExportPDF = async () => {
     try {
-      await Linking.openURL(`${API_URL}/export/pdf`);
+      const token = await SecureStore.getItemAsync('auth_token');
+      await Linking.openURL(`${API_URL}/export/pdf?status=all&token=${token}`);
     } catch {
       Alert.alert('Error', 'Could not open export URL');
     }
@@ -207,11 +211,11 @@ export default function SettingsScreen() {
       <Text className="text-3xl font-bold text-[#111827] mb-8 mt-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Settings</Text>
 
       {/* ── Account ──────────────────────────────────── */}
-      <View className="bg-white p-5 rounded-[24px] shadow-sm mb-6 border border-gray-100 flex-row items-center space-x-4">
+      <View className="bg-white p-5 rounded-[24px] shadow-sm mb-6 border border-gray-100 flex-row items-center">
         <View className="w-14 h-14 rounded-[16px] bg-[#0D9E75] items-center justify-center shadow-sm">
           <Feather name="user" size={24} color="#FFF" />
         </View>
-        <View className="flex-1">
+        <View className="flex-1 ml-4">
           <Text className="text-[#6B7280] text-[10px] font-bold uppercase tracking-widest mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Account</Text>
           <Text className="text-[#111827] font-bold text-base" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{email}</Text>
         </View>
@@ -219,9 +223,9 @@ export default function SettingsScreen() {
 
       {/* ── Financial Settings ────────────────────────── */}
       <View className="bg-white p-6 rounded-[24px] shadow-sm mb-6 border border-gray-100">
-        <View className="flex-row items-center space-x-3 mb-6">
+        <View className="flex-row items-center mb-6">
           <Feather name="pie-chart" size={20} color="#0D9E75" />
-          <Text className="text-[#111827] font-bold text-lg" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Financial Settings</Text>
+          <Text className="text-[#111827] font-bold text-lg ml-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Financial Settings</Text>
         </View>
 
         <Text className="text-[#6B7280] text-[11px] font-bold uppercase tracking-widest mb-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Base Currency</Text>
@@ -280,11 +284,11 @@ export default function SettingsScreen() {
 
       {/* ── Push Notifications ───────────────────────── */}
       <View className="bg-white p-6 rounded-[24px] shadow-sm mb-6 border border-gray-100 flex-row items-center justify-between">
-        <View className="flex-row items-center space-x-4 flex-1">
+        <View className="flex-row items-center flex-1">
           <View className="w-12 h-12 rounded-[16px] bg-[#FEF3C7] items-center justify-center">
             <Feather name="bell" size={20} color="#D97706" />
           </View>
-          <View className="flex-1 pr-4">
+          <View className="flex-1 pr-4 ml-4">
             <Text className="text-[#111827] font-bold text-[15px] mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Push Notifications</Text>
             <Text className="text-[#6B7280] text-[13px]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
               {arePushNotificationsAvailable()
@@ -304,9 +308,9 @@ export default function SettingsScreen() {
 
       {/* ── Category Budgets ─────────────────────────── */}
       <View className="bg-white p-6 rounded-[24px] shadow-sm mb-6 border border-gray-100">
-        <View className="flex-row items-center space-x-3 mb-6">
+        <View className="flex-row items-center mb-6">
           <Feather name="target" size={20} color="#0D9E75" />
-          <Text className="text-[#111827] font-bold text-lg" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Category Budgets</Text>
+          <Text className="text-[#111827] font-bold text-lg ml-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Category Budgets</Text>
         </View>
         
         <View className="bg-[#F4F6F9] rounded-[16px] overflow-hidden">
@@ -357,25 +361,25 @@ export default function SettingsScreen() {
 
       {/* ── Import / Export ──────────────────────────── */}
       <View className="bg-white p-6 rounded-[24px] shadow-sm mb-6 border border-gray-100">
-        <View className="flex-row items-center space-x-3 mb-6">
+        <View className="flex-row items-center mb-6">
           <Feather name="download-cloud" size={20} color="#0D9E75" />
-          <Text className="text-[#111827] font-bold text-lg" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export Data</Text>
+          <Text className="text-[#111827] font-bold text-lg ml-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export Data</Text>
         </View>
-        <View className="flex-row space-x-4">
+        <View className="flex-row" style={{ gap: 16 }}>
           <TouchableOpacity
             onPress={handleExportCSV}
             disabled={exporting}
-            className="flex-1 flex-row items-center justify-center space-x-2 p-4 rounded-[16px] bg-[#1DCCA0]/10 border border-[#1DCCA0]/20"
+            className="flex-1 flex-row items-center justify-center p-4 rounded-[16px] bg-[#1DCCA0]/10 border border-[#1DCCA0]/20"
           >
             <Feather name="file-text" size={18} color="#0D9E75" />
-            <Text className="text-[#0D9E75] font-bold text-[13px]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export CSV</Text>
+            <Text className="text-[#0D9E75] font-bold text-[13px] ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export CSV</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleExportPDF}
-            className="flex-1 flex-row items-center justify-center space-x-2 p-4 rounded-[16px] bg-[#1DCCA0]/10 border border-[#1DCCA0]/20"
+            className="flex-1 flex-row items-center justify-center p-4 rounded-[16px] bg-[#1DCCA0]/10 border border-[#1DCCA0]/20"
           >
             <Feather name="file" size={18} color="#0D9E75" />
-            <Text className="text-[#0D9E75] font-bold text-[13px]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export PDF</Text>
+            <Text className="text-[#0D9E75] font-bold text-[13px] ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export PDF</Text>
           </TouchableOpacity>
         </View>
         <Text className="text-[#9CA3AF] text-[11px] mt-4 text-center" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
@@ -388,11 +392,11 @@ export default function SettingsScreen() {
         className="bg-white p-6 rounded-[24px] shadow-sm flex-row items-center justify-between mb-8 border border-[#FEE2E2]"
         onPress={handleLogout}
       >
-        <View className="flex-row items-center space-x-4">
+        <View className="flex-row items-center">
           <View className="w-10 h-10 rounded-full bg-[#FEF2F2] items-center justify-center">
             <Feather name="log-out" size={18} color="#DC2626" />
           </View>
-          <Text className="text-[#DC2626] font-bold text-[15px]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Log Out</Text>
+          <Text className="text-[#DC2626] font-bold text-[15px] ml-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Log Out</Text>
         </View>
         <Feather name="chevron-right" size={20} color="#DC2626" />
       </TouchableOpacity>

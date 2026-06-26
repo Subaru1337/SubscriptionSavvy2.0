@@ -3,7 +3,7 @@ import {
   TouchableOpacity, ActivityIndicator, Alert, Animated
 } from 'react-native';
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -173,9 +173,11 @@ export default function DashboardScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   if (loading && !summary) {
     return <DashboardSkeleton />;

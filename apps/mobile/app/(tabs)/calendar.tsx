@@ -5,7 +5,7 @@ import {
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import SubscriptionLogo from '../../components/SubscriptionLogo';
 import { getCurrencySymbol } from '../../lib/currency';
 import { useBaseCurrency } from '../../lib/useBaseCurrency';
@@ -93,9 +93,11 @@ export default function CalendarScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
