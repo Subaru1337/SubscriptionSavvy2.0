@@ -12,7 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import * as SplashScreen from "expo-splash-screen";
 import { View } from "react-native";
-import LottieView from "lottie-react-native";
+import { Video, ResizeMode } from "expo-av";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -55,13 +55,17 @@ export default function RootLayout() {
 
         {!animationFinished && (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#F4F6F9', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-            <LottieView
-              autoPlay
-              loop={false}
-              source={require('../assets/splash.json')}
-              onAnimationFinish={() => setAnimationFinished(true)}
+            <Video
+              source={require('../assets/splash.mp4')}
               style={{ width: '100%', height: '100%' }}
-              resizeMode="cover"
+              resizeMode={ResizeMode.COVER}
+              shouldPlay
+              isLooping={false}
+              onPlaybackStatusUpdate={(status) => {
+                if (status.isLoaded && status.didJustFinish) {
+                  setAnimationFinished(true);
+                }
+              }}
             />
           </View>
         )}
