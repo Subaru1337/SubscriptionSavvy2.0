@@ -1,11 +1,11 @@
 import {
   View, Text, TouchableOpacity, Alert, Switch, ScrollView,
-  TextInput, ActivityIndicator, Linking
+  TextInput, ActivityIndicator, Linking, Animated
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { Feather } from '@expo/vector-icons';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { api, API_URL } from '../../lib/api';
 import {
   arePushNotificationsAvailable,
@@ -23,6 +23,27 @@ type CategoryBudget = {
   category: string;
   limit: string | number;
   currency: string;
+};
+
+const SettingsSkeleton = () => {
+  const shimmer = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0.3, duration: 800, useNativeDriver: true })
+      ])
+    ).start();
+  }, [shimmer]);
+
+  return (
+    <View className="flex-1 bg-[#F4F6F9] px-5 pt-8">
+      <Animated.View style={{ opacity: shimmer }} className="w-32 h-8 bg-[#E5E7EB] rounded-lg mb-8" />
+      <Animated.View style={{ opacity: shimmer }} className="w-full h-24 bg-[#E5E7EB] rounded-[24px] mb-6" />
+      <Animated.View style={{ opacity: shimmer }} className="w-full h-64 bg-[#E5E7EB] rounded-[24px] mb-6" />
+    </View>
+  );
 };
 
 export default function SettingsScreen() {
@@ -178,11 +199,7 @@ export default function SettingsScreen() {
   };
 
   if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center bg-[#F4F6F9]">
-        <ActivityIndicator size="large" color="#0D9E75" />
-      </View>
-    );
+    return <SettingsSkeleton />;
   }
 
   return (

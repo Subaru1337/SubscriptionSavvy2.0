@@ -1,8 +1,8 @@
 import {
   View, Text, ScrollView, RefreshControl,
-  ActivityIndicator
+  ActivityIndicator, Animated
 } from 'react-native';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import DonutChart from '../../components/DonutChart';
@@ -20,6 +20,31 @@ const CATEGORY_COLORS: Record<string, string> = {
   Shopping: '#EC4899',
   'Developer Tools': '#8B5CF6',
   Other: '#9CA3AF',
+};
+
+const AnalyticsSkeleton = () => {
+  const shimmer = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0.3, duration: 800, useNativeDriver: true })
+      ])
+    ).start();
+  }, [shimmer]);
+
+  return (
+    <View className="flex-1 bg-[#F4F6F9] px-5 pt-8">
+      <Animated.View style={{ opacity: shimmer }} className="w-32 h-8 bg-[#E5E7EB] rounded-lg mb-8" />
+      
+      {/* Health Arc Box Skeleton */}
+      <Animated.View style={{ opacity: shimmer }} className="w-full h-64 bg-[#E5E7EB] rounded-[24px] mb-6" />
+
+      {/* Chart Box Skeleton */}
+      <Animated.View style={{ opacity: shimmer }} className="w-full h-48 bg-[#E5E7EB] rounded-[24px] mb-6" />
+    </View>
+  );
 };
 
 export default function AnalyticsScreen() {
@@ -64,11 +89,7 @@ export default function AnalyticsScreen() {
   }, [fetchData]);
 
   if (loading && !summary) {
-    return (
-      <View className="flex-1 justify-center items-center bg-[#F4F6F9]">
-        <ActivityIndicator size="large" color="#0D9E75" />
-      </View>
-    );
+    return <AnalyticsSkeleton />;
   }
 
   const chartData = categories.map(cat => ({

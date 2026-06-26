@@ -1,8 +1,8 @@
 import {
-  View, Text, ActivityIndicator, ScrollView, RefreshControl,
-  TouchableOpacity, TextInput, StyleSheet
+  View, Text, ScrollView, RefreshControl,
+  TouchableOpacity, TextInput, StyleSheet, Animated
 } from 'react-native';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -25,6 +25,33 @@ type Subscription = {
 };
 
 const FILTER_TABS = ['ALL', 'ENTERTAINMENT', 'PRODUCTIVITY', 'HEALTH', 'EDUCATION', 'FINANCE', 'SHOPPING'];
+
+const SubscriptionsSkeleton = () => {
+  const shimmer = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0.3, duration: 800, useNativeDriver: true })
+      ])
+    ).start();
+  }, [shimmer]);
+
+  return (
+    <View className="flex-1 bg-[#F4F6F9] px-5 pt-8">
+      <Animated.View style={{ opacity: shimmer }} className="w-full h-12 bg-[#E5E7EB] rounded-xl mb-6" />
+      <View className="flex-row mb-6">
+        {[1, 2, 3].map((i) => (
+          <Animated.View key={i} style={{ opacity: shimmer }} className="w-20 h-8 bg-[#E5E7EB] rounded-full mr-2" />
+        ))}
+      </View>
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Animated.View key={i} style={{ opacity: shimmer }} className="w-full h-20 bg-[#E5E7EB] rounded-2xl mb-3" />
+      ))}
+    </View>
+  );
+};
 
 export default function SubscriptionsScreen() {
   const [loading, setLoading] = useState(true);
@@ -60,11 +87,7 @@ export default function SubscriptionsScreen() {
   });
 
   if (loading && subscriptions.length === 0) {
-    return (
-      <View className="flex-1 justify-center items-center bg-[#F4F6F9]">
-        <ActivityIndicator size="large" color="#0D9E75" />
-      </View>
-    );
+    return <SubscriptionsSkeleton />;
   }
 
   return (

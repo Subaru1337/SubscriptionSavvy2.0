@@ -1,8 +1,8 @@
 import {
   View, Text, ScrollView, RefreshControl,
-  TouchableOpacity, ActivityIndicator
+  TouchableOpacity, ActivityIndicator, Animated
 } from 'react-native';
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { api } from '../../lib/api';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -40,6 +40,35 @@ const getFirstDayOfMonth = (year: number, month: number) => {
 
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+const CalendarSkeleton = () => {
+  const shimmer = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0.3, duration: 800, useNativeDriver: true })
+      ])
+    ).start();
+  }, [shimmer]);
+
+  return (
+    <View className="flex-1 bg-[#F4F6F9] px-5 pt-8">
+      {/* Calendar Header */}
+      <Animated.View style={{ opacity: shimmer }} className="w-48 h-6 bg-[#E5E7EB] rounded-lg mb-6" />
+      
+      {/* Calendar Grid Skeleton */}
+      <Animated.View style={{ opacity: shimmer }} className="w-full h-64 bg-[#E5E7EB] rounded-3xl mb-8" />
+
+      {/* List items skeleton */}
+      <Animated.View style={{ opacity: shimmer }} className="w-32 h-5 bg-[#E5E7EB] rounded-lg mb-4" />
+      {[1, 2, 3].map((i) => (
+        <Animated.View key={i} style={{ opacity: shimmer }} className="w-full h-16 bg-[#E5E7EB] rounded-2xl mb-3" />
+      ))}
+    </View>
+  );
+};
 
 export default function CalendarScreen() {
   const [loading, setLoading] = useState(true);
@@ -118,11 +147,7 @@ export default function CalendarScreen() {
   }
 
   if (loading && subscriptions.length === 0) {
-    return (
-      <View className="flex-1 justify-center items-center bg-[#F4F6F9]">
-        <ActivityIndicator size="large" color="#0D9E75" />
-      </View>
-    );
+    return <CalendarSkeleton />;
   }
 
   return (
