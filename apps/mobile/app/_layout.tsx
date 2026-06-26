@@ -60,8 +60,8 @@ export default function RootLayout() {
               loop={false}
               source={require('../assets/splash.json')}
               onAnimationFinish={() => setAnimationFinished(true)}
-              style={{ width: 300, height: 300 }}
-              resizeMode="contain"
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
             />
           </View>
         )}
