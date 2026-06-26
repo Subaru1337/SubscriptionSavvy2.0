@@ -82,11 +82,30 @@ export default function SubscriptionsScreen() {
     }, [fetchData])
   );
 
-  const filteredSubscriptions = subscriptions.filter(sub => {
-    const matchesSearch = sub.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = activeFilter === 'ALL' || sub.category.toUpperCase() === activeFilter;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredSubscriptions = subscriptions
+    .filter(sub => {
+      const matchesSearch = sub.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesFilter = activeFilter === 'ALL' || sub.category.toUpperCase() === activeFilter;
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      const getPriority = (status: string) => {
+        if (!status || status === 'active') return 1;
+        if (status === 'paused') return 2;
+        if (status === 'cancelled') return 3;
+        return 4;
+      };
+      
+      const priorityA = getPriority(a.status);
+      const priorityB = getPriority(b.status);
+      
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      
+      // If same status, sort by next payment date (earliest first)
+      return new Date(a.nextPayment).getTime() - new Date(b.nextPayment).getTime();
+    });
 
   if (loading && subscriptions.length === 0) {
     return <SubscriptionsSkeleton />;
