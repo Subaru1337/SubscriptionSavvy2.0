@@ -12,7 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import * as SplashScreen from "expo-splash-screen";
 import { View } from "react-native";
-import { Video, ResizeMode } from "expo-av";
+import { useVideoPlayer, VideoView } from "expo-video";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,6 +24,20 @@ export default function RootLayout() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
   });
+
+  const player = useVideoPlayer(require('../assets/splash.mp4'), player => {
+    player.loop = false;
+    player.play();
+  });
+
+  useEffect(() => {
+    const subscription = player.addListener('playingChange', ({ isPlaying }) => {
+      if (!isPlaying && player.currentTime > 0) {
+        setAnimationFinished(true);
+      }
+    });
+    return () => subscription.remove();
+  }, [player]);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -55,17 +69,11 @@ export default function RootLayout() {
 
         {!animationFinished && (
           <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#F4F6F9', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-            <Video
-              source={require('../assets/splash.mp4')}
+            <VideoView
+              player={player}
               style={{ width: '100%', height: '100%' }}
-              resizeMode={ResizeMode.COVER}
-              shouldPlay
-              isLooping={false}
-              onPlaybackStatusUpdate={(status) => {
-                if (status.isLoaded && status.didJustFinish) {
-                  setAnimationFinished(true);
-                }
-              }}
+              contentFit="cover"
+              nativeControls={false}
             />
           </View>
         )}
