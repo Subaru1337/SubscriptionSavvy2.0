@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Rect, Path, Circle } from 'react-native-svg';
 import AnimatedNumber from '../../components/AnimatedNumber';
 import AnimatedRing from '../../components/AnimatedRing';
-import SubscriptionLogo from '../../components/SubscriptionLogo';
+import { Image } from 'react-native';
 import { getCurrencySymbol, formatAmount } from '../../lib/currency';
 import { useBaseCurrency } from '../../lib/useBaseCurrency';
 
@@ -213,6 +213,17 @@ export default function DashboardScreen() {
         contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D9E75" />}
       >
+        {/* Header with App Logo */}
+        <View className="flex-row items-center mb-6 pt-2">
+          <View className="shadow-sm bg-white rounded-[12px] p-0.5 mr-3">
+            <Image source={require('../../assets/icon.png')} style={{ width: 40, height: 40, borderRadius: 10 }} />
+          </View>
+          <View>
+            <Text className="text-[#6B7280] font-bold text-[11px] uppercase tracking-widest mb-0.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Welcome back,</Text>
+            <Text className="text-[#111827] font-bold text-[18px]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>SubscriptionSavvy</Text>
+          </View>
+        </View>
+
         {/* Animated Hero Card */}
         <LinearGradient
           colors={['#0E1B2E', '#0D3B2F']}

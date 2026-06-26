@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Feather } from '@expo/vector-icons';
 import { useEffect, useState, useCallback, useRef } from 'react';
@@ -188,8 +188,8 @@ export default function SettingsScreen() {
       } else {
         Alert.alert('Success', 'File downloaded, but sharing is not available.');
       }
-    } catch {
-      Alert.alert('Error', 'Failed to export data');
+    } catch (err: any) {
+      Alert.alert('Error', `Failed to export data: ${err.message || 'Unknown error'}`);
     } finally {
       setExporting(false);
     }
@@ -221,8 +221,8 @@ export default function SettingsScreen() {
       } else {
         Alert.alert('Success', 'File downloaded, but sharing is not available.');
       }
-    } catch {
-      Alert.alert('Error', 'Failed to export data');
+    } catch (err: any) {
+      Alert.alert('Error', `Failed to export data: ${err.message || 'Unknown error'}`);
     } finally {
       setExporting(false);
     }
