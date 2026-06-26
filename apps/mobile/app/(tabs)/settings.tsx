@@ -4,6 +4,8 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
+import * as FileSystem from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { Feather } from '@expo/vector-icons';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { api, API_URL } from '../../lib/api';
@@ -164,22 +166,65 @@ export default function SettingsScreen() {
     setExporting(true);
     try {
       const token = await SecureStore.getItemAsync('auth_token');
-      // Open export URL in browser with token appended for authentication
-      const url = `${API_URL}/export/csv?status=all&token=${token}`;
-      await Linking.openURL(url);
+      const fileUri = `${FileSystem.documentDirectory}subscriptions.csv`;
+      
+      const { uri, status } = await FileSystem.downloadAsync(
+        `${API_URL}/export/csv?status=all`,
+        fileUri,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (status !== 200) {
+         Alert.alert('Error', 'Failed to export CSV');
+         return;
+      }
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri);
+      } else {
+        Alert.alert('Success', 'File downloaded, but sharing is not available.');
+      }
     } catch {
-      Alert.alert('Export', 'Opening CSV export in your browser...');
+      Alert.alert('Error', 'Failed to export data');
     } finally {
       setExporting(false);
     }
   };
 
   const handleExportPDF = async () => {
+    setExporting(true);
     try {
       const token = await SecureStore.getItemAsync('auth_token');
-      await Linking.openURL(`${API_URL}/export/pdf?status=all&token=${token}`);
+      const fileUri = `${FileSystem.documentDirectory}subscriptions.pdf`;
+      
+      const { uri, status } = await FileSystem.downloadAsync(
+        `${API_URL}/export/pdf?status=all`,
+        fileUri,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      if (status !== 200) {
+         Alert.alert('Error', 'Failed to export PDF');
+         return;
+      }
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri);
+      } else {
+        Alert.alert('Success', 'File downloaded, but sharing is not available.');
+      }
     } catch {
-      Alert.alert('Error', 'Could not open export URL');
+      Alert.alert('Error', 'Failed to export data');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -383,7 +428,7 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
         <Text className="text-[#9CA3AF] text-[11px] mt-4 text-center" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
-          Opens the export in your browser
+          Saves the file securely to your device
         </Text>
       </View>
 

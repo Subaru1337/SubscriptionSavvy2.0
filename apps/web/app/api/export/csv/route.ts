@@ -6,23 +6,10 @@ import { stringify } from "csv-stringify/sync";
 import { format } from "date-fns";
 
 export async function GET(request: NextRequest) {
-  let authUser = await getAuthUser();
-  const { searchParams } = new URL(request.url);
-
-  if (!authUser) {
-    const token = searchParams.get("token");
-    if (token) {
-      try {
-        const { verifyJWT } = await import("@/lib/auth");
-        authUser = await verifyJWT(token);
-      } catch (e) {
-        // invalid token
-      }
-    }
-  }
-
+  const authUser = await getAuthUser();
   if (!authUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { searchParams } = new URL(request.url);
   const statusFilter = searchParams.get("status");
 
   const where: Record<string, unknown> = { userId: authUser.userId };
