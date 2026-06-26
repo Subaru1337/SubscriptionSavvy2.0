@@ -29,11 +29,11 @@ function TabIcon({ isFocused, iconName, label }: { isFocused: boolean, iconName:
       <AnimatedFeather 
         name={iconName as any} 
         size={22} 
-        color={isFocused ? '#0D9E75' : '#6B7280'} 
+        color={isFocused ? '#0D7377' : '#6B7280'} 
         style={animatedStyle}
       />
       {isFocused && (
-        <View className="w-1.5 h-1.5 rounded-full bg-[#0D9E75] mt-1 absolute bottom-0" />
+        <View className="w-1.5 h-1.5 rounded-full bg-[#0D7377] mt-1 absolute bottom-0" />
       )}
     </View>
   );
@@ -145,10 +145,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#0D9E75',
+    backgroundColor: '#0D7377',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#0D9E75',
+    shadowColor: '#0D7377',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

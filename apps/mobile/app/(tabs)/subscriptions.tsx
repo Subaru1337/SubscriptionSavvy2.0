@@ -118,8 +118,8 @@ export default function SubscriptionsScreen() {
               <TouchableOpacity
                 key={tab}
                 onPress={() => setActiveFilter(tab)}
-                className={`px-5 py-2.5 rounded-full mr-2 shadow-sm ${isActive ? 'bg-[#0D9E75]' : 'bg-white'}`}
-                style={isActive ? { shadowColor: '#0D9E75', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 } : {}}
+                className={`px-5 py-2.5 rounded-full mr-2 shadow-sm ${isActive ? 'bg-[#0D7377]' : 'bg-white'}`}
+                style={isActive ? { shadowColor: '#0D7377', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 } : {}}
               >
                 <Text className={`text-xs uppercase tracking-widest ${isActive ? 'text-white' : 'text-[#6B7280]'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                   {tab}
@@ -132,7 +132,7 @@ export default function SubscriptionsScreen() {
 
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D9E75" />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D7377" />}
       >
         {filteredSubscriptions.map((sub) => {
           const nextPaymentDate = new Date(sub.nextPayment);
@@ -169,7 +169,7 @@ export default function SubscriptionsScreen() {
 
               <View className="pt-3 border-t border-gray-100 flex-row justify-between items-end">
                 <View>
-                  <Text className="text-base text-[#0D9E75]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                  <Text className="text-base text-[#0D7377]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                     {getCurrencySymbol(sub.currency)}{Number(sub.cost).toFixed(0)}
                   </Text>
                   {sub.currency !== baseCurrency ? (

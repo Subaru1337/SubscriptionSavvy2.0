@@ -37,8 +37,8 @@ function ChipSelector({ label, options, value, onChange }: {
               paddingVertical: 10,
               borderRadius: 999,
               borderWidth: 1,
-              borderColor: value === opt ? '#0D9E75' : '#E5E7EB',
-              backgroundColor: value === opt ? '#0D9E75' : '#FFFFFF',
+              borderColor: value === opt ? '#0D7377' : '#E5E7EB',
+              backgroundColor: value === opt ? '#0D7377' : '#FFFFFF',
             }}
           >
             <Text style={{
@@ -193,7 +193,7 @@ export default function AddSubscriptionScreen() {
       >
         {fetching ? (
           <View className="flex-1 justify-center items-center">
-            <ActivityIndicator size="large" color="#0D9E75" />
+            <ActivityIndicator size="large" color="#0D7377" />
           </View>
         ) : (
           <BottomSheetScrollView
@@ -242,8 +242,8 @@ export default function AddSubscriptionScreen() {
                       style={{
                         flex: 1, padding: 16, borderRadius: 12, alignItems: 'center',
                         borderWidth: 1,
-                        borderColor: form.billingCycle === cycle ? '#0D9E75' : '#E5E7EB',
-                        backgroundColor: form.billingCycle === cycle ? '#0D9E75' : '#FFFFFF',
+                        borderColor: form.billingCycle === cycle ? '#0D7377' : '#E5E7EB',
+                        backgroundColor: form.billingCycle === cycle ? '#0D7377' : '#FFFFFF',
                       }}
                       onPress={() => {
                         const newCycle = cycle;
@@ -310,7 +310,7 @@ export default function AddSubscriptionScreen() {
               </View>
 
               <TouchableOpacity
-                className="bg-[#0D9E75] p-5 rounded-2xl items-center shadow-sm mb-12"
+                className="bg-[#0D7377] p-5 rounded-2xl items-center shadow-sm mb-12"
                 onPress={handleSubmit}
                 disabled={loading}
               >

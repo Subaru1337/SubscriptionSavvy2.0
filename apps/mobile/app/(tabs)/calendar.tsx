@@ -25,7 +25,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Productivity: '#0061FF',
   Health: '#10B981',
   Education: '#F59E0B',
-  Finance: '#0D9E75',
+  Finance: '#0D7377',
   Shopping: '#EC4899',
   'Developer Tools': '#8B5CF6',
   Other: '#9CA3AF',
@@ -156,7 +156,7 @@ export default function CalendarScreen() {
     <View className="flex-1 bg-[#F4F6F9]">
       <ScrollView
         contentContainerStyle={{ padding: 24, paddingBottom: 120 }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D9E75" />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D7377" />}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -174,7 +174,7 @@ export default function CalendarScreen() {
               <Feather name="chevron-left" size={18} color="#4B5563" />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleToday} className="px-3 border-x border-gray-100">
-              <Text className="text-sm font-bold text-[#0D9E75]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Today</Text>
+              <Text className="text-sm font-bold text-[#0D7377]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Today</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={handleNextMonth} className="p-2">
               <Feather name="chevron-right" size={18} color="#4B5563" />
@@ -210,7 +210,7 @@ export default function CalendarScreen() {
               const hasRenewals = !!subsByDate[dateStr];
               
               // We just use a single line color based on the first sub's category to match design simplicity
-              const firstSubColor = hasRenewals ? (CATEGORY_COLORS[subsByDate[dateStr][0].category] || '#0D9E75') : null;
+              const firstSubColor = hasRenewals ? (CATEGORY_COLORS[subsByDate[dateStr][0].category] || '#0D7377') : null;
 
               return (
                 <TouchableOpacity
@@ -219,8 +219,8 @@ export default function CalendarScreen() {
                   style={{ width: '14.28%', aspectRatio: 1 }}
                   className="p-1"
                 >
-                  <View className={`flex-1 items-center justify-center rounded-xl border ${isSelected ? 'bg-[#1DCCA0]/20 border-[#0D9E75]' : isToday ? 'bg-[#F4F6F9] border-[#E5E7EB]' : 'border-transparent'}`}>
-                    <Text className={`text-[13px] font-bold ${isSelected ? 'text-[#0D9E75]' : isToday ? 'text-[#111827]' : 'text-[#4B5563]'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                  <View className={`flex-1 items-center justify-center rounded-xl border ${isSelected ? 'bg-[#14A085]/20 border-[#0D7377]' : isToday ? 'bg-[#F4F6F9] border-[#E5E7EB]' : 'border-transparent'}`}>
+                    <Text className={`text-[13px] font-bold ${isSelected ? 'text-[#0D7377]' : isToday ? 'text-[#111827]' : 'text-[#4B5563]'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                       {day}
                     </Text>
                     {hasRenewals && (
@@ -239,8 +239,8 @@ export default function CalendarScreen() {
             {MONTH_NAMES[selectedDate.getMonth()].slice(0,3)} {selectedDate.getDate()}
           </Text>
           {selectedTotal > 0 && (
-            <View className="bg-[#1DCCA0]/20 px-3 py-1 rounded-full border border-[#1DCCA0]/30">
-              <Text className="text-[10px] font-bold text-[#0D9E75] tracking-widest uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+            <View className="bg-[#14A085]/20 px-3 py-1 rounded-full border border-[#14A085]/30">
+              <Text className="text-[10px] font-bold text-[#0D7377] tracking-widest uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                 {getCurrencySymbol(baseCurrency)}{selectedTotal.toFixed(0)} Due
               </Text>
             </View>
@@ -268,7 +268,7 @@ export default function CalendarScreen() {
                 </Text>
               </View>
               <View className="items-end">
-                <Text className="text-lg font-bold text-[#0D9E75] mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                <Text className="text-lg font-bold text-[#0D7377] mb-1" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                   {getCurrencySymbol(sub.currency)}{Number(sub.cost).toFixed(0)}
                 </Text>
                 <View className="flex-row items-center" style={{ gap: 4 }}>

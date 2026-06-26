@@ -203,7 +203,7 @@ export default function SubscriptionDetailScreen() {
   if (loading && !sub) {
     return (
       <View className="flex-1 justify-center items-center bg-[#F4F6F9]">
-        <ActivityIndicator size="large" color="#0D9E75" />
+        <ActivityIndicator size="large" color="#0D7377" />
       </View>
     );
   }
@@ -243,7 +243,7 @@ export default function SubscriptionDetailScreen() {
         onScroll={scrollHandler}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D9E75" progressViewOffset={HEADER_HEIGHT} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D7377" progressViewOffset={HEADER_HEIGHT} />}
         showsVerticalScrollIndicator={false}
       >
         {/* Parallax Header Area */}
@@ -257,8 +257,8 @@ export default function SubscriptionDetailScreen() {
                 </View>
               ) : null}
             </View>
-            <View className="bg-[#1DCCA0]/20 px-4 py-1.5 rounded-full mb-4 border border-[#1DCCA0]/30">
-              <Text className="text-[#0D9E75] text-[10px] font-bold tracking-widest uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+            <View className="bg-[#14A085]/20 px-4 py-1.5 rounded-full mb-4 border border-[#14A085]/30">
+              <Text className="text-[#0D7377] text-[10px] font-bold tracking-widest uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                 {sub.category}
               </Text>
             </View>
@@ -287,7 +287,7 @@ export default function SubscriptionDetailScreen() {
                 onPress={handlePause}
                 disabled={isPausing}
                 className="flex-1 py-4 rounded-2xl items-center shadow-sm"
-                style={{ backgroundColor: sub.status === 'paused' ? '#0D9E75' : '#FEE2E2' }}
+                style={{ backgroundColor: sub.status === 'paused' ? '#0D7377' : '#FEE2E2' }}
               >
                 {isPausing ? <ActivityIndicator size="small" color={sub.status === 'paused' ? 'white' : '#DC2626'} /> : (
                   <Text
@@ -307,12 +307,12 @@ export default function SubscriptionDetailScreen() {
               <Text className="text-[10px] font-bold text-[#6B7280] uppercase tracking-widest mb-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                 Monthly Cost
               </Text>
-              <Text className="text-3xl font-bold text-[#0D9E75]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+              <Text className="text-3xl font-bold text-[#0D7377]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                 ₹{Number(sub.cost).toFixed(0)}
               </Text>
             </View>
             <View className="bg-[#F4F6F9] w-14 h-14 rounded-full items-center justify-center">
-              <Feather name="credit-card" size={24} color="#0D9E75" />
+              <Feather name="credit-card" size={24} color="#0D7377" />
             </View>
           </View>
 
@@ -347,7 +347,7 @@ export default function SubscriptionDetailScreen() {
               <TouchableOpacity 
                 onPress={handleMarkAsPaid}
                 disabled={paying}
-                className="bg-[#0D9E75] p-4 rounded-xl items-center mt-2 shadow-sm"
+                className="bg-[#0D7377] p-4 rounded-xl items-center mt-2 shadow-sm"
               >
                 {paying ? (
                   <ActivityIndicator size="small" color="white" />

@@ -9,7 +9,7 @@ export default function AnimatedRing({
   percentage, 
   size = 64, 
   strokeWidth = 6, 
-  color = '#1DCCA0', 
+  color = '#14A085', 
   trackColor = 'rgba(255,255,255,0.1)' 
 }: { 
   percentage: number, 

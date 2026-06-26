@@ -26,10 +26,10 @@ export default function AnimatedBar({ value, maxValue, label, delay = 0, isCurre
       )}
       <View className="w-full max-w-[28px] bg-[#F4F6F9] rounded-t-lg h-full absolute bottom-6" style={{ zIndex: -1 }} />
       <Animated.View 
-        className={`w-full max-w-[28px] rounded-t-lg mb-6 ${isCurrentMonth ? 'bg-[#0D9E75]' : 'bg-[#1DCCA0]'}`} 
+        className={`w-full max-w-[28px] rounded-t-lg mb-6 ${isCurrentMonth ? 'bg-[#0D7377]' : 'bg-[#14A085]'}`} 
         style={[rStyle, { opacity: isCurrentMonth ? 1 : 0.6 }]} 
       />
-      <Text className={`text-[10px] uppercase tracking-wider absolute bottom-0 ${isCurrentMonth ? 'text-[#0D9E75] font-bold' : 'text-[#9CA3AF] font-bold'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+      <Text className={`text-[10px] uppercase tracking-wider absolute bottom-0 ${isCurrentMonth ? 'text-[#0D7377] font-bold' : 'text-[#9CA3AF] font-bold'}`} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
         {label}
       </Text>
     </View>

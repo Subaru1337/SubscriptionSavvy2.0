@@ -17,7 +17,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Productivity: '#0061FF',
   Health: '#10B981',
   Education: '#F59E0B',
-  Finance: '#0D9E75',
+  Finance: '#0D7377',
   Shopping: '#EC4899',
   'Developer Tools': '#8B5CF6',
   Other: '#9CA3AF',
@@ -111,7 +111,7 @@ export default function AnalyticsScreen() {
     <View className="flex-1 bg-[#F4F6F9]">
       <ScrollView
         contentContainerStyle={{ padding: 24, paddingBottom: 120 }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D9E75" />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D7377" />}
         showsVerticalScrollIndicator={false}
       >
         <Text className="text-3xl font-bold text-[#111827] mb-8 mt-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
@@ -135,7 +135,7 @@ export default function AnalyticsScreen() {
         ) : healthScore ? (
           <View className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100 mb-6 items-center">
             <View className="flex-row items-center mb-6 space-x-2">
-              <Feather name="activity" size={16} color="#0D9E75" />
+              <Feather name="activity" size={16} color="#0D7377" />
               <Text className="text-xs font-bold text-[#6B7280] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Subscription Health</Text>
             </View>
             
@@ -173,7 +173,7 @@ export default function AnalyticsScreen() {
         {annualRecap ? (
           <View className="bg-[#0E0F14] p-6 rounded-[24px] shadow-lg mb-6">
             <View className="flex-row items-center space-x-2 mb-6">
-              <Feather name="award" size={18} color="#1DCCA0" />
+              <Feather name="award" size={18} color="#14A085" />
               <Text className="text-base font-bold text-white tracking-wide" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{annualRecap.year} Spending Recap</Text>
             </View>
             {annualRecap.payment_count === 0 ? (
@@ -195,8 +195,8 @@ export default function AnalyticsScreen() {
                   </View>
                   <View className="w-1/2 pl-4">
                     <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Top Category</Text>
-                    <View className="bg-[#1DCCA0]/20 self-start px-2 py-1 rounded border border-[#1DCCA0]/30">
-                      <Text className="text-[10px] font-bold text-[#1DCCA0] uppercase tracking-wider" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{annualRecap.top_category}</Text>
+                    <View className="bg-[#14A085]/20 self-start px-2 py-1 rounded border border-[#14A085]/30">
+                      <Text className="text-[10px] font-bold text-[#14A085] uppercase tracking-wider" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{annualRecap.top_category}</Text>
                     </View>
                   </View>
                 </View>
@@ -276,7 +276,7 @@ export default function AnalyticsScreen() {
                       {hasLimit && (
                         <View className="w-full h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden">
                           <View 
-                            className={`h-full rounded-full ${overBudget ? 'bg-[#EF4444]' : 'bg-[#1DCCA0]'}`} 
+                            className={`h-full rounded-full ${overBudget ? 'bg-[#EF4444]' : 'bg-[#14A085]'}`} 
                             style={{ width: `${percent}%` }} 
                           />
                         </View>

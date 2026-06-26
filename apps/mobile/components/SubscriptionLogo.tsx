@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 
 const gradients = [
-  ['#0D9E75', '#0A7DB8'],
+  ['#0D7377', '#0A7DB8'],
   ['#F59E0B', '#EF4444'],
   ['#8B5CF6', '#3B82F6'],
   ['#EC4899', '#8B5CF6'],

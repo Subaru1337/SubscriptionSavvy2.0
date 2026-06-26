@@ -257,7 +257,7 @@ export default function SettingsScreen() {
 
       {/* ── Account ──────────────────────────────────── */}
       <View className="bg-white p-5 rounded-[24px] shadow-sm mb-6 border border-gray-100 flex-row items-center">
-        <View className="w-14 h-14 rounded-[16px] bg-[#0D9E75] items-center justify-center shadow-sm">
+        <View className="w-14 h-14 rounded-[16px] bg-[#0D7377] items-center justify-center shadow-sm">
           <Feather name="user" size={24} color="#FFF" />
         </View>
         <View className="flex-1 ml-4">
@@ -269,7 +269,7 @@ export default function SettingsScreen() {
       {/* ── Financial Settings ────────────────────────── */}
       <View className="bg-white p-6 rounded-[24px] shadow-sm mb-6 border border-gray-100">
         <View className="flex-row items-center mb-6">
-          <Feather name="pie-chart" size={20} color="#0D9E75" />
+          <Feather name="pie-chart" size={20} color="#0D7377" />
           <Text className="text-[#111827] font-bold text-lg ml-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Financial Settings</Text>
         </View>
 
@@ -280,7 +280,7 @@ export default function SettingsScreen() {
               <TouchableOpacity
                 key={cur}
                 onPress={() => setBaseCurrency(cur)}
-                className={`px-5 py-2.5 rounded-full border ${baseCurrency === cur ? 'bg-[#0D9E75] border-[#0D9E75]' : 'bg-[#F4F6F9] border-gray-200'}`}
+                className={`px-5 py-2.5 rounded-full border ${baseCurrency === cur ? 'bg-[#0D7377] border-[#0D7377]' : 'bg-[#F4F6F9] border-gray-200'}`}
               >
                 <Text className={baseCurrency === cur ? 'text-white font-bold text-[13px]' : 'text-[#6B7280] font-bold text-[13px]'} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                   {cur}
@@ -309,8 +309,8 @@ export default function SettingsScreen() {
           <Switch
             value={emailReminders}
             onValueChange={setEmailReminders}
-            trackColor={{ false: '#E5E7EB', true: '#1DCCA0' }}
-            thumbColor={emailReminders ? '#0D9E75' : '#fff'}
+            trackColor={{ false: '#E5E7EB', true: '#14A085' }}
+            thumbColor={emailReminders ? '#0D7377' : '#fff'}
           />
         </View>
 
@@ -354,7 +354,7 @@ export default function SettingsScreen() {
       {/* ── Category Budgets ─────────────────────────── */}
       <View className="bg-white p-6 rounded-[24px] shadow-sm mb-6 border border-gray-100">
         <View className="flex-row items-center mb-6">
-          <Feather name="target" size={20} color="#0D9E75" />
+          <Feather name="target" size={20} color="#0D7377" />
           <Text className="text-[#111827] font-bold text-lg ml-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Category Budgets</Text>
         </View>
         
@@ -368,7 +368,7 @@ export default function SettingsScreen() {
                 {isEditing ? (
                   <View className="flex-row items-center space-x-3">
                     <TextInput
-                      className="bg-white border border-[#0D9E75] rounded-lg px-3 py-1.5 text-[#111827] font-bold text-[13px] w-24"
+                      className="bg-white border border-[#0D7377] rounded-lg px-3 py-1.5 text-[#111827] font-bold text-[13px] w-24"
                       style={{ fontFamily: 'PlusJakartaSans_700Bold' }}
                       placeholder="Amount"
                       placeholderTextColor="#9CA3AF"
@@ -377,7 +377,7 @@ export default function SettingsScreen() {
                       onChangeText={setBudgetInput}
                       autoFocus
                     />
-                    <TouchableOpacity onPress={() => saveCategoryBudget(cat)} className="w-8 h-8 bg-[#0D9E75] rounded-full items-center justify-center">
+                    <TouchableOpacity onPress={() => saveCategoryBudget(cat)} className="w-8 h-8 bg-[#0D7377] rounded-full items-center justify-center">
                       <Feather name="check" size={14} color="#FFF" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => { setEditingBudget(null); setBudgetInput(''); }} className="w-8 h-8 bg-white border border-gray-300 rounded-full items-center justify-center">
@@ -392,10 +392,10 @@ export default function SettingsScreen() {
                     }}
                     className="flex-row items-center space-x-2"
                   >
-                    <Text className={existing ? 'text-[#0D9E75] text-[13px] font-bold' : 'text-[#6B7280] text-[13px] font-bold'} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                    <Text className={existing ? 'text-[#0D7377] text-[13px] font-bold' : 'text-[#6B7280] text-[13px] font-bold'} style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                       {existing ? `${getCurrencySymbol(baseCurrency)} ${Number(existing.limit).toFixed(0)}` : 'Set limit'}
                     </Text>
-                    <Feather name="edit-2" size={14} color={existing ? '#0D9E75' : '#9CA3AF'} />
+                    <Feather name="edit-2" size={14} color={existing ? '#0D7377' : '#9CA3AF'} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -407,24 +407,24 @@ export default function SettingsScreen() {
       {/* ── Import / Export ──────────────────────────── */}
       <View className="bg-white p-6 rounded-[24px] shadow-sm mb-6 border border-gray-100">
         <View className="flex-row items-center mb-6">
-          <Feather name="download-cloud" size={20} color="#0D9E75" />
+          <Feather name="download-cloud" size={20} color="#0D7377" />
           <Text className="text-[#111827] font-bold text-lg ml-3" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export Data</Text>
         </View>
         <View className="flex-row" style={{ gap: 16 }}>
           <TouchableOpacity
             onPress={handleExportCSV}
             disabled={exporting}
-            className="flex-1 flex-row items-center justify-center p-4 rounded-[16px] bg-[#1DCCA0]/10 border border-[#1DCCA0]/20"
+            className="flex-1 flex-row items-center justify-center p-4 rounded-[16px] bg-[#14A085]/10 border border-[#14A085]/20"
           >
-            <Feather name="file-text" size={18} color="#0D9E75" />
-            <Text className="text-[#0D9E75] font-bold text-[13px] ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export CSV</Text>
+            <Feather name="file-text" size={18} color="#0D7377" />
+            <Text className="text-[#0D7377] font-bold text-[13px] ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export CSV</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleExportPDF}
-            className="flex-1 flex-row items-center justify-center p-4 rounded-[16px] bg-[#1DCCA0]/10 border border-[#1DCCA0]/20"
+            className="flex-1 flex-row items-center justify-center p-4 rounded-[16px] bg-[#14A085]/10 border border-[#14A085]/20"
           >
-            <Feather name="file" size={18} color="#0D9E75" />
-            <Text className="text-[#0D9E75] font-bold text-[13px] ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export PDF</Text>
+            <Feather name="file" size={18} color="#0D7377" />
+            <Text className="text-[#0D7377] font-bold text-[13px] ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Export PDF</Text>
           </TouchableOpacity>
         </View>
         <Text className="text-[#9CA3AF] text-[11px] mt-4 text-center" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>

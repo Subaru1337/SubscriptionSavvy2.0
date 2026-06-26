@@ -57,7 +57,7 @@ export default function CustomHeader() {
       </View>
       <TouchableOpacity 
         onPress={() => router.push('/settings')}
-        className="w-12 h-12 rounded-full bg-[#0D9E75] items-center justify-center shadow-sm"
+        className="w-12 h-12 rounded-full bg-[#0D7377] items-center justify-center shadow-sm"
       >
         <Text className="text-white font-bold text-lg" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{initial}</Text>
       </TouchableOpacity>

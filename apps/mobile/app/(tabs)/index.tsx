@@ -66,8 +66,8 @@ const NewUserGuide = ({ onPress }: { onPress: () => void }) => (
     <View className="bg-white rounded-[24px] shadow-sm border border-gray-100 overflow-hidden">
       {/* Hero CTA */}
       <View className="bg-gradient-to-b p-6 items-center" style={{ backgroundColor: '#F0FDF9' }}>
-        <View className="w-16 h-16 rounded-full bg-[#0D9E75]/10 items-center justify-center mb-4">
-          <Feather name="plus-circle" size={32} color="#0D9E75" />
+        <View className="w-16 h-16 rounded-full bg-[#0D7377]/10 items-center justify-center mb-4">
+          <Feather name="plus-circle" size={32} color="#0D7377" />
         </View>
         <Text className="text-lg font-bold text-[#111827] text-center mb-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Track your first subscription</Text>
         <Text className="text-[13px] text-[#6B7280] text-center leading-5 mb-6" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
@@ -75,7 +75,7 @@ const NewUserGuide = ({ onPress }: { onPress: () => void }) => (
         </Text>
         <TouchableOpacity
           onPress={onPress}
-          className="bg-[#0D9E75] px-8 py-4 rounded-2xl shadow-sm flex-row items-center"
+          className="bg-[#0D7377] px-8 py-4 rounded-2xl shadow-sm flex-row items-center"
         >
           <Feather name="plus" size={16} color="white" />
           <Text className="text-white font-bold text-[14px] ml-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Add Subscription</Text>
@@ -90,8 +90,8 @@ const NewUserGuide = ({ onPress }: { onPress: () => void }) => (
           { icon: 'calendar', label: 'Set the renewal date', desc: "We'll remind you before it hits." },
         ].map((step, i) => (
           <View key={i} className={`flex-row items-center py-4 ${i < 2 ? 'border-b border-gray-100' : ''}`}>
-            <View className="w-9 h-9 rounded-full bg-[#0D9E75]/10 items-center justify-center mr-4">
-              <Feather name={step.icon as any} size={16} color="#0D9E75" />
+            <View className="w-9 h-9 rounded-full bg-[#0D7377]/10 items-center justify-center mr-4">
+              <Feather name={step.icon as any} size={16} color="#0D7377" />
             </View>
             <View className="flex-1">
               <Text className="text-[13px] font-bold text-[#111827] mb-0.5" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>{step.label}</Text>
@@ -107,7 +107,7 @@ const NewUserGuide = ({ onPress }: { onPress: () => void }) => (
 // Empty State SVG
 const CalendarEmptyState = () => (
   <View className="items-center py-8">
-    <Svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0D9E75" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <Svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#0D7377" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
       <Rect x="3" y="4" width="18" height="18" rx="2" ry="2"></Rect>
       <Path d="M16 2v4"></Path>
       <Path d="M8 2v4"></Path>
@@ -211,7 +211,7 @@ export default function DashboardScreen() {
     <View className="flex-1 bg-[#F4F6F9]">
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D9E75" />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} tintColor="#0D7377" />}
       >
         {/* Animated Hero Card */}
         <LinearGradient
@@ -232,14 +232,14 @@ export default function DashboardScreen() {
                 className="text-[40px] text-white" 
                 style={{ fontFamily: 'PlusJakartaSans_700Bold', lineHeight: 48 }} 
               />
-              <Text className="text-[#1DCCA0] text-xs mt-1" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+              <Text className="text-[#14A085] text-xs mt-1" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
                 this month · {summary?.active_subscriptions || 0} active subs
               </Text>
             </View>
             <View className="items-center justify-center relative">
-              <AnimatedRing percentage={budgetUsed} size={72} strokeWidth={6} color="#1DCCA0" trackColor="rgba(255,255,255,0.15)" />
+              <AnimatedRing percentage={budgetUsed} size={72} strokeWidth={6} color="#14A085" trackColor="rgba(255,255,255,0.15)" />
               <View className="absolute items-center justify-center">
-                <Text className="text-[#1DCCA0] text-sm" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+                <Text className="text-[#14A085] text-sm" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                   {Math.round(budgetUsed)}%
                 </Text>
               </View>
@@ -249,18 +249,18 @@ export default function DashboardScreen() {
             <Text className="text-gray-300 text-xs" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
               Annual: {formatAmount(summary?.annual_total || 0, baseCurrency, 2)}
             </Text>
-            <Text className="text-[#1DCCA0] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+            <Text className="text-[#14A085] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
               vs last month: ↑ 0%
             </Text>
           </View>
           <View className="flex-row justify-between pt-4 mt-4 border-t border-white/10">
             <View className="flex-row items-center">
-              <Feather name="shield" size={14} color="#1DCCA0" />
+              <Feather name="shield" size={14} color="#14A085" />
               <Text className="text-gray-300 text-xs ml-1.5" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
                 Saved by Cancelling
               </Text>
             </View>
-            <Text className="text-[#1DCCA0] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+            <Text className="text-[#14A085] text-xs" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
               {formatAmount(savings?.total_saved || 0, baseCurrency, 2)}
             </Text>
           </View>
@@ -286,7 +286,7 @@ export default function DashboardScreen() {
                 <TouchableOpacity 
                   key={`${sub.id}-${i}`}
                   onPress={() => router.push(`/subscription/${sub.id}`)}
-                  className={`bg-white rounded-[20px] p-4 mr-3 shadow-sm border border-[#0D9E75] items-center w-[84px]`}
+                  className={`bg-white rounded-[20px] p-4 mr-3 shadow-sm border border-[#0D7377] items-center w-[84px]`}
                 >
                   <Text className="text-[10px] text-[#6B7280] mb-3 uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
                     {dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
@@ -397,7 +397,7 @@ export default function DashboardScreen() {
             Upcoming
           </Text>
           <TouchableOpacity onPress={() => router.push('/subscriptions')}>
-            <Text className="text-xs text-[#0D9E75] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+            <Text className="text-xs text-[#0D7377] uppercase tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
               View All
             </Text>
           </TouchableOpacity>

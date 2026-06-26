@@ -79,7 +79,7 @@ export default function RegisterScreen() {
         {!isKeyboardVisible && (
           <View className="bg-[#15171E] rounded-b-[40px] pt-16 pb-8 px-8 mb-6">
             <View className="flex-row items-center justify-center space-x-2 mb-4">
-              <View className="w-8 h-8 rounded-lg bg-[#0D9E75] items-center justify-center">
+              <View className="w-8 h-8 rounded-lg bg-[#0D7377] items-center justify-center">
                 <Feather name="shield" size={16} color="#FFF" />
               </View>
               <Text className="text-white font-bold text-lg tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>SAVVY</Text>
@@ -153,16 +153,16 @@ export default function RegisterScreen() {
             onPress={() => setAgreed(!agreed)}
             activeOpacity={0.7}
           >
-            <View className={`w-5 h-5 rounded-[6px] items-center justify-center mr-3 ${agreed ? 'bg-[#1DCCA0]' : 'border border-[#4B5563]'}`}>
+            <View className={`w-5 h-5 rounded-[6px] items-center justify-center mr-3 ${agreed ? 'bg-[#14A085]' : 'border border-[#4B5563]'}`}>
               {agreed && <Feather name="check" size={12} color="#0E0F14" />}
             </View>
             <Text className="text-[13px] text-[#9CA3AF] leading-5" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
-              I agree to the <Text className="text-[#1DCCA0] font-bold" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Terms of Service</Text> and <Text className="text-[#1DCCA0] font-bold" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Privacy Policy</Text>.
+              I agree to the <Text className="text-[#14A085] font-bold" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Terms of Service</Text> and <Text className="text-[#14A085] font-bold" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Privacy Policy</Text>.
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            className="bg-[#0D9E75] h-[56px] rounded-[16px] items-center justify-center mb-6 shadow-sm"
+            className="bg-[#0D7377] h-[56px] rounded-[16px] items-center justify-center mb-6 shadow-sm"
             onPress={handleRegister}
             disabled={loading}
           >
@@ -176,7 +176,7 @@ export default function RegisterScreen() {
           <View className="flex-row justify-center items-center">
             <Text className="text-[13px] text-[#6B7280]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.replace('/')}>
-              <Text className="text-[13px] font-bold text-[#1DCCA0]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Log in</Text>
+              <Text className="text-[13px] font-bold text-[#14A085]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Log in</Text>
             </TouchableOpacity>
           </View>
         </View>

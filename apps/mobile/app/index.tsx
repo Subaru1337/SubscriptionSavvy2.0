@@ -31,7 +31,7 @@ const FEATURES = [
     icon: 'pie-chart',
     title: 'Visual Analytics',
     desc: 'Beautiful charts tracking your monthly and annual habits.',
-    color: '#0D9E75'
+    color: '#0D7377'
   }
 ];
 
@@ -114,7 +114,7 @@ export default function LoginScreen() {
   if (isCheckingAuth) {
     return (
       <View className="flex-1 bg-[#0E0F14] justify-center items-center">
-        <ActivityIndicator size="large" color="#1DCCA0" />
+        <ActivityIndicator size="large" color="#14A085" />
       </View>
     );
   }
@@ -136,7 +136,7 @@ export default function LoginScreen() {
           <View style={{ height: SCREEN_HEIGHT * 0.45 }} className="bg-[#15171E] rounded-b-[40px] pt-16 overflow-hidden">
             {/* Logo */}
           <View className="flex-row items-center justify-center space-x-2 mb-6">
-            <View className="w-8 h-8 rounded-lg bg-[#0D9E75] items-center justify-center">
+            <View className="w-8 h-8 rounded-lg bg-[#0D7377] items-center justify-center">
               <Feather name="shield" size={16} color="#FFF" />
             </View>
             <Text className="text-white font-bold text-lg tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>SAVVY</Text>
@@ -172,7 +172,7 @@ export default function LoginScreen() {
             {FEATURES.map((_, idx) => (
               <View 
                 key={idx} 
-                className={`h-1.5 rounded-full ${idx === activeIndex ? 'w-6 bg-[#1DCCA0]' : 'w-1.5 bg-[#4B5563]'}`} 
+                className={`h-1.5 rounded-full ${idx === activeIndex ? 'w-6 bg-[#14A085]' : 'w-1.5 bg-[#4B5563]'}`} 
               />
             ))}
           </View>
@@ -207,7 +207,7 @@ export default function LoginScreen() {
             <View className="flex-row justify-between items-center mb-2">
               <Text className="text-[10px] font-bold tracking-widest text-[#9CA3AF] uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Password</Text>
               <TouchableOpacity>
-                <Text className="text-[11px] font-bold text-[#1DCCA0]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Forgot Password?</Text>
+                <Text className="text-[11px] font-bold text-[#14A085]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Forgot Password?</Text>
               </TouchableOpacity>
             </View>
             <View className="flex-row items-center bg-[#15171E] border border-white/5 rounded-[16px] px-4 h-[56px]">
@@ -228,7 +228,7 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity 
-            className="bg-[#0D9E75] h-[56px] rounded-[16px] items-center justify-center mb-6 shadow-sm"
+            className="bg-[#0D7377] h-[56px] rounded-[16px] items-center justify-center mb-6 shadow-sm"
             onPress={handleLogin}
             disabled={loading}
           >
@@ -242,7 +242,7 @@ export default function LoginScreen() {
           <View className="flex-row justify-center items-center">
             <Text className="text-[13px] text-[#6B7280]" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text className="text-[13px] font-bold text-[#1DCCA0]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Sign up</Text>
+              <Text className="text-[13px] font-bold text-[#14A085]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Sign up</Text>
             </TouchableOpacity>
           </View>
         </View>
