@@ -1,6 +1,6 @@
 import "../global.css";
 import { Stack } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useFonts } from "expo-font";
 import { 
   PlusJakartaSans_400Regular,
