@@ -47,7 +47,7 @@
     "typescript": "~5.9.2"
   },
   "scripts": {
-    "eas-build-pre-install": "npm install lightningcss",
+    "eas-build-pre-install": "npm install lightningcss-linux-x64-gnu",
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
