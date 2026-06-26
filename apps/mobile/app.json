@@ -24,6 +24,7 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "./plugins/with-react-native-hermes-command",
       "expo-secure-store",
       "expo-router",
       "expo-video"
