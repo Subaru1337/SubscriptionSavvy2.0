@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Subsavvy",
-    "slug": "subsavvy",
+    "slug": "mobile",
     "scheme": "subscriptionsavvy",
     "version": "1.0.0",
     "orientation": "portrait",
