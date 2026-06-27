@@ -1,8 +1,8 @@
 import {
   View, Text, TouchableOpacity, Alert, Switch, ScrollView,
-  TextInput, ActivityIndicator, Linking, Animated
+  TextInput, ActivityIndicator, Linking, Animated, InteractionManager
 } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -50,24 +50,13 @@ const SettingsSkeleton = () => {
 
 export default function SettingsScreen() {
 
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [pushReminders, setPushReminders] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
   const [exporting, setExporting] = useState(false);
-  const [shouldLogout, setShouldLogout] = useState(false);
-
-  useEffect(() => {
-    if (shouldLogout) {
-      const performLogout = async () => {
-        await SecureStore.deleteItemAsync('auth_token');
-        await SecureStore.deleteItemAsync('user_data');
-        router.replace('/');
-      };
-      // Add a slight delay to ensure the alert dialog has fully dismissed on the native side
-      setTimeout(performLogout, 300);
-    }
-  }, [shouldLogout]);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // Server-synced settings
   const [baseCurrency, setBaseCurrency] = useState('USD');
@@ -241,6 +230,28 @@ export default function SettingsScreen() {
     }
   };
 
+  const performLogout = useCallback(async () => {
+    setLoggingOut(true);
+    try {
+      try {
+        await api.post('/auth/logout');
+      } catch {
+        // Local logout should still complete if the server session endpoint is unavailable.
+      }
+
+      await SecureStore.deleteItemAsync('auth_token');
+      await SecureStore.deleteItemAsync('user_data');
+      delete api.defaults.headers.common.Authorization;
+
+      InteractionManager.runAfterInteractions(() => {
+        router.dismissAll();
+        router.replace('/');
+      });
+    } finally {
+      setLoggingOut(false);
+    }
+  }, [router]);
+
   const handleLogout = () => {
     Alert.alert('Log Out', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
@@ -248,7 +259,7 @@ export default function SettingsScreen() {
         text: 'Log Out',
         style: 'destructive',
         onPress: () => {
-          setShouldLogout(true);
+          void performLogout();
         },
       },
     ]);
@@ -443,14 +454,17 @@ export default function SettingsScreen() {
       <TouchableOpacity
         className="bg-white p-6 rounded-[24px] shadow-sm flex-row items-center justify-between mb-8 border border-[#FEE2E2]"
         onPress={handleLogout}
+        disabled={loggingOut}
       >
         <View className="flex-row items-center">
           <View className="w-10 h-10 rounded-full bg-[#FEF2F2] items-center justify-center">
             <Feather name="log-out" size={18} color="#DC2626" />
           </View>
-          <Text className="text-[#DC2626] font-bold text-[15px] ml-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Log Out</Text>
+          <Text className="text-[#DC2626] font-bold text-[15px] ml-4" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>
+            {loggingOut ? 'Logging Out...' : 'Log Out'}
+          </Text>
         </View>
-        <Feather name="chevron-right" size={20} color="#DC2626" />
+        {loggingOut ? <ActivityIndicator size="small" color="#DC2626" /> : <Feather name="chevron-right" size={20} color="#DC2626" />}
       </TouchableOpacity>
     </ScrollView>
   );
