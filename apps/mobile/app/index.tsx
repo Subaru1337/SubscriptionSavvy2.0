@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Dimensions, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Dimensions, KeyboardAvoidingView, Platform, Keyboard, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { api } from '../lib/api';
@@ -136,10 +136,8 @@ export default function LoginScreen() {
           <View style={{ height: SCREEN_HEIGHT * 0.45 }} className="bg-[#15171E] rounded-b-[40px] pt-16 overflow-hidden">
             {/* Logo */}
           <View className="flex-row items-center justify-center space-x-2 mb-6">
-            <View className="w-8 h-8 rounded-lg bg-[#0D7377] items-center justify-center">
-              <Feather name="shield" size={16} color="#FFF" />
-            </View>
-            <Text className="text-white font-bold text-lg tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>SAVVY</Text>
+            <Image source={require('../assets/logo_t.png')} style={{ width: 32, height: 32 }} resizeMode="contain" />
+            <Text className="text-white font-bold text-lg tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Subsavvy</Text>
           </View>
 
           <ScrollView 
@@ -206,9 +204,6 @@ export default function LoginScreen() {
           <View className="mb-8">
             <View className="flex-row justify-between items-center mb-2">
               <Text className="text-[10px] font-bold tracking-widest text-[#9CA3AF] uppercase" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Password</Text>
-              <TouchableOpacity>
-                <Text className="text-[11px] font-bold text-[#14A085]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Forgot Password?</Text>
-              </TouchableOpacity>
             </View>
             <View className="flex-row items-center bg-[#15171E] border border-white/5 rounded-[16px] px-4 h-[56px]">
               <Feather name="lock" size={18} color="#6B7280" className="mr-3" />
