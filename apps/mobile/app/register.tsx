@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Keyboard, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { api } from '../lib/api';
@@ -11,7 +11,6 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const router = useRouter();
@@ -30,10 +29,7 @@ export default function RegisterScreen() {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-    if (!agreed) {
-      Alert.alert('Error', 'You must agree to the Terms of Service and Privacy Policy');
-      return;
-    }
+
     if (password.length < 8) {
       Alert.alert('Error', 'Password must be at least 8 characters long');
       return;
@@ -79,10 +75,8 @@ export default function RegisterScreen() {
         {!isKeyboardVisible && (
           <View className="bg-[#15171E] rounded-b-[40px] pt-16 pb-8 px-8 mb-6">
             <View className="flex-row items-center justify-center space-x-2 mb-4">
-              <View className="w-8 h-8 rounded-lg bg-[#0D7377] items-center justify-center">
-                <Feather name="shield" size={16} color="#FFF" />
-              </View>
-              <Text className="text-white font-bold text-lg tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>SAVVY</Text>
+              <Image source={require('../assets/logo_t.png')} style={{ width: 32, height: 32 }} resizeMode="contain" />
+              <Text className="text-white font-bold text-lg tracking-widest" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Subsavvy</Text>
             </View>
             <Text className="text-white text-2xl font-bold text-center mb-2" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Create Account</Text>
             <Text className="text-[#9CA3AF] text-[13px] text-center px-4" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
@@ -148,18 +142,7 @@ export default function RegisterScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity 
-            className="flex-row items-center mb-8 pr-4"
-            onPress={() => setAgreed(!agreed)}
-            activeOpacity={0.7}
-          >
-            <View className={`w-5 h-5 rounded-[6px] items-center justify-center mr-3 ${agreed ? 'bg-[#14A085]' : 'border border-[#4B5563]'}`}>
-              {agreed && <Feather name="check" size={12} color="#0E0F14" />}
-            </View>
-            <Text className="text-[13px] text-[#9CA3AF] leading-5" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
-              I agree to the <Text className="text-[#14A085] font-bold" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Terms of Service</Text> and <Text className="text-[#14A085] font-bold" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Privacy Policy</Text>.
-            </Text>
-          </TouchableOpacity>
+
 
           <TouchableOpacity 
             className="bg-[#0D7377] h-[56px] rounded-[16px] items-center justify-center mb-6 shadow-sm"
@@ -178,6 +161,27 @@ export default function RegisterScreen() {
             <TouchableOpacity onPress={() => router.replace('/')}>
               <Text className="text-[13px] font-bold text-[#14A085]" style={{ fontFamily: 'PlusJakartaSans_700Bold' }}>Log in</Text>
             </TouchableOpacity>
+          </View>
+          
+          <View className="mt-8 items-center">
+            <Text className="text-[11px] text-[#9CA3AF] text-center px-4" style={{ fontFamily: 'PlusJakartaSans_500Medium' }}>
+              By creating an account, you agree to our{' '}
+              <Text 
+                className="text-[#14A085] font-bold" 
+                style={{ fontFamily: 'PlusJakartaSans_700Bold' }}
+                onPress={() => router.push('/terms')}
+              >
+                Terms of Service
+              </Text>
+              {' '}and{' '}
+              <Text 
+                className="text-[#14A085] font-bold" 
+                style={{ fontFamily: 'PlusJakartaSans_700Bold' }}
+                onPress={() => router.push('/privacy')}
+              >
+                Privacy Policy
+              </Text>.
+            </Text>
           </View>
         </View>
       </ScrollView>
