@@ -1,8 +1,8 @@
 import {
   View, Text, TouchableOpacity, Alert, Switch, ScrollView,
-  TextInput, ActivityIndicator, Linking, Animated, InteractionManager
+  TextInput, ActivityIndicator, Linking, Animated
 } from 'react-native';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { Redirect, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -50,13 +50,13 @@ const SettingsSkeleton = () => {
 
 export default function SettingsScreen() {
 
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [pushReminders, setPushReminders] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [loggedOut, setLoggedOut] = useState(false);
 
   // Server-synced settings
   const [baseCurrency, setBaseCurrency] = useState('USD');
@@ -69,6 +69,8 @@ export default function SettingsScreen() {
   const [budgetInput, setBudgetInput] = useState('');
 
   const fetchSettings = useCallback(async () => {
+    if (loggingOut || loggedOut) return;
+
     setLoading(true);
     try {
       const userData = await SecureStore.getItemAsync('user_data');
@@ -99,7 +101,7 @@ export default function SettingsScreen() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loggingOut, loggedOut]);
 
   useFocusEffect(
     useCallback(() => {
@@ -233,24 +235,17 @@ export default function SettingsScreen() {
   const performLogout = useCallback(async () => {
     setLoggingOut(true);
     try {
-      try {
-        await api.post('/auth/logout');
-      } catch {
-        // Local logout should still complete if the server session endpoint is unavailable.
-      }
-
       await SecureStore.deleteItemAsync('auth_token');
       await SecureStore.deleteItemAsync('user_data');
       delete api.defaults.headers.common.Authorization;
-
-      InteractionManager.runAfterInteractions(() => {
-        router.dismissAll();
-        router.replace('/');
-      });
-    } finally {
+      setEmail('');
+      setCategoryBudgets([]);
+      setLoggedOut(true);
+    } catch {
+      Alert.alert('Error', 'Failed to log out. Please try again.');
       setLoggingOut(false);
     }
-  }, [router]);
+  }, []);
 
   const handleLogout = () => {
     Alert.alert('Log Out', 'Are you sure you want to log out?', [
@@ -264,6 +259,10 @@ export default function SettingsScreen() {
       },
     ]);
   };
+
+  if (loggedOut) {
+    return <Redirect href="/" />;
+  }
 
   if (loading) {
     return <SettingsSkeleton />;
