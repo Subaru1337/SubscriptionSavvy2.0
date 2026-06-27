@@ -26,12 +26,6 @@ Subsavvy is a modern subscription tracker that gives you a clear picture of wher
 
 ---
 
-## 🖼️ Screenshots
-
-> _Coming soon — add your own screenshots here!_
-
----
-
 ## 🚀 Features
 
 | Feature | Web | Mobile |
