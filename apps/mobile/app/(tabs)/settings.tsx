@@ -237,11 +237,7 @@ export default function SettingsScreen() {
         onPress: async () => {
           await SecureStore.deleteItemAsync('auth_token');
           await SecureStore.deleteItemAsync('user_data');
-          
-          // Defer navigation to allow the Alert dialog to fully close first (iOS quirk)
-          setTimeout(() => {
-            router.replace('/');
-          }, 100);
+          router.replace('/');
         },
       },
     ]);
