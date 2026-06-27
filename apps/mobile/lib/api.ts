@@ -14,6 +14,8 @@ export const api = axios.create({
   },
 });
 
+let isRedirectingToLogin = false;
+
 api.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync('auth_token');
   if (token) {
@@ -25,18 +27,27 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    console.error(
-      "Axios Error:",
-      error.message,
-      error.response?.status,
-      error.response?.data?.error ?? error.response?.data,
-      error.config?.baseURL,
-      error.config?.url,
-    );
     if (error.response && error.response.status === 401) {
       await SecureStore.deleteItemAsync('auth_token');
-      // Redirect to login screen
-      router.replace('/');
+      await SecureStore.deleteItemAsync('user_data');
+      delete api.defaults.headers.common.Authorization;
+
+      if (!isRedirectingToLogin) {
+        isRedirectingToLogin = true;
+        router.replace('/');
+        setTimeout(() => {
+          isRedirectingToLogin = false;
+        }, 1000);
+      }
+    } else {
+      console.error(
+        "Axios Error:",
+        error.message,
+        error.response?.status,
+        error.response?.data?.error ?? error.response?.data,
+        error.config?.baseURL,
+        error.config?.url,
+      );
     }
     return Promise.reject(error);
   }
