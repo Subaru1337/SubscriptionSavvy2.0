@@ -2,7 +2,7 @@ import {
   View, Text, TouchableOpacity, Alert, Switch, ScrollView,
   TextInput, ActivityIndicator, Linking, Animated
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -49,12 +49,25 @@ const SettingsSkeleton = () => {
 };
 
 export default function SettingsScreen() {
-  const router = useRouter();
+
   const [email, setEmail] = useState('');
   const [pushReminders, setPushReminders] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [shouldLogout, setShouldLogout] = useState(false);
+
+  useEffect(() => {
+    if (shouldLogout) {
+      const performLogout = async () => {
+        await SecureStore.deleteItemAsync('auth_token');
+        await SecureStore.deleteItemAsync('user_data');
+        router.replace('/');
+      };
+      // Add a slight delay to ensure the alert dialog has fully dismissed on the native side
+      setTimeout(performLogout, 300);
+    }
+  }, [shouldLogout]);
 
   // Server-synced settings
   const [baseCurrency, setBaseCurrency] = useState('USD');
@@ -228,16 +241,14 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     Alert.alert('Log Out', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Log Out',
         style: 'destructive',
-        onPress: async () => {
-          await SecureStore.deleteItemAsync('auth_token');
-          await SecureStore.deleteItemAsync('user_data');
-          router.replace('/');
+        onPress: () => {
+          setShouldLogout(true);
         },
       },
     ]);
