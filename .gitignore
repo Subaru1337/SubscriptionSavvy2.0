@@ -1,7 +1,97 @@
-.env.local
+# ==============================================
+# SubscriptionSavvy2.0 — Monorepo .gitignore
+# ==============================================
+
+# ── Secrets & environment ──────────────────────
 .env
-node_modules
-.next
-.DS_Store
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.staging
+!.env.example
+
+# ── Dependencies ───────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Next.js (apps/web) ────────────────────────
+.next/
+out/
+apps/web/.next/
+apps/web/out/
+
+# ── Expo / React Native (apps/mobile) ─────────
+.expo/
+apps/mobile/.expo/
+dist/
+web-build/
+expo-env.d.ts
+apps/mobile/expo-env.d.ts
+
+# Android / iOS build artefacts
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# Metro bundler
+.metro-health-check*
+
+# ── Turborepo ─────────────────────────────────
+.turbo/
+
+# ── TypeScript ────────────────────────────────
+*.tsbuildinfo
+apps/web/tsconfig.tsbuildinfo
+
+# ── Prisma ────────────────────────────────────
+# Keep schema.prisma but ignore generated client & migrations
+apps/web/prisma/migrations/
+# Uncomment the line below if you use the default output path for the generated client
+# apps/web/prisma/generated/
+
+# ── Build / dist outputs ──────────────────────
+build/
+dist/
+out/
+.output/
+
+# ── Logs ──────────────────────────────────────
 *.log
-prisma/migrations
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+logs/
+
+# ── Coverage & testing ────────────────────────
+coverage/
+.nyc_output/
+
+# ── OS artefacts ──────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Editor & IDE ──────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Vercel ────────────────────────────────────
+.vercel/
+
+# ── EAS / Expo Application Services ───────────
+.eas/
+
+# ── Miscellaneous ─────────────────────────────
+.cache/
+*.local
